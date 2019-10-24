@@ -1,0 +1,1252 @@
+
+The three interpretations of the surface syntax, dubbed \Nname{}, \Tname{},
+ and \Aname{}, are defined via three reduction semantics.
+ The first three subsections introduce the {\em notions of reduction\/};
+ the last one generates the compatible closure with respect to evaluation contexts of
+ these relations in a reasonably standard fashion~\cite{barendregt-1981,fff:redex}. 
+
+The three semantics utilize some common extensions to the surface syntax
+and common meta functions; see figures~\ref{fig:evaluation-language},
+\ref{fig:evaluation-metafunctions},\footnote{The judgment $\svalue_0 \in \snat$
+   holds when the value $\svalue_0$ is a member of the set of natural numbers,
+   and similarly for other objects and sets.
+   By convention: a variable without a subscript typically refers to a set, and a
+    term containing a set describes a comprehension.
+   For example, $(\efun{\svar}{\svalue}) = \eset{(\efun{\svar_i}{\svalue_j}) \mid \svar_i \in \svar \mbox{ and } \svalue_j \in \svalue}$.}
+and \ref{fig:delta}.
+In particular, each
+recognizes the same errors ($\eerr$), uses the same type
+constructors ($\stag$) for tag checks,
+and assigns the same meaning ($\sdelta$) to primitive
+operations.
+
+A program evaluation may signal four kinds of errors, defined in
+\figref{fig:evaluation-language}.
+First, a dynamic
+tag error ($\tagerrorD{}$) is the outcome of an evaluation that applies an
+ elimination form to a misshaped argument. For 
+example, the first projection of an integer signals such an error.
+A static tag error ($\tagerrorS{}$) results from similar applications in typed
+ code, and from any other redex that contradicts the static typing judgment.
+Intuitively, type soundness eliminates the possibility of such contradictions.
+Third, 
+a division-by-zero error ($\divisionbyzeroerror$) may be raised by an
+ application of the $\squotient$ primitive; $\squotient$ is one representative
+ example of the partial primitives in a full language.
+Lastly, a boundary error ($\boundaryerror{\sbset}{\svalue}$)
+ indicates a type mismatch between two components and comes with both a set of
+ boundaries and a witness value.\footnote{A boundary error is comparable to a
+   blame error~\cite{wf-esop-2009}; however, a boundary error emphasizes that
+   either an untyped component or a type specification may be at fault.
+   Type specifications---whether written by a programmer or inferred~\cite{cc-snapl-2019}---can have bugs.}
+The error $\boundaryerror{\eset{\obnd{\sowner_0}{\stype_0}{\sowner_1}}}{\svalue_0}$,
+ for example, says that a mismatch between value $\svalue_0$ and type $\stype_0$
+ prevented the value sent by the $\sowner_1$ component from entering the $\sowner_0$ component.
+
+\begin{figure}[t]
+
+  \begin{minipage}[t]{0.60\columnwidth}
+  \lbl{\fbox{\sevallang{}}}{
+    \begin{langarray}
+      \eerr & \BNFeq &
+        \tagerrorD \mid \tagerrorS \mid
+        \divisionbyzeroerror \mid
+        \boundaryerror{\sbset}{\svalue}
+      \\
+      \sexpr & \BNFeq &
+        \ldots \mid \eerr
+      \\
+      \stag & \BNFeq &
+        \knat \mid \kint \mid \kpair \mid \kfun
+    \end{langarray}
+  }
+
+  \end{minipage}\begin{minipage}[t]{0.40\columnwidth}
+    \lbl{\fbox{$\stypeenv \sWT \sexpr : \stype$} \missingrules{}}{\vspace{-1mm}\begin{mathpar}
+    \inferrule*{
+    }{
+      \stypeenv_0 \sWT \eerr : \stype_0
+    }
+  \end{mathpar}}
+
+  \medskip
+  \lbl{\fbox{$\stypeenv \sWT \sexpr : \tdyn$} \missingrules{}}{\vspace{-1mm}\begin{mathpar}
+    \inferrule*{
+    }{
+      \stypeenv_0 \sWT \eerr : \tdyn
+    }
+  \end{mathpar}}
+
+  \end{minipage}
+
+  \Description[Grammar and types for error expressions.]{An extended grammar
+    for error expressions, and typing judgments to state that an error is well-typed
+    in any context.
+  }
+  \caption{Syntax for basic errors and type constuctors, common typing judgments}
+\label{fig:evaluation-language}
+\end{figure}
+
+\begin{figure}[t]\flushleft\(
+  \begin{array}{l@{\quad}l}
+    \begin{array}{l@{~~}c@{~~}l@{}}
+    \fshallow{\stag_0}{\svalue_0} & \feq &
+      \left\{\begin{array}{l@{~~}l}
+        \makebox[2pt][l]{$\ftrue$}
+        \\ & \mbox{\makebox[\widthof{or}][l]{if} $\stag_0 \eeq \knat$ and $\svalue_0 \in \snat$}
+        \\ & \mbox{or $\stag_0 \eeq \kint$ and $\svalue_0 \in \sint$}
+        \\ & \mbox{or $\stag_0 \eeq \kpair$ and}
+        \\ & \quad\, \svalue_0 \in \epair{\svalue}{\svalue} \cup{}
+        \\ & \zerowidth{\qquad\, \quad (\emon{\obnd{\sowner}{(\tpair{\stype}{\stype})}{\sowner}}{\svalue})}
+        \\ & \mbox{or $\stag_0 \eeq \kfun$ and}
+        \\ & \quad\, \svalue_0 \in (\efun{\svar}{\sexpr}) \cup (\efun{\tann{\svar}{\stype}}{\sexpr}) \cup{}
+        \\ & \zerowidth{\qquad\, \quad (\emon{\obnd{\sowner}{(\tfun{\stype}{\stype})}{\sowner}}{\svalue})}
+        \\
+        \zerowidth{\fshallow{\stag_0}{\svalue_1}}
+        \\ & \mbox{\makebox[\widthof{or}][l]{if} $\svalue_0 \eeq \ehist{\sbset_0}{\svalue_1}$}
+        \\
+        \zerowidth{\ffalse}
+        \\ & \mbox{otherwise}
+      \end{array}\right.
+    \end{array}
+  &
+    \begin{array}{l@{~~}c@{~~}l}
+    \tagof{\stype_0} & \feq &
+      \left\{\begin{array}{ll}
+        \knat & \mbox{if $\stype_0 \eeq \tnat$}
+        \\
+        \kint & \mbox{if $\stype_0 \eeq \tint$}
+        \\
+        \kpair & \mbox{if $\stype_0 \in \tpair{\stype}{\stype}$}
+        \\
+        \kfun & \mbox{if $\stype_0 \in \tfun{\stype}{\stype}\!\!$}
+      \end{array}\right.
+
+      \\[3.6cm]
+
+      \frev{\sbset_0} & \feq &
+        \eset{\obnd{\sowner_1}{\stype_0}{\sowner_0} \\
+      & & \,{}\mid \obnd{\sowner_0}{\stype_0}{\sowner_1} \in \sbset_0}
+    \end{array}
+
+  \end{array}\)
+
+  \Description[Three metafunctions.]{Metafunctions for the evaluation language.
+    The `tag-match' metafunction matches a type-tag against a value. The
+    `floor of` metafunction reduces a type to a type tag. The `rev' metafunction
+    reverses the labels in every boundary of a set.
+  }
+  \caption{Common metafunctions}
+  \label{fig:evaluation-metafunctions}
+\end{figure}
+
+\begin{figure}[t]\flushleft
+  \begin{minipage}[t]{0.48\columnwidth}\(
+  \begin{array}{l@{~~}c@{~~}l}
+      \sdelta(\sunop, \epair{\svalue_0}{\svalue_1}) & \feq &
+        \left\{\begin{array}{l@{~~}l}
+          \makebox[2pt][l]{$\svalue_0$}
+          \\ & \mbox{if $\sunop \eeq \tinst{\sfst}{\toptional}$}
+          \\
+          \zerowidth{\svalue_1}
+          \\ & \mbox{if $\sunop \eeq \tinst{\ssnd}{\toptional}$}
+        \end{array}\right.
+  \end{array}\)
+
+  \end{minipage}\begin{minipage}[t]{0.52\columnwidth}\(
+  \begin{array}{l@{~~}c@{~~}l}
+      \sdelta(\sbinop, \sint_0, \sint_1) & \feq &
+       \left\{\begin{array}{l@{~~~}l}
+         \makebox[2pt][l]{$\sint_0 + \sint_1$}
+         \\ & \mbox{if $\sbinop \eeq \tinst{\ssum}{\stoptional}$}
+         \\
+         \zerowidth{\divisionbyzeroerror}
+         \\ & \mbox{if $\sbinop \eeq \tinst{\squotient}{\stoptional}$}
+         \\ & \mbox{and $\sint_1 \eeq 0$}
+         \\
+         \zerowidth{\floorof{\sint_0 / \sint_1}}
+         \\ & \mbox{if $\sbinop \eeq \tinst{\squotient}{\stoptional}$}
+         \\ & \mbox{and $\sint_1 \neq 0$}
+       \end{array}\right.
+  \end{array}\)
+  \end{minipage}
+
+  \Description[Two metafunctions]{The `delta' metafunctions assign meaning to
+    the primitive operations: `fst' and `snd' get elements from a pair value;
+    `sum' and `quotient' perform integer arithmetic.}
+  \caption{Specification for primitive operations}
+  \label{fig:delta}
+\end{figure}
+
+
+%% ------------------------------------------------------------------------------
+\subsection{\Nname{} Notions of Reduction} \label{sub:ho}
+
+\Figref{fig:natural-language} extends the base grammar of evaluation expressions
+with monitor wrappers. While the grammar is somewhat liberal, \Nname{} only
+ever pairs a function-type boundary with a (possibly-monitored) function value in a
+monitor. Thus the monitors that arise during evaluation are members of the
+following two mutually-recursive sets:
+
+\smallskip\hspace{-6mm}
+\begin{array}[t]{ll}
+\begin{array}[t]{lcl}
+  \Nstawrapper & \BNFeq & \emon{\obnd{\sowner}{(\tfun{\stype}{\stype})}{\sowner}}{\efun{\svar}{\sexpr}} \\
+  & \mid & \emon{\obnd{\sowner}{(\tfun{\stype}{\stype})}{\sowner}}{\Ndynwrapper}
+\end{array} &
+\begin{array}[t]{lcl}
+  \Ndynwrapper & \BNFeq & \emon{\obnd{\sowner}{(\tfun{\stype}{\stype})}{\sowner}}{\efun{\tann{\svar}{\stype}}{\sexpr}} \\
+  & \mid & \emon{\obnd{\sowner}{(\tfun{\stype}{\stype})}{\sowner}}{\wideas{\Nstawrapper}{\Ndynwrapper}}
+\end{array}
+\end{array}
+\smallskip
+
+\noindent If any other monitor arises, the notions of reduction raise a static
+tag error. These rules appear in the \techreport{} along with a proof that
+well-typed expressions never raise static tag errors.
+
+\begin{figure}[t]\flushleft
+
+  \lbl{\fbox{\Nname{} \sevallang{}}}{
+    \begin{langarray}
+      \svalue & \BNFeq &
+        \snat
+        \mid \sint
+        \mid \epair{\svalue}{\svalue}
+        \mid \efun{\svar}{\sexpr}
+        \mid \efun{\tann{\svar}{\stype}}{\sexpr}
+        \mid \emon{\sbnd}{\svalue}
+      \\
+      \sexpr & \BNFeq &
+        \ldots \mid \emon{\sbnd}{\svalue}
+    \end{langarray}
+  }
+
+  \smallskip
+  \begin{minipage}[t]{0.5\columnwidth}
+  \lbl{\fbox{$\stypeenv \sWTN \sexpr : \stype$} \missingrules{}}{\begin{mathpar}
+    \inferrule*{
+      \stypeenv_0 \sWTN \svalue_0 : \tdyn
+    }{
+      \stypeenv_0 \sWTN \emon{\obnd{\sowner_0}{(\tfun{\stype_0}{\stype_1})}{\sowner_1}}{\svalue_0} : \tfun{\stype_0}{\stype_1}
+    }
+  \end{mathpar}}
+
+  \end{minipage}\begin{minipage}[t]{0.5\columnwidth}
+  \lbl{\fbox{$\tenv \sWTN \sexpr : \tdyn$} \missingrules{}}{\begin{mathpar}
+    \inferrule*{
+      \tenv_0 \sWTN \svalue_0 : \tfun{\stype_0}{\stype_1}
+    }{
+      \stypeenv_0 \sWTN \emon{\obnd{\sowner_0}{(\tfun{\stype_0}{\stype_1})}{\sowner_1}}{\svalue_0} : \tdyn
+    }
+  \end{mathpar}}
+
+  \end{minipage}
+
+  \Description[Grammar and typing judgments.]{Extends the evaluation grammar
+    with monitor values and adds typing rules for monitors. The typing
+    rules are similar to the dyn and stat rules.
+  }
+  \caption{\Nname{} language extensions}
+  \label{fig:natural-language}
+\end{figure}
+
+
+%% -----------------------------------------------------------------------------
+
+\subsubsection{\Nname{}, Statically-Typed} \label{sec:n-static}
+The $\sdelta$ metafunction (\figref{fig:delta}) defines the semantics
+ of the unary and binary operators.
+If $\sdelta$ is undefined for the argument values, a tag error results:
+
+\begin{rrpage}
+  \rhsbox{2pt}{\sexpr \nredNS \sexpr}
+  \\[-2ex]
+  \begin{inlinerrarray}
+    \eunopt{\stype_0}{\svalue_0}
+    &  \nredNS
+    &  \tagerrorS
+    \\\sidecond{if \(\sdelta(\sunop, {\svalue_0})\) is undefined}
+    \\[0.3ex]
+    \eunopt{\stype_0}{\svalue_0}
+    & \nredNS
+    & \sdelta(\sunop, {\svalue_0})
+    \\\sidecond{if \(\sdelta(\sunop, {\svalue_0})\) is defined}
+    \\[0.3ex]
+    \ebinopt{\stype_0}{\svalue_0}{\svalue_1}
+    &  \nredNS
+    &  \tagerrorS
+    \\\sidecond{if \(\sdelta(\sbinop, {\svalue_0}, {\svalue_1})\) is undefined}
+    \\[0.3ex]
+    \ebinopt{\stype_0}{\svalue_0}{\svalue_1}
+    &  \nredNS
+    &  \sdelta(\sbinop, {\svalue_0}, {\svalue_1})
+    \\\sidecond{if \(\sdelta(\sbinop, {\svalue_0}, {\svalue_1})\) is defined}
+  \end{inlinerrarray}
+\end{rrpage}
+
+%\noindent Recall that a $\delta$ reduction issues errors for partially-defined primitive
+%operations.
+
+Only a typed function or monitor may be applied to an argument in a statically-typed context.
+Any other application is a tag error:
+
+\begin{inlinerrarray}
+  \eapp{\stype_0}{\svalue_0}{\svalue_1}
+  & \nredNS
+  & \tagerrorS
+  \\\sidecond{if $\svalue_0 \not\in (\efun{\tann{\svar}{\stype}}{\sexpr}) \cup (\emon{\sbnd}{\svalue})$}
+\end{inlinerrarray}
+
+\noindent
+The application of a typed lambda to an argument is standard:
+
+\begin{inlinerrarray}
+       \eapp{\stype_0}{(\efun{\tann{\svar_0}{\stype_1}}{\sexpr_0})}{\svalue_0}
+      &  \nredNS
+      &  \esubst{\sexpr_0}{\svar_0}{\svalue_0}
+\end{inlinerrarray}
+
+\noindent
+The application of a monitored, untyped function unfolds the monitor proxy into
+two new boundary terms.
+One $\ssta$ boundary protects the typed argument
+from improper use by the body of the dynamically-typed function; one
+$\sdyn$ boundary checks the result:
+
+\begin{inlinerrarray}
+  \eapp{\stype_0}{(\emon{\obnd{\sowner_0}{(\tfun{\stype_1}{\stype_2})}{\sowner_1}}{\svalue_0})}{\svalue_1}
+      &  \nredNS
+      &  \edynb{\sbnd_0}{(\eapp{\tdyn}{\svalue_0}{(\estab{\sbnd_1}{\svalue_1})})}
+      \\\sidecond{where \(\sbnd_0 \sassign \obnd{\sowner_0}{\stype_2}{\sowner_1}\)
+                    and \(\sbnd_1 \sassign \obnd{\sowner_1}{\stype_1}{\sowner_0}\)}
+\end{inlinerrarray}
+
+\noindent
+Both boundaries use the type $(\tfun{\stype_1}{\stype_2})$ from
+the monitored function and ignore the annotation $\stype_0$ that decorates the application.
+The annotations are relevant only for \Tname{} and \Aname{}.
+
+The remaining four rules define the behavior of $\sdyn$ boundaries.
+ These rules initially check a dynamically-typed value against a static type
+ using the $\sshallow$ metafunction.
+For functions, a successful check entails the creation of a new monitor:
+
+\begin{inlinerrarray}
+      \edynb{\obnd{\sowner_0}{(\tfun{\stype_0}{\stype_1})}{\sowner_1}}{\svalue_0}
+      &  \nredNS
+      &  \emon{\obnd{\sowner_0}{(\tfun{\stype_0}{\stype_1})}{\sowner_1}}{\svalue_0}
+      \\\sidecond{if $\fshallow{\ftagof{\tfun{\stype_0}{\stype_1}}}{\svalue_0}$}
+\end{inlinerrarray}
+
+\noindent
+For pairs, \Nname{} creates a new typed pair containing new $\sdyn$ boundaries.
+The evaluation of these boundaries validates the elements of the original,
+ untyped pair:
+
+\begin{inlinerrarray}
+  \edynb{\obnd{\sowner_0}{(\tpair{\stype_0}{\stype_1})}{\sowner_1}}{\epair{\svalue_0}{\svalue_1}}
+      &  \nredNS
+      &  \epair{\edynb{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\svalue_0}}{\edynb{\obnd{\sowner_0}{\stype_1}{\sowner_1}}{\svalue_1}}
+\end{inlinerrarray}
+
+\noindent For base types, a successful check is a complete proof that the
+ value matches the type:
+
+\begin{inlinerrarray}
+       \edynb{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\sint_0}
+      &  \nredNS
+      &  \sint_0
+      \\\sidecond{if \(\fshallow{\ftagof{\stype_0}}{\sint_0}\)}
+\end{inlinerrarray}
+
+\noindent
+Otherwise, if the $\sshallow$ check fails, the reduction ends in a type mismatch.
+The error message reports the current boundary and the incompatible value:
+
+\begin{inlinerrarray}
+       \edynb{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\svalue_0}
+      &  \nredNS
+      &  \boundaryerror{\eset{\obnd{\sowner_0}{\stype_0}{\sowner_1}}}{\svalue_0}
+      \\\sidecond{if \(\neg \fshallow{\ftagof{\stype_0}}{\svalue_0}\)}
+\end{inlinerrarray}
+
+
+%% -----------------------------------------------------------------------------      
+\subsubsection{\Nname{}, Dynamically-Typed}
+
+Applications of primitives end in a dynamic tag error if $\sdelta$ is
+ undefined for the given values:
+
+\begin{rrpage}
+  \rhsbox{2pt}{\sexpr \nredND \sexpr}
+  \\[-2ex]
+  \begin{inlinerrarray}
+    \eunopt{\tdyn}{\svalue_0} &  \nredND &  \tagerrorD
+      \\\sidecond{if \(\sdelta(\sunop, {\svalue_0})\) is undefined}
+      \\[0.3ex]
+       \eunopt{\tdyn}{\svalue_0}
+      &  \nredND
+      &  \sdelta(\sunop, {\svalue_0})
+      \\\sidecond{if \(\sdelta(\sunop, {\svalue_0})\) is defined}
+      \\[0.3ex]
+       \ebinopt{\tdyn}{\svalue_0}{\svalue_1}
+      &  \nredND
+      &  \tagerrorD{}
+      \\\sidecond{if \(\sdelta(\sbinop, {\svalue_0}, {\svalue_1})\) is undefined}
+      \\[0.3ex]
+       \ebinopt{\tdyn}{\svalue_0}{\svalue_1}
+      &  \nredND
+      &  \sdelta(\sbinop, {\svalue_0}, {\svalue_1})
+      \\\sidecond{if \(\sdelta(\sbinop, {\svalue_0}, {\svalue_1})\) is defined}
+  \end{inlinerrarray}
+\end{rrpage}
+
+Function application follows the tag of the operator:
+ substitution for an untyped function,
+ decomposition for a monitor,
+ and a tag error for anything else:
+
+\begin{inlinerrarray}
+      \eapp{\tdyn}{\svalue_0}{\svalue_1}
+      & \nredND
+      & \tagerrorD
+      \\\sidecond{if $\svalue_0 \not\in (\efun{\svar}{\sexpr}) \cup (\emon{\sbnd}{\svalue})$}
+      \\[0.3ex]
+       \eapp{\tdyn}{(\efun{\svar_0}{\sexpr_0})}{\svalue_0}
+      &  \nredND
+      &  \esubst{\sexpr_0}{\svar_0}{\svalue_0}
+      \\[0.3ex]
+       \eapp{\tdyn}{(\emon{\obnd{\sowner_0}{(\tfun{\stype_0}{\stype_1})}{\sowner_1}}{\svalue_0})}{\svalue_1}
+      &  \nredND
+      &  \estab{\sbnd_0}{(\eapp{\stype_1}{\svalue_0}{(\edynb{\sbnd_1}{\svalue_1})})}
+      \\\sidecond{where \(\sbnd_0 \sassign \obnd{\sowner_0}{\stype_1}{\sowner_1}\)
+                  and \(\sbnd_1 \sassign \obnd{\sowner_1}{\stype_0}{\sowner_0}\)}
+\end{inlinerrarray}
+
+\noindent
+In the monitor case, a $\sdyn$ boundary checks the
+ argument and a $\ssta$ boundary protects the result.
+
+The rules for $\ssta$ boundaries protect typed values from untyped contexts.
+Protection is crucial for typed functions because an untyped context may
+ supply type-incorrect arguments:
+
+\begin{inlinerrarray}
+      \estab{\obnd{\sowner_0}{(\tfun{\stype_0}{\stype_1})}{\sowner_1}}{\svalue_0}
+      &  \nredND
+      &  \emon{\obnd{\sowner_0}{(\tfun{\stype_0}{\stype_1})}{\sowner_1}}{\svalue_0}
+      \\\sidecond{if $\fshallow{\ftagof{\tfun{\stype_0}{\stype_1}}}{\svalue_0}$}
+\end{inlinerrarray}
+
+\noindent
+For typed pairs, a traversal protects higher-order members:
+
+\begin{inlinerrarray}
+  \estab{\obnd{\sowner_0}{(\tpair{\stype_0}{\stype_1})}{\sowner_1}}{\epair{\svalue_0}{\svalue_1}}
+      &  \nredND
+      &  \epair{\estab{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\svalue_0}}{\estab{\obnd{\sowner_0}{\stype_1}{\sowner_1}}{\svalue_1}}
+\end{inlinerrarray}
+
+\noindent
+Base values do not require protection:
+
+\begin{inlinerrarray}
+       \estab{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\sint_0}
+      &  \nredND
+      &  \sint_0
+      \\\sidecond{if \(\fshallow{\ftagof{\stype_0}}{\sint_0}\)}
+\end{inlinerrarray}
+
+\noindent
+Any other combination of type and value indicates a type mismatch within a
+ statically-typed component, and results in a static tag error:
+
+\begin{inlinerrarray}
+       \estab{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\svalue_0}
+      &  \nredND
+      &  \tagerrorS
+      \\\sidecond{if \(\neg \fshallow{\ftagof{\stype_0}}{\svalue_0}\)}
+\end{inlinerrarray}
+
+\noindent
+The $\ssta$ rules do not output a boundary error because a type mismatch in
+typed code contradicts the static typing judgment, which is meant to be an
+invariant.
+
+
+%% -----------------------------------------------------------------------------
+\subsection{\Tname{} Notion of Reduction} \label{sub:first}
+
+\Figref{fig:transient-language} extends the base evaluation language with
+ pre-values, heaps, and tag-check expressions.
+The goal is to allocate one
+ instance of every function and pair on a value heap.
+Technically, a value heap $\vstore$ maps addresses ($\eloc$) to pre-values ($\sprevalue$).
+A blame heap $\bstore$ maps addresses to sets of boundaries according to the
+ blame strategy of Transient Reticulated~\cite{vss-popl-2017,v-thesis-2019}.
+A check expression
+ $(\echecktwo{\stoptional}{\sexpr}{\eloc})$ validates the result of an
+ elimination form: $\stoptional$ is the expected type, $\sexpr$ is the
+ result, and $\eloc$ is the address of the previously-eliminated value.
+The typing judgments {$\vstoretype; \stypeenv \sWTT \sexpr : \stag$} and
+ {$\vstoretype; \stypeenv \sWTT \sexpr : \tdyn$} validate type-tags.
+Both judgments accept all kinds of values and have analogous rules;
+ refer to the \techreport{} for details.
+
+The figure also defines three meta-functions: $\fmapref{\cdot}{\cdot}$,
+$\fmapreplace{\cdot}{\cdot}{\cdot}$, and $\fmapupdate{\cdot}{\cdot}{\cdot}$.
+The first gets an item from a finite map,
+ the second replaces a blame heap entry,
+ and the third extends a blame heap entry.
+Because maps are sets, set union suffices to add new entries.
+
+\begin{figure}[t]
+  \begin{minipage}[t]{0.42\columnwidth}
+    \lbl{\fbox{\Tname{} \sevallang{}}}{
+      \begin{langarray}
+        \eloc & \BNFeq    & % \locations
+          \textrm{\scountable{} set of heap locations}
+        \\
+        \svalue & \BNFeq &
+          \sint \mid \snat \mid \eloc
+        \\
+        \sprevalue & \BNFeq &
+          {\efun{\svar}{\sexpr}}
+          \mid {\efun{\tann{\svar}{\stype}}{\sexpr}}
+          \mid {\epair{\svalue}{\svalue}}
+        \\
+        \sexpr & \BNFeq &
+          \ldots \mid \eloc \mid \echecktwo{\stoptional}{\sexpr}{\eloc}
+        \\
+        \vstore & \BNFeq &
+          \powerset{(\vrecord{\eloc}{\sprevalue})}
+        \\
+        \bstore & \BNFeq &
+          \powerset{(\brecord{\eloc}{\sbset})}
+        \\
+        \vstoretype & \BNFeq &
+          \snil \mid \fcons{\tann{\eloc}{\stoptional}}{\vstoretype}
+      \end{langarray}
+    }
+
+  \end{minipage}\begin{minipage}[t][][c]{0.70\columnwidth}
+    \vspace{-3mm}
+    \begin{flushleft}\(\begin{array}[t]{l@{~~}c@{~~}l}
+      \fmapref{\vstore_0}{\svalue_0} & \feq &
+      \left\{\begin{array}{l@{\quad}l}
+        \sprevalue_0 & \mbox{if $\svalue_0 \in \eloc$ and $(\vrecord{\svalue_0}{\sprevalue_0}) \in \vstore_0$}
+        \\
+        \svalue_0 & \mbox{if $\svalue_0 \not\in \eloc$}
+      \end{array}\right.
+      \\[4mm]
+      \fmapref{\bstore_0}{\svalue_0} & \feq &
+      \left\{\begin{array}{l@{\quad}l}
+        \sbset_0 & \mbox{if $\svalue_0 \in \eloc$ and $(\brecord{\svalue_0}{\sbset_0}) \in \bstore_0$}
+        \\
+        \semptymap & \mbox{otherwise}
+      \end{array}\right.
+      \\[4mm]
+      \fmapreplace{\bstore_0}{\svalue_0}{\sbset_0} & \feq &
+      \left\{\begin{array}{l@{\quad}l}
+        \zerowidth{\eset{\vrecord{\svalue_0}{\sbset_0}} \cup {(\bstore_0 \setminus (\vrecord{\svalue_0}{\sbset_1}))}}
+        \\
+        & \mbox{if $\svalue_0 \in \eloc$ and $(\vrecord{\svalue_0}{\sbset_1}) \in \bstore_0$}
+        \\
+        \bstore_0 & \mbox{otherwise}
+      \end{array}\right.
+      \\[6mm]
+      \fmapupdate{\bstore_0}{\svalue_0}{\sbset_0} & \feq &
+        \quad \fmapreplace{\bstore_0}{\svalue_0}{\bappend{\sbset_0}{\fmapref{\bstore_0}{\svalue_0}}}
+  \end{array}\)\end{flushleft}
+
+  \end{minipage}
+
+  \lbl{\fbox{$\vstoretype; \stypeenv \sWTT \sexpr : \stag$} \missingrules{}}{\begin{mathpar} %  (selected rules)
+%    \inferrule*{
+%      \vstoretype_0; \fcons{\tann{\svar_0}{\stype_0}}{\stypeenv_0} \sWTT \sexpr_0 : \stag_0
+%    }{
+%      \vstoretype_0; \stypeenv_0 \sWTT \efun{\tann{\svar_0}{\stype_0}}{\sexpr_0} : \kfun
+%    }
+%
+    \inferrule*{
+      \vstoretype_0; \fcons{\tann{\svar_0}{\tdyn}}{\stypeenv_0} \sWTT \sexpr_0 : \tdyn
+    }{
+      \vstoretype_0; \stypeenv_0 \sWTT \efun{\svar_0}{\sexpr_0} : \kfun
+    }
+
+    \inferrule*{
+      \vstoretype_0; \stypeenv_0 \sWTT \sexpr_0 : \stag_0
+    }{
+      \vstoretype_0; \stypeenv_0 \sWTT \echecktwo{\stype_0}{\sexpr_0}{\eloc_0} : \tagof{\stype_0}
+    }
+
+    \inferrule*{
+      \vstoretype_0; \stypeenv_0 \sWTT \sexpr_0 : \tdyn
+    }{
+      \vstoretype_0; \stypeenv_0 \sWTT \echecktwo{\stype_0}{\sexpr_0}{\eloc_0} : \tagof{\stype_0}
+    }
+
+  \end{mathpar}}
+
+  \medskip
+  \lbl{\fbox{$\vstoretype; \stypeenv \sWTT \sexpr : \tdyn$} \missingrules{}}{\begin{mathpar} %  (selected rules)
+    \inferrule*{
+      \vstoretype_0; \fcons{\tann{\svar_0}{\tdyn}}{\stypeenv_0} \sWTT \sexpr_0 : \tdyn
+    }{
+      \vstoretype_0; \stypeenv_0 \sWTT \efun{\svar_0}{\sexpr_0} : \tdyn
+    }
+
+    \inferrule*{
+      \vstoretype_0; \fcons{\tann{\svar_0}{\stype_0}}{\stypeenv_0} \sWTT \sexpr_0 : \stag_0
+    }{
+      \vstoretype_0; \stypeenv_0 \sWTT \efun{\tann{\svar_0}{\stype_0}}{\sexpr_0} : \tdyn
+    }
+
+    \inferrule*{
+      \tann{\eloc_0}{\tdyn} \in \vstoretype_0
+    }{
+      \vstoretype_0; \stypeenv_0 \sWTT \eloc_0 : \tdyn
+    }
+
+  \end{mathpar}}
+
+  \Description[Grammar, metafunctions, and typing judgments.]{A grammar
+   defines heap locations, heap-allocated values, heaps, tag-check expressions,
+   blame heaps, and heap typings. Four metafunctions help with heap references
+   and updates. Two new typing judgments match an expression to a type tag.
+  }
+  \caption{\Tname{} language extensions and metafunctions}
+  \label{fig:transient-language}
+\end{figure}
+
+%% -----------------------------------------------------------------------------
+\subsubsection{\Tname{}}
+The first rule allocates a new heap address for a pre-value:
+
+\begin{rrpage}
+  \rhsbox{-2pt}{\conf{\sexpr}{\vstore}{\bstore} \nredTX \conf{\sexpr}{\vstore}{\bstore}}
+  \\[-2.5ex]
+  \begin{inlinerrarray}
+    \conf{\sprevalue_0}{\vstore_0}{\bstore_0}
+    &  \nredTX
+    &  \conf{\eloc_0}{(\eset{\vrecord{\eloc_0}{\sprevalue_0}} \cup \vstore_0)}{(\eset{\brecord{\eloc_0}{\semptymap}} \cup {\bstore_0})}
+    \\\sidecond{where $\ffresh{\eloc_0}{\vstore_0\mbox{ and }\bstore_0}$}
+  \end{inlinerrarray}
+\end{rrpage}
+
+A pair projection extracts a component from a (heap allocated) value.
+Because projection is an elimination form, the next step is to tag-check the
+ result against the expected type:
+
+\begin{inlinerrarray}
+  \conf{(\eunopt{\stype_0}{\svalue_0})}{\vstore_0}{\bstore_0}
+    &  \nredTX
+    &  \conf{\tagerrorS}{\vstore_0}{\bstore_0}
+    \\\sidecond{if $\sdelta(\sunop, {\vstore_0(\svalue_0)})$ is undefined}
+    \\
+    \conf{(\eunopt{\tdyn}{\svalue_0})}{\vstore_0}{\bstore_0}
+    &  \nredTX
+    &  \conf{\tagerrorD}{\vstore_0}{\bstore_0}
+    \\\sidecond{if $\sdelta(\sunop, {\vstore_0(\svalue_0)})$ is undefined}
+    \\
+    \conf{(\eunopt{\stoptional}{\eloc_0})}{\vstore_0}{\bstore_0}
+    &  \nredTX
+    &  \conf{(\echecktwo{\stoptional}{\sdelta(\sunop, \vstore_0(\eloc_0))}{\eloc_0})}{\vstore_0}{\bstore_0}
+    \\\sidecond{if $\sdelta(\sunop, \vstore_0(\eloc_0))$ is defined}
+\end{inlinerrarray}
+
+Binary operations yield new integers, and therefore do not require result checks:
+
+\begin{inlinerrarray}
+  \conf{(\ebinopt{\stype_0}{\svalue_0}{\svalue_1})}{\vstore_0}{\bstore_0}
+    &  \nredTX
+    &  \conf{\tagerrorS}{\vstore_0}{\bstore_0}
+    \\\sidecond{if \(\sdelta(\sbinop, \svalue_0, \svalue_1)\) is undefined}
+    \\
+    \conf{(\ebinopt{\tdyn}{\svalue_0}{\svalue_1})}{\vstore_0}{\bstore_0}
+    &  \nredTX
+    &  \conf{\tagerrorD}{\vstore_0}{\bstore_0}
+    \\\sidecond{if \(\sdelta(\sbinop, \svalue_0, \svalue_1)\) is undefined}
+    \\
+    \conf{(\ebinopt{\toptional}{\sint_0}{\sint_1})}{\vstore_0}{\bstore_0}
+    &  \nredTX
+    &  \conf{\sdelta(\sbinop, \sint_0, \sint_1)}{\vstore_0}{\bstore_0}
+    \\\sidecond{if \(\sdelta(\sbinop, \sint_0, \sint_1)\) is defined}
+\end{inlinerrarray}
+
+
+The application of a typed function first confirms the tag of the argument value
+ against the domain of the function.
+If they match, the rule:
+ (1) extends the blame for the argument with reversed boundaries, to record the
+ flow into the function;
+ (2) substitutes the argument into the function body;
+ and (3) guards the result expression with a codomain check for the expected type:
+
+\begin{inlinerrarray}
+    \conf{(\eapp{\stoptional}{\eloc_0}{\svalue_0})}{\vstore_0}{\bstore_0}
+    &  \nredTX
+    & \conf{(\echecktwo{\stoptional}{\esubst{\sexpr_0}{\svar_0}{\svalue_0}}{\eloc_0})}{\vstore_0}{\fmapupdate{\bstore_0}{\svalue_0}{\frev{\bstore_0(\eloc_0)}}}
+    \\\sidecond{if $\fmapref{\vstore_{0}}{\eloc_0}=\efun{\tann{\svar_0}{{\stype_0}}}{\sexpr_0}$
+                and $\fshallow{\ftagof{\stype_0}}{\fmapref{\vstore_0}{\svalue_0}}$}
+\end{inlinerrarray}
+
+\noindent If the domain check fails, then \Tname{} reports a boundary error
+containing $\svalue_0$ and the boundaries associated with the procedure
+$\fmapref{\vstore_0}{\eloc_0}$:
+
+\begin{inlinerrarray}
+    \conf{(\eapp{\stoptional}{\eloc_0}{\svalue_0})}{\vstore_0}{\bstore_0}
+    &  \nredTX
+    & \conf{\boundaryerror{\fmapref{\bstore_0}{\eloc_0}}{\svalue_0}}{\vstore_0}{\bstore_0}
+    \\\sidecond{if $\fmapref{\vstore_{0}}{\eloc_0}=\efun{\tann{\svar_0}{{\stype_0}}}{\sexpr_0}$
+                and $\neg \fshallow{\ftagof{\stype_0}}{\fmapref{\vstore_0}{\svalue_0}}$}
+\end{inlinerrarray}
+
+The application of an untyped function in a typed context inserts a check that the function
+ computes a value matching the expected type.  In anticipation of a possible check error, the
+ rule updates the blame map:
+
+\begin{inlinerrarray}
+    \conf{(\eapp{\stype_0}{\eloc_0}{\svalue_0})}{\vstore_0}{\bstore_0}
+    & \nredTX
+    & \conf{(\echecktwo{\stype_0}{\esubst{\sexpr_0}{\svar_0}{\svalue_0}}{\eloc_0})}{\vstore_0}{\fmapupdate{\bstore_0}{\svalue_0}{\frev{\fmapref{\bstore_0}{\eloc_0}}}}
+    \\\sidecond{if \(\fmapref{\vstore_{0}}{\eloc_0}=\efun{\svar_0}{\sexpr_0}\)}
+\end{inlinerrarray}
+
+\noindent In an untyped context, the reduction merely performs the required substitution:
+
+\begin{inlinerrarray}
+    \conf{(\eapp{\tdyn}{\eloc_0}{\svalue_0})}{\vstore_0}{\bstore_0}
+    &  \nredTX
+    & \conf{(\esubst{\sexpr_0}{\svar_0}{\svalue_0})}{\vstore_0}{\bstore_0}
+    \\\sidecond{if \(\fmapref{\vstore_{0}}{\eloc_0}=\efun{\svar_0}{\sexpr_0}\)}
+\end{inlinerrarray}
+
+\noindent
+Invalid applications signal a static or dynamic tag error, depending on the context:
+
+\begin{inlinerrarray}
+    \conf{(\eapp{\stype_0}{\svalue_0}{\svalue_1})}{\vstore_0}{\bstore_0}
+    &  \nredTX
+    & \conf{\tagerrorS}{\vstore_0}{\bstore_0}
+    \\\sidecond{if \(\fmapref{\vstore_{0}}{\svalue_0} \not\in (\efun{\svar}{\sexpr}) \cup (\efun{\tann{\svar}{\stype}}{\sexpr})\)}
+    \\
+    \conf{(\eapp{\tdyn}{\svalue_0}{\svalue_1})}{\vstore_0}{\bstore_0}
+    &  \nredTX
+    & \conf{\tagerrorD}{\vstore_0}{\bstore_0}
+    \\\sidecond{if \(\fmapref{\vstore_{0}}{\svalue_0} \not\in (\efun{\svar}{\sexpr}) \cup (\efun{\tann{\svar}{\stype}}{\sexpr})\)}
+\end{inlinerrarray}
+
+A $\sdyn$ boundary checks the tag of a value.
+If successful, the value crosses the boundary and the blame map records the event.
+Otherwise, the rule reports the current boundary:
+
+\begin{inlinerrarray}
+    \conf{(\edynb{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\svalue_0})}{\vstore_0}{\bstore_0}
+    & \nredTX
+    & \conf{\svalue_0}{\vstore_0}{(\fmapupdate{\bstore_0}{\svalue_0}{\eset{\obnd{\sowner_0}{\stype_0}{\sowner_1}}})}
+    \\\sidecond{if $\fshallow{\ftagof{\stype_0}}{\fmapref{\vstore_0}{\svalue_0}}$}
+    \\
+    \conf{(\edynb{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\svalue_0})}{\vstore_0}{\bstore_0}
+    & \nredTX
+    & \conf{\boundaryerror{\eset{\obnd{\sowner_0}{\stype_0}{\sowner_1}}}{\svalue_0}}{\vstore_0}{\bstore_0}
+    \\\sidecond{if $\neg\fshallow{\ftagof{\stype_0}}{\fmapref{\vstore_0}{\svalue_0}}$}
+\end{inlinerrarray}
+
+A $\ssta$ boundary must check the tag of a value to guard against incorrect
+ types.
+If the type is incorrect, evaluation ends in a static tag error.
+
+\begin{inlinerrarray}
+    \conf{(\estab{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\svalue_0})}{\vstore_0}{\bstore_0}
+    & \nredTX
+    & \conf{\svalue_0}{\vstore_0}{(\fmapupdate{\bstore_0}{\svalue_0}{\eset{\obnd{\sowner_0}{\stype_0}{\sowner_1}}})}
+    \\\sidecond{if $\fshallow{\ftagof{\stype_0}}{\fmapref{\vstore_0}{\svalue_0}}$}
+    \\
+    \conf{(\estab{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\svalue_0})}{\vstore_0}{\bstore_0}
+    & \nredTX
+    & \conf{\tagerrorS}{\vstore_0}{\bstore_0}
+    \\\sidecond{if $\neg\fshallow{\ftagof{\stype_0}}{\fmapref{\vstore_0}{\svalue_0}}$}
+\end{inlinerrarray}
+
+The rules for check expressions are similar to those for $\sdyn$ boundaries,
+ but have additional information about the source of the target value.
+A check for the dynamic type $\tdyn$ is a no-op:
+
+\begin{inlinerrarray}
+    \conf{(\echecktwo{\tdyn}{\svalue_0}{\eloc_0})}{\vstore_0}{\bstore_0}
+    & \nredTX
+    & \conf{\svalue_0}{\vstore_0}{\bstore_0}
+\end{inlinerrarray}
+
+\noindent
+Any other check expression matches the value against the type.
+If the check fails, the error reports the boundary information for both the
+value and the $\eloc_0$ address because either set may contain the boundary at
+the root of the issue:
+
+\begin{inlinerrarray}
+    \conf{(\echecktwo{\stype_0}{\svalue_0}{\eloc_0})}{\vstore_0}{\bstore_0}
+    &  \nredTX
+    & \conf{\svalue_0}{\vstore_0}{(\fmapupdate{\bstore_0}{\svalue_0}{\fmapref{\bstore_0}{\eloc_0}})}
+    \\\sidecond{if \(\fshallow{\ftagof{\stype_0}}{\fmapref{\vstore_0}{\svalue_0}}\)}
+    \\
+    \conf{(\echecktwo{\stype_0}{\svalue_0}{\eloc_0})}{\vstore_0}{\bstore_0}
+    & \nredTX
+    & \conf{\boundaryerror{\bappend{\fmapref{\bstore_0}{\svalue_0}}{\fmapref{\bstore_0}{\eloc_0}}}{\svalue_0}}{\vstore_0}{\bstore_0}
+    \\\sidecond{if \(\neg \fshallow{\ftagof{\stype_0}}{\fmapref{\vstore_0}{\svalue_0}}\)}
+\end{inlinerrarray}
+
+%% -----------------------------------------------------------------------------
+\subsection{\Aname{} Notions of Reduction} \label{sub:wrapper}
+
+\Figref{fig:amnesic-language} adds monitors and trace wrappers to
+ the base evaluation language, along with metafunctions to
+ extend, inspect, and remove the trace history associated with a value.
+During evaluation, \Aname{} limits the number of wrappers on a value
+ by removing monitors when the value flows to an untyped component.
+An originally-untyped value gets at most one trace and one temporary ``outer'' monitor.
+An originally-typed value gets at most two monitors---one permanent ``inner''
+ and one temporary ``outer''---and one trace.
+Using the abbreviation $(\ehopt{\sbset}{\svalue})$ for an optionally-traced
+ value (bottom of \figref{fig:amnesic-language}), these wrapped values
+ match the following grammars during evaluation:
+
+\medskip\hspace{-6mm}
+\begin{array}[t]{ll}
+\begin{array}[t]{lcl}
+  \Astawrapper
+   & \BNFeq & \emon{\sbnd}{(\ehopt{\sbset}{\epair{\svalue}{\svalue}})} \\[1pt]
+   & \mid   & \emon{\sbnd}{(\ehopt{\sbset}{\efun{\svar}{\sexpr}})} \\[1pt]
+   & \mid   & \emon{\sbnd}{(\ehopt{\sbset}{(\emon{\sbnd}{\epair{\svalue}{\svalue}})})} \\[1pt]
+   & \mid   & \zerowidth{\emon{\sbnd}{(\ehopt{\sbset}{(\emon{\sbnd}{\efun{\tann{\svar}{\stype}}{\sexpr}})})}}
+\end{array}
+\begin{array}[t]{lcl}
+  \Adynwrapper
+  & \BNFeq & \ehist{\sbset}{\sint} \\
+  & \mid & \ehist{\sbset}{\epair{\svalue}{\svalue}} \\
+  & \mid & \ehist{\sbset}{\efun{\svar}{\sexpr}} \\
+  & \mid & \ehopt{\sbset}{(\emon{\sbnd}{\epair{\svalue}{\svalue}})} \\
+  & \mid & \ehopt{\sbset}{(\emon{\sbnd}{\efun{\tann{\svar}{\stype}}{\sexpr}})}
+\end{array}
+\end{array}
+\smallskip
+
+\noindent The number of boundaries in a trace may grow without bound.
+
+\begin{figure}[t]
+  \begin{minipage}[t]{0.4\columnwidth}
+  \lbl{\fbox{\Aname{} \sevallang{}}}{
+    \begin{langarray}
+      \svalue & \BNFeq &
+        \snat
+        \mid \sint
+        \mid \epair{\svalue}{\svalue}
+        \mid \efun{\svar}{\sexpr}
+        \mid \efun{\tann{\svar}{\stype}}{\sexpr}
+        \mid
+      \\ & &
+        \emon{\sbnd}{\svalue}
+        \mid \etrace{\sbset}{\svalue} \mid u
+      \\
+      \sexpr & \BNFeq &
+        \ldots
+        \mid \emon{\sbnd}{\svalue}
+        \mid \etrace{\sbset}{\svalue} \mid
+      \\
+      & & \esuffix{\sbset}{\sexpr}
+    \end{langarray}
+  }
+
+  \bigskip
+  \lbl{\fbox{$\stypeenv \sWTA \sexpr : \stype$} \missingrules{}}{\begin{mathpar}
+    \inferrule*{
+      \stypeenv_0 \sWTA \svalue_0 : \tdyn
+    }{
+      \stypeenv_0 \sWTA \emon{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\svalue_0} : \stype_0
+    }
+  \end{mathpar}}
+
+  \end{minipage}\begin{minipage}[t][][c]{0.6\columnwidth}
+    \vspace{-3mm}
+    \begin{flushleft}\(\begin{array}[t]{l@{~}c@{~}l}
+    \faddtrace{\sbset_0}{\svalue_0} & \feq &
+     \left\{\begin{array}{ll}
+        \svalue_0
+        \\ & \mbox{if $\sbset_0 \eeq \emptyset$}
+        \\
+        \zerowidth{\ehist{(\sbset_0 \cup \sbset_1)\,}{\svalue_1}}
+        \\ & \mbox{if $\svalue_0 \eeq \ehist{\sbset_1}{\svalue_1}$}
+        \\
+        \zerowidth{\ehist{\sbset_0}{\svalue_0}}
+        \\ & \mbox{if $\svalue_0 \not\in \ehist{\sbset}{\svalue}$ and $\sbset_0 \neq \emptyset\!\!\!\!$}
+      \end{array}\right.
+      \\[13mm]
+    \fgettrace{\svalue_0} & \feq &
+      \left\{\begin{array}{ll}
+        \sbset_0
+        & \mbox{if $\svalue_0 \eeq \ehist{\sbset_0}{\svalue_1}$}
+        \\
+        \emptyset
+        & \mbox{if $\svalue_0 \not\in \ehist{\sbset}{\svalue}$}
+      \end{array}\right.
+      \\[5mm]
+    \fremtrace{\svalue_0} & \feq &
+      \left\{\begin{array}{ll}
+        \svalue_1
+        & \mbox{if $\svalue_0 \eeq \ehist{\sbset_0}{\svalue_1}$}
+        \\
+        \svalue_0
+        & \mbox{if $\svalue_0 \not\in \ehist{\sbset}{\svalue}$}
+      \end{array}\right.
+  \end{array} \) \end{flushleft}
+  \end{minipage}
+
+  \lbl{\fbox{$\tenv \sWTA \sexpr : \tdyn$} \missingrules{}}{\begin{mathpar}
+    \inferrule*{
+      \tenv_0 \sWTA \svalue_0 : \stype_0
+    }{
+      \stypeenv_0 \sWTA \emon{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\svalue_0} : \tdyn
+    }
+
+    \inferrule*{
+      \tenv_0 \sWTA \svalue_0 : \tdyn
+    }{
+      \stypeenv_0 \sWTA \ehist{\sbset_0}{\svalue_0} : \tdyn
+    }
+
+    \inferrule*{
+      \tenv_0 \sWTA \sexpr_0 : \tdyn
+    }{
+      \stypeenv_0 \sWTA \esuffix{\sbset_0}{\sexpr_0} : \tdyn
+    }
+  \end{mathpar}}
+
+  \bigskip
+  \lbl{~}{\(\quad
+    (\ehopt{\sbset_0}{\svalue_1}) \eeq \svalue_0 \sabbreveq
+        \mbox{$\fremtrace{\svalue_0} \eeq \svalue_1$ and $\fgettrace{\svalue_0} \eeq \sbset_0$}
+  \)}
+
+  \Description[Grammar, metafunctions, and typing judgments.]{A grammar adds
+    monitor values, trace values, and trace expressions. Three metafunctions
+    add, get, and remove a trace around a value. Two typing judgments accomodate
+    monitor and trace wrappers. Lastly, there is an abbreviation for optionally-traced
+    values.
+  }
+  \caption{\Aname{} language extensions, metafunctions, and $\ehopt{\!}{\!}$ abbreviation}
+  \label{fig:amnesic-language}
+\end{figure}
+
+\subsubsection{\Aname{}, Statically-Typed}
+
+Two groups of rules handle primitive operations.
+One group applies the $\sdelta$ metafunction:
+
+\begin{rrpage}
+  \rhsbox{2pt}{\sexpr \nredAS \sexpr}
+  \\[-2ex]
+\begin{inlinerrarray}
+  \eunopt{\stype_0}{\svalue_0}
+    &  \nredAS
+    &  \tagerrorS
+    \\\sidecond{if \(\svalue_0 \not\in (\emon{\obnd{\sowner}{(\tpair{\stype}{\stype})}{\sowner}}{\svalue})\)
+                and \(\sdelta(\sunop, {\svalue_0})\) is undefined}
+    \\[0.3ex]
+    \eunopt{\stype_0}{\svalue_0} &  \nredAS &  \sdelta(\sunop, {\svalue_0})
+    \\\sidecond{if \(\sdelta(\sunop, {\svalue_0})\) is defined}
+    \\[0.3ex]
+    \ebinopt{\stype_0}{\svalue_0}{\svalue_1}
+    &  \nredAS
+    &  \tagerrorS
+    \\\sidecond{if \(\sdelta(\sbinop, {\svalue_0}, {\svalue_1})\) is undefined}
+    \\[0.3ex]
+    \ebinopt{\stype_0}{\svalue_0}{\svalue_1}
+    &  \nredAS
+    &  \sdelta(\sbinop, \svalue_0, \svalue_1)
+    \\\sidecond{if \(\sdelta(\sbinop, \svalue_0, \svalue_1)\) is defined}
+\end{inlinerrarray}
+\end{rrpage}
+
+\noindent
+The other group handles monitored pair values:
+
+\begin{inlinerrarray}
+  \efst{\stype_0}{(\emon{\obnd{\sowner_0}{(\tpair{\stype_1}{\stype_2})}{\sowner_1}}{\svalue_0})}
+      &  \nredAS
+      &  \edynb{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{(\efst{\tdyn}{\svalue_0})}
+      \\[0.3ex]
+      \esnd{\stype_0}{(\emon{\obnd{\sowner_0}{(\tpair{\stype_1}{\stype_2})}{\sowner_1}}{\svalue_0})}
+      &  \nredAS
+      &  \edynb{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{(\esnd{\tdyn}{\svalue_0})}
+\end{inlinerrarray}
+
+\noindent
+The projection of an element from a monitored pair creates a boundary
+term to check the untyped value.
+The new boundary uses the annotation $\stype_0$ from the operator,
+ exactly like \Tname{}.
+Type $\stype_0$ may be weaker than the corresponding type in the monitor,
+ but this weaker guarantee is all that the context explicitly relies on.
+
+An invalid application in typed code yields a tag error:
+
+\begin{inlinerrarray}
+  \eapp{\stype_0}{\svalue_0}{\svalue_1}
+  & \nredAS
+  & \tagerrorS
+  \\\sidecond{if $\svalue_0 \not\in (\efun{\tann{\svar}{\stype}}{\sexpr}) \cup (\emon{\sbnd}{\svalue})$}
+\end{inlinerrarray}
+
+\noindent
+The application of an un-monitored function proceeds by substitution:
+
+\begin{inlinerrarray}
+  \eapp{\stype_0}{(\efun{\tann{\svar_0}{{\stype_1}}}{\sexpr_0})}{\svalue_0}
+  &  \nredAS
+  &  \esubst{\sexpr_0}{\svar_0}{\svalue_0}
+\end{inlinerrarray}
+
+\noindent
+The application of a monitored function unfolds into two boundaries:
+
+\begin{inlinerrarray}
+  \eapp{\stype_0}{(\emon{\obnd{\sowner_0}{(\tfun{\stype_1}{\stype_2})}{\sowner_1}}{(\svalue_0)})}{\svalue_1}
+      &  \nredAS
+      &  \edynb{\sbnd_0}{(\eapp{\tdyn}{\svalue_0}{(\estab{\sbnd_1}{\svalue_1})})}
+      \\\sidecond{where \(\sbnd_0 \sassign \obnd{\sowner_0}{\stype_0}{\sowner_1}\)
+                  and \(\sbnd_1 \sassign \obnd{\sowner_1}{\stype_1}{\sowner_0}\)}
+\end{inlinerrarray}
+
+\noindent
+One boundary protects the argument
+ using the domain type $\stype_1$ from the monitor,
+ and the other validates the result using the type annotation $\stype_0$ from
+ the application.
+As with monitored pairs, the annotation $\stype_0$ may be weaker
+ than the monitor's type $\stype_2$ but suffices for the context.
+
+Lastly, the rules for $\sdyn$ boundaries demonstrate \Aname{}'s first-order
+ type-enforcement strategy.
+If an untyped function or pair reaches a matching boundary, the following rule
+ creates a new monitor without checking the elements of a pair:
+
+\begin{inlinerrarray}
+       \edynb{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\svalue_0}
+      &  \nredAS
+      &  \emon{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\svalue_0}
+      \\\sidecond{if \(\fshallow{\ftagof{\stype_0}}{\svalue_0}\)
+                  and \(\fremtrace{\svalue_0} \in (\efun{\svar}{\sexpr}) \cup \epair{\svalue}{\svalue} \cup (\emon{\sbnd}{\svalue})\)}
+\end{inlinerrarray}
+
+\noindent
+Base values are permitted to flow to the client context if they match the
+boundary type.
+The rule removes any trace wrapper because the match fully checks the type:
+
+\begin{inlinerrarray}
+       \edynb{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{(\ehopt{\sbset_0}{\sint_0})}
+      &  \nredAS
+      &  \sint_0
+      \\\sidecond{if \(\fshallow{\ftagof{\stype_0}}{\sint_0}\)}
+\end{inlinerrarray}
+
+\noindent
+If a value reaches an incompatible boundary, then \Aname{} reports both the
+current boundary and any boundaries in the value's trace:
+
+\begin{inlinerrarray}
+       \edynb{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\svalue_0}
+      &  \nredAS
+      &  \boundaryerror{\eset{\obnd{\sowner_0}{\stype_0}{\sowner_1}} \cup \sbset_0}{\fremtrace{\svalue_0}}
+      \\\sidecond{if \(\neg\fshallow{\ftagof{\stype_0}}{\svalue_0}\)
+                  and \(\sbset_0 \eeq \fgettrace{\svalue_0}\)}
+\end{inlinerrarray}
+
+
+\subsubsection{\Aname{}, Dynamically-Typed}
+
+Trace-wrapped expressions and values can appear (only) in dynamically-typed contexts;
+ thus every rule needs to handle possibly-traced values.
+
+The first rule merges a trace expression onto a value:
+
+\begin{rrpage}
+  \rhsbox{1pt}{\sexpr \nredAD \sexpr}
+  \\[-1.7ex]
+  \begin{inlinerrarray}
+       \eprehist{\sbset_0}{\svalue_0} &  \nredAD & \faddtrace{\sbset_0}{\svalue_0}
+  \end{inlinerrarray}
+\end{rrpage}
+
+For un-monitored pairs, \Aname{} applies $\sdelta$ to project an element and
+ propagates the trace boundaries from the pair onto the element:
+
+\begin{inlinerrarray}
+  \eunopt{\tdyn}{\svalue_0}
+      & \nredAD
+      & \tagerrorD
+      \\\sidecond{where $\svalue_1 \sassign \fremtrace{\svalue_0}$
+                  and $\svalue_1 \not\in {(\emon{\obnd{\sowner}{\tpair{\stype}{\stype}}{\sowner}}{\svalue})}$
+                  and $\sdelta(\sunop, \svalue_1)$ is undefined}
+      \\[0.3ex]
+      \eunopt{\tdyn}{\svalue_0}
+      & \nredAD
+      & \faddtrace{\fgettrace{\svalue_0}}{\sdelta(\sunop, {\svalue_1})}
+      \\\sidecond{where $\svalue_1 \sassign \fremtrace{\svalue_0}$
+                  and $\sdelta(\sunop, {\svalue_1})$ is defined}
+\end{inlinerrarray}
+
+\noindent
+Binary operations compute a new value, so traces on the inputs are
+ irrelevant to the result:
+
+\begin{inlinerrarray}
+  \ebinopt{\tdyn}{\svalue_0}{\svalue_1}
+      & \nredAD
+      & \tagerrorD
+      \\ \sidecond{if \(\sdelta(\sbinop, \fremtrace{\svalue_0}, \fremtrace{\svalue_1})\) is undefined}
+      \\[0.3ex]
+       \ebinopt{\tdyn}{\svalue_0}{\svalue_1}
+      & \nredAD
+      & \sdelta(\sbinop, {\svalue_2}, {\svalue_3})
+      \\\sidecond{where $\svalue_2 \sassign \fremtrace{\svalue_0}$
+                  and $\svalue_3 \sassign \fremtrace{\svalue_1}$
+                  and $\sdelta(\sbinop, {\svalue_2}, {\svalue_3})$ is defined}
+\end{inlinerrarray}
+
+The projection of an element from a monitored pair creates a new boundary
+ that protects the element using the type from the monitor.
+The trace of the element is extended with the trace (if any) from the pair:
+
+\begin{inlinerrarray}
+  \efst{\tdyn}{(\ehopt{\sbset_0}{(\emon{\obnd{\sowner_0}{(\tpair{\stype_0}{\stype_1})}{\sowner_1}}{\svalue_0})})}
+      &  \nredAD
+      &  \eprehist{\sbset_0}{(\estab{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{(\efst{\stype_0}{\svalue_0})})}
+      \\[0.3ex]
+       \esnd{\tdyn}{(\ehopt{\sbset_0}{(\emon{\obnd{\sowner_0}{(\tpair{\stype_0}{\stype_1})}{\sowner_1}}{\svalue_0})})}
+      &  \nredAD
+      &  \eprehist{\sbset_0}{(\estab{\obnd{\sowner_0}{\stype_1}{\sowner_1}}{(\esnd{\stype_1}{\svalue_0})})}
+\end{inlinerrarray}
+
+For un-monitored functions, \Aname{} propagates the function's trace to both the
+result and the argument value.
+The boundaries around the latter are reversed because the argument flows into
+the function body:
+
+\begin{inlinerrarray}
+       \eapp{\tdyn}{(\ehopt{\sbset_0}{(\efun{\svar_0}{\sexpr_0})})}{\svalue_0}
+      &  \nredAD
+      &  \eprehist{\sbset_0}{(\esubst{\sexpr_0}{\svar_0}{\svalue_1})}
+      \\\sidecond{where \(\svalue_1 \sassign \faddtrace{\frev{\sbset_0}}{\svalue_0}\)}
+\end{inlinerrarray}
+
+\noindent
+For monitored functions, the argument aquires the monitor's reversed trace information
+ and is validated against the domain of the monitor's type.
+The result of a monitored application is protected using the monitor's codomain
+ and its trace is extended.
+
+\begin{inlinerrarray}
+  \eapp{\tdyn}{(\ehopt{\sbset_0}{(\emon{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\svalue_0})})}{\svalue_1}
+      &  \nredAD
+      &  \eprehist{\sbset_0}{(\estab{\sbnd_0}{(\eapp{\stype_2}{\svalue_0}{(\edynb{\sbnd_1}{\svalue_2})})})}
+      \\\sidecond{where \(\stype_0 \eeq \tfun{\stype_1}{\stype_2}\)
+                  and \(\sbnd_0 \sassign \obnd{\sowner_0}{\stype_2}{\sowner_1}\)
+                  and \(\sbnd_1 \sassign \obnd{\sowner_1}{\stype_1}{\sowner_0}\)}
+      \\\sidecond{and \(\svalue_2 \sassign \faddtrace{\frev{\sbset_0}}{\svalue_1}\)}
+\end{inlinerrarray}
+
+\noindent
+Applying any other kind of value to an argument results in a tag error:
+
+\begin{inlinerrarray}
+      \eapp{\tdyn}{\svalue_0}{\svalue_1}
+      & \nredAD
+      & \tagerrorD
+      \\\sidecond{if $\svalue_0 \not\in (\efun{\svar}{\sexpr}) \cup (\emon{\obnd{\sowner}{(\tfun{\stype}{\stype})}{\sowner}}{\svalue})$}
+\end{inlinerrarray}
+
+When a statically-typed function or pair flows to an untyped context for the first time,
+ \Aname{} creates a new monitor (to protect either the function, or functions
+ within the pair):
+
+\begin{inlinerrarray}
+       \estab{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\svalue_0}
+      &  \nredAD
+      & \emon{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\svalue_0}
+      \\\sidecond{if \(\fshallow{\ftagof{\stype_0}}{\svalue_0}\) and \(\svalue_0 \in {(\efun{\tann{\svar}{{\stype}}}{\sexpr})} \cup {\epair{\svalue}{\svalue}}\)}
+\end{inlinerrarray}
+
+\noindent
+When a monitored value flows to an untyped component, \Aname{} replaces
+ the monitor wrapper with a trace wrapper.
+If the monitored value is an untyped function or pair, then it flows
+ un-monitored back to the untyped client.
+If the value is a monitored-and-typed function or pair, then it retains its
+ inner monitor:
+
+\begin{inlinerrarray}
+  \estab{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{(\emon{\sbnd_1}{\svalue_0})}
+      &  \nredAD
+      &  \eprehist{\eset{\obnd{\sowner_0}{\stype_0}{\sowner_1}, \sbnd_1}}{\svalue_0}
+      \\\sidecond{if $\fshallow{\tagof{\stype_0}}{(\emon{\sbnd_1}{\svalue_0})}$}
+\end{inlinerrarray}
+
+\noindent
+Typed base values may flow to untyped clients.
+Any other $\ssta$ boundary contradicts static typing:
+
+\begin{inlinerrarray}
+       \estab{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\sint_0}
+      &  \nredAD
+      &  \sint_0
+      \\\sidecond{if $\fshallow{\tagof{\stype_0}}{\sint_0}$}
+      \\
+       \estab{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\svalue_0}
+      &  \nredAD
+      &  \tagerrorS
+      \\\sidecond{if $\neg\fshallow{\tagof{\stype_0}}{\svalue_0}$}
+\end{inlinerrarray}
+
+
+%% -----------------------------------------------------------------------------
+\subsection{From Notions of Reduction to Semantics} \label{sec:reduction-lifting}
+
+Aside from the global heaps in \Tname{}, the standard operations of
+ compatible closure ($\rrarrow_{\mathsf{\xsym}}$)
+ and reflexive-transitive closure ($\rredX$)
+ suffice to define three reduction relations;
+ refer to a standard text for background
+ or the \techreport{} for details:
+
+\smallskip\(
+ \hfill
+ \rredN ~~~~~=~~~~~ \rrarrow^{*}_{(\nredNS \cup\, \nredND)}
+ \qquad\qquad\quad
+ \rredT ~~~~~=~~~~~ \rrarrow^{*}_{\nredTX}
+ \qquad\qquad\quad
+ \rredA ~~~~~=~~~~~ \rrarrow^{*}_{(\nredAS \cup\, \nredAD)}
+ \hfill
+\)\smallskip
+
+%    \fdiverge{\sexpr_0}{\rredX} & \forall\,\sexpr_1~.~\sexpr_0 \rredX \sexpr_1 \implies \exists\,\sexpr_2~.~\sexpr_1 \credX \sexpr_2
+
+To enable uniform statements about the reduction relations,
+ let $\scriptstyle\mathsf{\xsym}$ range over the set $\scriptstyle\eset{\mathsf{\nsym}, \mathsf{\tsym}, \mathsf{\asym}}$
+ and let $\sexpr_0 \rredT \sexpr_1$ iff there exists maps $\vstore_1$ and $\bstore_1$
+ such that $\conf{\sexpr_0}{\semptymap}{\semptymap} \rredT \conf{\sexpr_1}{\vstore_1}{\bstore_1}$
+ is defined.
+In this manner, the term $\sexpr_0 \rredX \sexpr_1$ has meaning for each of
+ the three reduction relations.
+Similarly, we write $\stypeenv_0 \sWTT \sexpr_0 : \stag_0$
+ rather than $\vstoretype_0; \stypeenv_0 \sWTT \sexpr_0 : \stag_0$
+ when the heap typing is clear from context.
+
+A reduction relation diverges on an expression,
+ written ``$\fdiverge{\sexpr_0}{\rredX}$,'' if there is an infinite chain
+ $\sexpr_0 \rrarrow_{\mathsf{\xsym}} \sexpr_1 \rrarrow_{\mathsf{\xsym}} \cdots$ 
+ of reductions starting from $\sexpr_0$ (or $\conf{\sexpr_0}{\semptymap}{\semptymap}$ for \Tname{}).
+

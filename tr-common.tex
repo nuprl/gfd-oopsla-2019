@@ -1,0 +1,1151 @@
+\subsection{Surface Definitions}
+
+\begin{flushleft}
+
+  \lbl{\fbox{\ssurfacelang{}}}{
+    \begin{langarray}
+      \sexpr & \BNFeq &
+        \svar
+        \mid \snat \mid \sint
+        \mid \efun{\svar}{\sexpr}
+        \mid \efun{\tann{\svar}{\stype}}{\sexpr}
+        \mid \epair{\sexpr}{\sexpr}
+        \mid \eapp{\stoptional}{\sexpr}{\sexpr}
+        \mid \eunopt{\stoptional}{\sexpr}
+        \mid \ebinopt{\stoptional}{\sexpr}{\sexpr}
+        \mid \edynb{\sbnd}{\sexpr}
+        \mid \estab{\sbnd}{\sexpr}
+      \\
+       \stype & \BNFeq &
+        \tnat \mid \tint \mid \tpair{\stype}{\stype} \mid \tfun{\stype}{\stype}
+      \\
+       \stoptional & \BNFeq &
+        \stype \mid \tdyn
+      \\
+       \sbnd & \BNFeq &
+        \obnd{\sowner}{\stype}{\sowner}
+      \\
+       \sowner & \BNFeq &
+        \textrm{\scountable{} set of names}
+      \\
+      \sunop & \BNFeq & 
+        \sfst \mid \ssnd
+      \\
+       \sbinop & \BNFeq & 
+        \ssum \mid \squotient
+      \\
+       \stypeenv & \BNFeq &
+        \cdot \mid \fcons{\tann{\svar}{\stoptional}}{\stypeenv}
+      \\
+      \sownerenv & \BNFeq &
+        \cdot \mid \fcons{\tann{\svar}{\sowner}}{\sownerenv}
+      \\
+       \snat & \BNFeq    & \naturals
+      \\
+       \sint & \BNFeq    & \integers
+      \\
+       \sblist & \BNFeq &
+        \snil \mid \fcons{\sbnd}{\sblist}
+    \end{langarray}
+  }
+
+  \medskip
+  \lbl{\fbox{$\fwellformed{\sexpr}{\stoptional}$}}{\(\begin{array}{l@{~~}l} % well-formed expression
+    \fwellformed{\sexpr_0}{\stype_0} &
+    \mbox{ iff } \,\exists\,\sowner_0.\,\sowner_0 \sWL \sexpr_0
+    \mbox{ and } \sWT \sexpr_0 : \stype_0
+    \\
+    \fwellformed{\sexpr_0}{\tdyn} &
+    \mbox{ iff } \,\exists\,\sowner_0.\,\sowner_0 \sWL \sexpr_0
+    \mbox{ and } \sWT \sexpr_0 : \tdyn
+  \end{array}\)}{}
+
+  \medskip
+  \lbl{\fbox{$\sownerenv; \sowner \sWL \sexpr$} well-named components}{\begin{mathpar}
+    \inferrule*{
+      \tann{\svar_0}{\sowner_0} \in \sownerenv_0
+    }{
+      \sownerenv_0; \sowner_0 \sWL \svar_0
+    }
+
+    \inferrule*{
+    }{
+      \sownerenv_0; \sowner_0 \sWL \sint_0
+    }
+
+    \inferrule*{
+      \fcons{\tann{\svar_0}{\sowner_0}}{\sownerenv_0}; \sowner_0 \sWL \sexpr_0
+    }{
+      \sownerenv_0; \sowner_0 \sWL \efun{\svar_0}{\sexpr_0}
+    }
+
+    \inferrule*{
+      \fcons{\tann{\svar_0}{\sowner_0}}{\sownerenv_0}; \sowner_0 \sWL \sexpr_0
+    }{
+      \sownerenv_0; \sowner_0 \sWL \efun{\tann{\svar_0}{\stype_0}}{\sexpr_0}
+    }
+
+    \inferrule*{
+      \sownerenv_0; \sowner_0 \sWL \sexpr_0
+      \\\\
+      \sownerenv_0; \sowner_0 \sWL \sexpr_1
+    }{
+      \sownerenv_0; \sowner_0 \sWL \epair{\sexpr_0}{\sexpr_1}
+    }
+
+    \inferrule*{
+      \sownerenv_0; \sowner_0 \sWL \sexpr_0
+      \\\\
+      \sownerenv_0; \sowner_0 \sWL \sexpr_1
+    }{
+      \sownerenv_0; \sowner_0 \sWL \eapp{\stoptional}{\sexpr_0}{\sexpr_1}
+    }
+
+    \inferrule*{
+      \sownerenv_0; \sowner_0 \sWL \sexpr_0
+    }{
+      \sownerenv_0; \sowner_0 \sWL \eunopt{\stoptional}{\sexpr_0}
+    }
+
+    \inferrule*{
+      \sownerenv_0; \sowner_0 \sWL \sexpr_0
+      \\\\
+      \sownerenv_0; \sowner_0 \sWL \sexpr_1
+    }{
+      \sownerenv_0; \sowner_0 \sWL \ebinopt{\stoptional}{\sexpr_0}{\sexpr_1}
+    }
+
+    \inferrule*{
+      \sownerenv_0; \sowner_1 \sWL \sexpr_0
+    }{
+      \sownerenv_0; \sowner_0 \sWL \edynb{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\sexpr_0}
+    }
+
+    \inferrule*{
+      \sownerenv_0; \sowner_1 \sWL \sexpr_0
+    }{
+      \sownerenv_0; \sowner_0 \sWL \estab{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\sexpr_0}
+    }
+  \end{mathpar}}
+
+  \medskip
+  \lbl{\fbox{$\tenv \sWS \sexpr : \stype$} static typing}{\begin{mathpar}
+    \inferrule*{
+      \fmember{\tann{\svar_0}{\stype_0}}{\tenv_0}
+    }{
+      \tenv_0 \sWS \svar_0 : \stype_0
+    }
+
+    \inferrule*{
+    }{
+      \tenv_0 \sWS \snat_0 : \tnat
+    }
+
+    \inferrule*{
+    }{
+      \tenv_0 \sWS \sint_0 : \tint
+    }
+
+    \inferrule*{
+      \fcons{\tann{\svar_0}{\stype_0}}{\tenv_0} \sWS \sexpr_0 : \stype_1
+    }{
+      \tenv_0 \sWS \efun{\tann{\svar_0}{\stype_0}}{\sexpr_0} : \tfun{\stype_0}{\stype_1}
+    }
+
+    \inferrule*{
+      \tenv_0 \sWS \sexpr_0 : \stype_0
+      \\\\
+      \tenv_0 \sWS \sexpr_1 : \stype_1
+    }{
+      \tenv_0 \sWS \epair{\sexpr_0}{\sexpr_1} : \tpair{\stype_0}{\stype_1}
+    }
+
+    \inferrule*{
+      \tenv_0 \sWS \sexpr_0 : \tfun{\stype_0}{\stype_1}
+      \\\\
+      \tenv_0 \sWS \sexpr_1 : \stype_0
+    }{
+      \tenv_0 \sWS \eapp{\stype_1}{\sexpr_0}{\sexpr_1} : \stype_1
+    }
+
+    \inferrule*{
+      \tenv_0 \sWS \sexpr_0 : \stype_0
+      \\\\
+      \sDelta(\sunop, \stype_0) \feq \stype_1
+      \\\\
+      \stype_1 \subteq \stype_2
+    }{
+      \tenv_0 \sWS \eunopt{\stype_2}{\sexpr_0} : \stype_2
+    }
+
+    \inferrule*{
+      \tenv_0 \sWS \sexpr_0 : \stype_0
+      \\\\
+      \tenv_0 \sWS \sexpr_1 : \stype_1
+      \\\\
+      \sDelta(\sbinop, \stype_0, \stype_1) \feq \stype_2
+      \\\\
+      \stype_2 \subteq \stype_3
+    }{
+      \tenv_0 \sWS \ebinopt{\stype_3}{\sexpr_0}{\sexpr_1} : \stype_3
+    }
+
+    \inferrule*{
+      \tenv_0 \sWD \sexpr_0 : \tdyn
+    }{
+      \tenv_0 \sWS \edyn{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\sexpr_0} : \stype_0
+    }
+
+    \inferrule*{
+      \tenv_0 \sWS \sexpr_0 : \stype_0
+      \\\\
+      \stype_0 \subteq \stype_1
+    }{
+      \tenv_0 \sWS \sexpr_0 : \stype_1
+    }
+  \end{mathpar}}
+
+  \medskip
+  \lbl{\fbox{$\tenv \sWD \sexpr : \tdyn$} dynamic typing}{\begin{mathpar}
+    \inferrule*{
+      \fmember{\svar_0}{\tenv_0}
+    }{
+      \tenv_0 \sWD \svar_0 : \tdyn
+    }
+
+    \inferrule*{
+    }{
+      \tenv_0 \sWD \sint_0 : \tdyn
+    }
+
+    \inferrule*{
+      \fcons{\tann{\svar_0}{\tdyn}}{\tenv_0} \sWD \sexpr_0 : \tdyn
+    }{
+      \tenv_0 \sWD \efun{\svar_0}{\sexpr_0} : \tdyn
+    }
+
+    \inferrule*{
+      \tenv_0 \sWD \sexpr_0 : \tdyn
+      \\\\
+      \tenv_0 \sWD \sexpr_1 : \tdyn
+    }{
+      \tenv_0 \sWD \epair{\sexpr_0}{\sexpr_1} : \tdyn
+    }
+
+    \inferrule*{
+      \tenv_0 \sWD \sexpr_0 : \tdyn
+      \\\\
+      \tenv_0 \sWD \sexpr_1 : \tdyn
+    }{
+      \tenv_0 \sWD \eapp{\tdyn}{\sexpr_0}{\sexpr_1} : \tdyn
+    }
+
+    \inferrule*{
+      \tenv_0 \sWD \sexpr_0 : \tdyn
+    }{
+      \tenv_0 \sWD \eunopt{\tdyn}{\sexpr_0} : \tdyn
+    }
+
+    \inferrule*{
+      \tenv_0 \sWD \sexpr_0 : \tdyn
+      \\\\
+      \tenv_0 \sWD \sexpr_1 : \tdyn
+    }{
+      \tenv_0 \sWD \ebinopt{\tdyn}{\sexpr_0}{\sexpr_1} : \tdyn
+    }
+
+    \inferrule*{
+      \tenv_0 \sWS \sexpr_0 : \stype_0
+    }{
+      \tenv_0 \sWD \esta{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\sexpr_0} : \tdyn
+    }
+
+  \end{mathpar}}
+
+  \medskip
+  \lbl{\fbox{$\stype \subteq \stype$}}{\begin{mathpar}
+    \inferrule*{
+    }{
+      \tnat \subteq \tint
+    }
+
+    \inferrule*{
+      \stype_0 \subteq \stype_2
+      \\
+      \stype_1 \subteq \stype_3
+    }{
+      \tpair{\stype_0}{\stype_1} \subteq \tpair{\stype_2}{\stype_3}
+    }
+
+    \inferrule*{
+      \stype_2 \subteq \stype_0
+      \\
+      \stype_1 \subteq \stype_3
+    }{
+      \tfun{\stype_0}{\stype_1} \subteq \tfun{\stype_2}{\stype_3}
+    }
+
+    \inferrule*{
+    }{
+      \stype_0 \subteq \stype_0
+    }
+  \end{mathpar}}
+
+  \medskip
+  \lbl{\fbox{$\sbnd \subteq \sbnd$}}{\begin{mathpar}
+    \inferrule*{
+      \stype_0 \subteq \stype_1
+    }{
+      \obnd{\sowner_0}{\stype_0}{\sowner_1} \subteq \obnd{\sowner_0}{\stype_0}{\sowner_1}
+    }
+  \end{mathpar}}
+
+    \lbl{\fbox{$\sDelta : \ffun{\tpair{\sunop}{\stype}}{\stype}$}}{
+      \begin{mfarray}
+        \sDelta(\sfst, \tpair{\stype_0}{\stype_1})
+        & \feq & \stype_0
+        \\
+        \sDelta(\ssnd, \tpair{\stype_0}{\stype_1})
+        & \feq & \stype_1
+      \end{mfarray}
+    }
+
+    \lbl{\fbox{$\sDelta : \ffun{\tpair{\sbinop}{\tpair{\stype}{\stype}}}{\stype}$}}{
+      \begin{mfarray}
+        \sDelta(\ssum, \tnat, \tnat)
+        & \feq & \tnat
+        \\
+        \sDelta(\ssum, \tint, \tint)
+        & \feq & \tint
+        \\
+        \sDelta(\squotient, \tnat, \tnat)
+        & \feq & \tnat
+        \\
+        \sDelta(\squotient, \tint, \tint)
+        & \feq & \tint
+      \end{mfarray}
+    }
+
+\end{flushleft}
+
+\subsection{Evaluation Definitions}
+\begin{flushleft}
+
+  \lbl{\fbox{Base \sevallang{}}}{
+    \begin{langarray}
+      \svalue & \BNFeq &
+        \snat
+        \mid \sint
+        \mid \epair{\svalue}{\svalue}
+        \mid \efun{\svar}{\sexpr}
+        \mid \efun{\tann{\svar}{\stype}}{\sexpr}
+      \\
+      \ctx & \BNFeq &
+        \ctxhole
+        \mid \epair{\ctx}{\sexpr}
+        \mid \epair{\svalue}{\ctx}
+        \mid \eunopt{\stoptional}{\ctx}
+        \mid \eapp{\stoptional}{\ctx}{\sexpr}
+        \mid \eapp{\stoptional}{\svalue}{\ctx}
+        \mid \ebinopt{\stoptional}{\ctx}{\sexpr}
+        \mid \ebinopt{\stoptional}{\svalue}{\ctx}
+        \mid \edynb{\sbnd}{\ctx}
+        \mid \\ & & \estab{\sbnd}{\ctx}
+      \\
+      \eerr & \BNFeq &
+        \tagerrorD \mid \tagerrorS \mid
+        \divisionbyzeroerror \mid
+        \boundaryerror{\sblist}{\svalue}
+      \\
+      \sexpr & \BNFeq &
+        \eerr
+        \mid \svar
+        \mid \snat \mid \sint
+        \mid \efun{\svar}{\sexpr}
+        \mid \efun{\tann{\svar}{\stype}}{\sexpr}
+        \mid \epair{\sexpr}{\sexpr}
+        \mid \eapp{\stoptional}{\sexpr}{\sexpr}
+        \mid \eunopt{\stoptional}{\sexpr}
+        \mid \ebinopt{\stoptional}{\sexpr}{\sexpr}
+        \mid \edynb{\sbnd}{\sexpr}
+        \mid \estab{\sbnd}{\sexpr}
+      \\
+      \stag & \BNFeq &
+        \knat \mid \kint \mid \kpair \mid \kfun
+      \\
+       \stype & \BNFeq &
+        \tnat \mid \tint \mid \tpair{\stype}{\stype} \mid \tfun{\stype}{\stype}
+      \\
+       \stoptional & \BNFeq &
+        \stype \mid \tdyn
+      \\
+       \sbnd & \BNFeq &
+        \obnd{\sowner}{\stype}{\sowner}
+      \\
+       \sowner & \BNFeq &
+        \textrm{\scountable{} set of names}
+      \\
+       \sunop & \BNFeq &
+        \sfst \mid \ssnd
+      \\
+       \sbinop & \BNFeq & 
+        \ssum \mid \squotient
+      \\
+       \stypeenv & \BNFeq &
+        \cdot \mid \fcons{\tann{\svar}{\stoptional}}{\stypeenv}
+      \\
+      \sownerenv & \BNFeq &
+        \cdot \mid \fcons{\tann{\svar}{\sowner}}{\sownerenv}
+      \\
+       \snat & \BNFeq    & \naturals
+      \\
+       \sint & \BNFeq    & \integers
+      \\
+       \sblist & \BNFeq &
+        \snil \mid \fcons{\sbnd}{\sblist}
+      \\
+       \sbset & \BNFeq &
+        \powerset{\sbnd}
+      \\
+       \sownerset & \BNFeq &
+        \powerset{\sowner}
+    \end{langarray}
+  }
+
+  \medskip
+  \lbl{\fbox{$\sshallow : \ffun{\tpair{\stag}{\svalue}}{\fbool}$}}{\(
+    \begin{array}{l@{~~}c@{~~}l@{}}
+    \fshallow{\stag_0}{\svalue_0} & \feq &
+      \left\{\begin{array}{l@{~~}l}
+        \makebox[2pt][l]{$\ftrue$}
+        \\ & \mbox{\makebox[\widthof{or}][l]{if} $\stag_0 \eeq \knat$ and $\svalue_0 \in \snat$}
+        \\ & \mbox{or $\stag_0 \eeq \kint$ and $\svalue_0 \in \sint$}
+        \\ & \mbox{or $\stag_0 \eeq \kpair$ and}
+        \\ & \quad\, \svalue_0 \in \epair{\svalue}{\svalue} \cup{}
+        \\ & \zerowidth{\qquad\, \quad (\emon{\obnd{\sowner}{(\tpair{\stype}{\stype})}{\sowner}}{\svalue})}
+        \\ & \mbox{or $\stag_0 \eeq \kfun$ and}
+        \\ & \quad\, \svalue_0 \in (\efun{\svar}{\sexpr}) \cup (\efun{\tann{\svar}{\stype}}{\sexpr}) \cup{}
+        \\ & \zerowidth{\qquad\, \quad (\emon{\obnd{\sowner}{(\tfun{\stype}{\stype})}{\sowner}}{\svalue})}
+        \\
+        \zerowidth{\fshallow{\stag_0}{\svalue_1}}
+        \\ & \mbox{\makebox[\widthof{or}][l]{if} $\svalue_0 \eeq \ehist{\sblist_0}{\svalue_1}$}
+        \\
+        \zerowidth{\ffalse}
+        \\ & \mbox{otherwise}
+      \end{array}\right.
+    \end{array}
+  \)}
+
+  \medskip
+  \lbl{\fbox{$\tagof{\cdot} : \ffun{\stype}{\stag}$}}{\(
+    \begin{array}{l@{~~}c@{~~}l@{}}
+    \tagof{\stype_0} & \feq &
+      \left\{\begin{array}{ll}
+        \knat & \mbox{if $\stype_0 \eeq \tnat$}
+        \\
+        \kint & \mbox{if $\stype_0 \eeq \tint$}
+        \\
+        \kpair & \mbox{if $\stype_0 \in \tpair{\stype}{\stype}$}
+        \\
+        \kfun & \mbox{if $\stype_0 \in \tfun{\stype}{\stype}\!\!$}
+      \end{array}\right.
+    \end{array}
+  \)}
+
+  \medskip
+  \lbl{\fbox{$\srev : \ffun{\sblist}{\sblist}$}}{
+    \begin{mfarray}
+      \frev{\fcons{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\fcons{\cdots\!}{\obnd{\sowner_{2n}}{\stype_n}{\sowner_{2n+1}}}}}
+      & \feq & \fcons{\obnd{\sowner_{2n+1}}{\stype_n}{\sowner_{2n}}}{\fcons{\cdots\!}{\obnd{\sowner_1}{\stype_0}{\sowner_0}}}
+    \end{mfarray}
+  }
+
+  \medskip
+  \lbl{\fbox{$\sdelta : \ffun{\tpair{\sunop}{\svalue}}{\sexpr}$}}{\(
+    \begin{array}{l@{~~}c@{~~}l@{}}
+      \sdelta(\sunop, \epair{\svalue_0}{\svalue_1}) & \feq &
+        \left\{\begin{array}{l@{~~}l}
+          \makebox[2pt][l]{$\svalue_0$}
+          \\ & \mbox{if $\sunop \eeq \tinst{\sfst}{\toptional}$}
+          \\
+          \zerowidth{\svalue_1}
+          \\ & \mbox{if $\sunop \eeq \tinst{\ssnd}{\toptional}$}
+        \end{array}\right.
+    \end{array}
+  \)}
+
+  \medskip
+  \lbl{\fbox{$\sdelta : \ffun{\tpair{\sbinop}{\tpair{\svalue}{\svalue}}}{\sexpr}$}}{\(
+    \begin{array}{l@{~~}c@{~~}l@{}}
+      \sdelta(\sbinop, \sint_0, \sint_1) & \feq &
+       \left\{\begin{array}{l@{~~~}l}
+         \makebox[2pt][l]{$\sint_0 + \sint_1$}
+         \\ & \mbox{if $\sbinop \eeq \tinst{\ssum}{\stoptional}$}
+         \\
+         \zerowidth{\divisionbyzeroerror}
+         \\ & \mbox{if $\sbinop \eeq \tinst{\squotient}{\stoptional}$}
+         \\ & \mbox{and $\sint_1 \eeq 0$}
+         \\
+         \zerowidth{\floorof{\sint_0 / \sint_1}}
+         \\ & \mbox{if $\sbinop \eeq \tinst{\squotient}{\stoptional}$}
+         \\ & \mbox{and $\sint_1 \neq 0$}
+       \end{array}\right.
+    \end{array}
+  \)}
+
+\end{flushleft}
+
+\subsection{Ownership Evaluation Definitions}
+\begin{flushleft}
+  \lbl{\fbox{Ownership \sevallang{}}}{
+    \begin{langarray}
+      \sowner & \BNFeq &
+        \textrm{\scountable{} set of labels, with 1-1 correspondence to names}
+      \\
+      \sownertop & \BNFeq &
+        \textrm{label for the ``top'' of an expression}
+      \\
+      \sownerlist & \BNFeq &
+        \snil \mid \fcons{\sownerlist}{\sowner}
+      \\
+      \svalue & \BNFeq &
+        \snat
+        \mid \sint
+        \mid \epair{\svalue}{\svalue}
+        \mid \efun{\svar}{\sexpr}
+        \mid \efun{\tann{\svar}{\stype}}{\sexpr}
+      \\
+      \ctx & \BNFeq &
+        \ctxhole
+        \mid \obars{\ctx}{\sowner}
+        \mid \epair{\ctx}{\sexpr}
+        \mid \epair{\svalue}{\ctx}
+        \mid \eunopt{\stoptional}{\ctx}
+        \mid \eapp{\stoptional}{\ctx}{\sexpr}
+        \mid \eapp{\stoptional}{\svalue}{\ctx}
+        \mid \ebinopt{\stoptional}{\ctx}{\sexpr}
+        \mid \ebinopt{\stoptional}{\svalue}{\ctx}
+        \mid \\ & &  \edynb{\sbnd}{\ctx}
+        \mid \estab{\sbnd}{\ctx}
+      \\
+      \eerr & \BNFeq &
+        \tagerrorD \mid \tagerrorS \mid
+        \divisionbyzeroerror \mid
+        \boundaryerror{\sblist}{\svalue}
+      \\
+      \sexpr & \BNFeq &
+        \obars{\sexpr}{\sowner}
+        \mid \eerr
+        \mid \svar
+        \mid \snat \mid \sint
+        \mid \efun{\svar}{\sexpr}
+        \mid \efun{\tann{\svar}{\stype}}{\sexpr}
+        \mid \epair{\sexpr}{\sexpr}
+        \mid \eapp{\stoptional}{\sexpr}{\sexpr}
+        \mid \eunopt{\stoptional}{\sexpr}
+        \mid \ebinopt{\stoptional}{\sexpr}{\sexpr}
+        \mid \edynb{\sbnd}{\sexpr}
+        \mid \estab{\sbnd}{\sexpr}
+      \\
+      \stag & \BNFeq &
+        \knat \mid \kint \mid \kpair \mid \kfun
+      \\
+       \stype & \BNFeq &
+        \tnat \mid \tint \mid \tpair{\stype}{\stype} \mid \tfun{\stype}{\stype}
+      \\
+       \stoptional & \BNFeq &
+        \stype \mid \tdyn
+      \\
+       \sbnd & \BNFeq &
+        \obnd{\sowner}{\stype}{\sowner}
+      \\
+       \sowner & \BNFeq &
+        \textrm{\scountable{} set of names}
+      \\
+      \sunop & \BNFeq & 
+        \sfst \mid \ssnd
+      \\
+       \sbinop & \BNFeq & 
+        \ssum \mid \squotient
+      \\
+       \stypeenv & \BNFeq &
+        \cdot \mid \fcons{\tann{\svar}{\stoptional}}{\stypeenv}
+      \\
+      \sownerenv & \BNFeq &
+        \cdot \mid \fcons{\tann{\svar}{\sowner}}{\sownerenv}
+      \\
+       \snat & \BNFeq    & \naturals
+      \\
+       \sint & \BNFeq    & \integers
+      \\
+       \sblist & \BNFeq &
+        \snil \mid \fcons{\sbnd}{\sblist}
+      \\
+       \sbset & \BNFeq &
+        \powerset{\sbnd}
+      \\
+       \sownerset & \BNFeq &
+        \powerset{\sowner}
+    \end{langarray}
+  }
+
+  \medskip
+  \lbl{\fbox{$\fwellformedO{\sexpr}{\stoptional}$} well-formed expression}{\(\begin{array}{l@{}l}
+    \fwellformedO{\obars{\sexpr_0}{\sowner_0}}{\stype_0} &
+    \mbox{ iff } \sowner_0 \sWSOP \obars{\sexpr_0}{\sowner_0}
+    \mbox{ and} \sWTO \obars{\sexpr_0}{\sowner_0} : \stype_0\!\!
+    \\
+    \fwellformedO{\obars{\sexpr_0}{\sowner_0}}{\tdyn} &
+    \mbox{ iff } \sowner_0 \sWSOP \obars{\sexpr_0}{\sowner_0}
+    \mbox{ and} \sWTO \obars{\sexpr_0}{\sowner_0} : \tdyn\!\!
+  \end{array}\)}
+
+  \medskip
+  \lbl{\fbox{$\sownerenv; \sowner \sWSOP \sexpr$} \missingrules{}}{\begin{mathpar} %  well-named-and-labeled components (selected rules)
+    \inferrule*{
+      \sownerenv_0; \sowner_0 \sWSOP \sexpr_0
+    }{
+      \sownerenv_0; \sowner_0 \sWSOP \obars{\sexpr_0}{\sowner_0}
+    }
+
+    \inferrule*{
+      \tann{\svar_0}{\sowner_0} \in \sownerenv_0
+    }{
+      \sownerenv_0; \sowner_0 \sWSOP \svar_0
+    }
+
+    \inferrule*{
+    }{
+      \sownerenv_0; \sowner_0 \sWSOP \sint_0
+    }
+
+    \inferrule*{
+      \fcons{\tann{\svar_0}{\sowner_0}}{\sownerenv_0}; \sowner_0 \sWSOP \sexpr_0
+    }{
+      \sownerenv_0; \sowner_0 \sWSOP \efun{\svar_0}{\sexpr_0}
+    }
+
+    \inferrule*{
+      \fcons{\tann{\svar_0}{\sowner_0}}{\sownerenv_0}; \sowner_0 \sWSOP \sexpr_0
+    }{
+      \sownerenv_0; \sowner_0 \sWSOP \efun{\tann{\svar_0}{\stype_0}}{\sexpr_0}
+    }
+
+    \inferrule*{
+      \sownerenv_0; \sowner_0 \sWSOP \sexpr_0
+      \\\\
+      \sownerenv_0; \sowner_0 \sWSOP \sexpr_1
+    }{
+      \sownerenv_0; \sowner_0 \sWSOP \epair{\sexpr_0}{\sexpr_1}
+    }
+
+    \inferrule*{
+      \sownerenv_0; \sowner_0 \sWSOP \sexpr_0
+      \\\\
+      \sownerenv_0; \sowner_0 \sWSOP \sexpr_1
+    }{
+      \sownerenv_0; \sowner_0 \sWSOP \eapp{\stoptional}{\sexpr_0}{\sexpr_1}
+    }
+
+    \inferrule*{
+      \sownerenv_0; \sowner_0 \sWSOP \sexpr_0
+    }{
+      \sownerenv_0; \sowner_0 \sWSOP \eunopt{\stoptional}{\sexpr_0}
+    }
+
+    \inferrule*{
+      \sownerenv_0; \sowner_0 \sWSOP \sexpr_0
+      \\\\
+      \sownerenv_0; \sowner_0 \sWSOP \sexpr_1
+    }{
+      \sownerenv_0; \sowner_0 \sWSOP \ebinopt{\stoptional}{\sexpr_0}{\sexpr_1}
+    }
+
+    \inferrule*{
+      \sownerenv_0; \sowner_1 \sWSOP \sexpr_0
+    }{
+      \sownerenv_0; \sowner_0 \sWSOP \edynb{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\obars{\sexpr_0}{\sowner_1}}
+    }
+
+    \inferrule*{
+      \sownerenv_0; \sowner_1 \sWSOP \sexpr_0
+    }{
+      \sownerenv_0; \sowner_0 \sWSOP \estab{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\obars{\sexpr_0}{\sowner_1}}
+    }
+
+    \inferrule*{
+      \sownerenv_0; \sowner_1 \sWSOP \svalue_0
+    }{
+      \sownerenv_0; \sowner_0 \sWSOP \emon{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\obars{\svalue_0}{\sowner_1}}
+    }
+
+    \inferrule*{
+      \sownerenv_0; \sowner_0 \sWSOP \svalue_0
+    }{
+      \sownerenv_0; \sowner_0 \sWSOP \ehist{\sblist_0}{\svalue_0}
+    }
+
+    \inferrule*{
+      \sownerenv_0; \sowner_0 \sWSOP \sexpr_0
+    }{
+      \sownerenv_0; \sowner_0 \sWSOP \esuffix{\sblist_0}{\sexpr_0}
+    }
+
+  \end{mathpar}}
+
+  \medskip
+  \lbl{\fbox{$\stypeenv \sWTO \sexpr : \stype $}}{\begin{mathpar}
+    \inferrule*{
+      \stypeenv_0 \sWTO \sexpr_0 : \stype_0
+    }{
+      \stypeenv_0 \sWTO \obars{\sexpr_0}{\sowner_0} : \stype_0
+    }
+
+    \inferrule*{
+      \fmember{\tann{\svar_0}{\stype_0}}{\tenv_0}
+    }{
+      \tenv_0 \sWTO \svar_0 : \stype_0
+    }
+
+    \inferrule*{
+    }{
+      \tenv_0 \sWTO \snat_0 : \tnat
+    }
+
+    \inferrule*{
+    }{
+      \tenv_0 \sWTO \sint_0 : \tint
+    }
+
+    \inferrule*{
+      \fcons{\tann{\svar_0}{\stype_0}}{\tenv_0} \sWTO \sexpr_0 : \stype_1
+    }{
+      \tenv_0 \sWTO \efun{\tann{\svar_0}{\stype_0}}{\sexpr_0} : \tfun{\stype_0}{\stype_1}
+    }
+
+    \inferrule*{
+      \tenv_0 \sWTO \sexpr_0 : \stype_0
+      \\\\
+      \tenv_0 \sWTO \sexpr_1 : \stype_1
+    }{
+      \tenv_0 \sWTO \epair{\sexpr_0}{\sexpr_1} : \tpair{\stype_0}{\stype_1}
+    }
+
+    \inferrule*{
+      \tenv_0 \sWTO \sexpr_0 : \tfun{\stype_0}{\stype_1}
+      \\\\
+      \tenv_0 \sWTO \sexpr_1 : \stype_0
+    }{
+      \tenv_0 \sWTO \eapp{\stype_1}{\sexpr_0}{\sexpr_1} : \stype_1
+    }
+
+    \inferrule*{
+      \tenv_0 \sWTO \sexpr_0 : \stype_0
+      \\\\
+      \sDelta(\sunop, \stype_0) \feq \stype_1
+    }{
+      \tenv_0 \sWTO \eunopt{\stype_1}{\sexpr_0} : \stype_1
+    }
+
+    \inferrule*{
+      \tenv_0 \sWTO \sexpr_0 : \stype_0
+      \\\\
+      \tenv_0 \sWTO \sexpr_1 : \stype_1
+      \\\\
+      \sDelta(\sbinop, \stype_0, \stype_1) \feq \stype_2
+    }{
+      \tenv_0 \sWTO \ebinopt{\stype_2}{\sexpr_0}{\sexpr_1} : \stype_2
+    }
+
+    \inferrule*{
+      \tenv_0 \sWTO \sexpr_0 : \tdyn
+    }{
+      \tenv_0 \sWTO \edyn{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\sexpr_0} : \stype_0
+    }
+
+    \inferrule*{
+      \tenv_0 \sWTO \sexpr_0 : \stype_0
+      \\\\
+      \stype_0 \subteq \stype_1
+    }{
+      \tenv_0 \sWTO \sexpr_0 : \stype_1
+    }
+  \end{mathpar}}
+
+  \medskip
+  \lbl{\fbox{$\stypeenv \sWTO \sexpr : \tdyn$}}{\begin{mathpar}
+    \inferrule*{
+      \stypeenv_0 \sWTO \sexpr_0 : \tdyn
+    }{
+      \stypeenv_0 \sWTO \obars{\sexpr_0}{\sowner_0} : \tdyn
+    }
+
+    \inferrule*{
+      \fmember{\svar_0}{\tenv_0}
+    }{
+      \tenv_0 \sWTO \svar_0 : \tdyn
+    }
+
+    \inferrule*{
+    }{
+      \tenv_0 \sWTO \sint_0 : \tdyn
+    }
+
+    \inferrule*{
+      \fcons{\tann{\svar_0}{\tdyn}}{\tenv_0} \sWTO \sexpr_0 : \tdyn
+    }{
+      \tenv_0 \sWTO \efun{\svar_0}{\sexpr_0} : \tdyn
+    }
+
+    \inferrule*{
+      \tenv_0 \sWTO \sexpr_0 : \tdyn
+      \\\\
+      \tenv_0 \sWTO \sexpr_1 : \tdyn
+    }{
+      \tenv_0 \sWTO \epair{\sexpr_0}{\sexpr_1} : \tdyn
+    }
+
+    \inferrule*{
+      \tenv_0 \sWTO \sexpr_0 : \tdyn
+      \\\\
+      \tenv_0 \sWTO \sexpr_1 : \tdyn
+    }{
+      \tenv_0 \sWTO \eapp{\tdyn}{\sexpr_0}{\sexpr_1} : \tdyn
+    }
+
+    \inferrule*{
+      \tenv_0 \sWTO \sexpr_0 : \tdyn
+    }{
+      \tenv_0 \sWTO \eunopt{\tdyn}{\sexpr_0} : \tdyn
+    }
+
+    \inferrule*{
+      \tenv_0 \sWTO \sexpr_0 : \tdyn
+      \\\\
+      \tenv_0 \sWTO \sexpr_1 : \tdyn
+    }{
+      \tenv_0 \sWTO \ebinopt{\tdyn}{\sexpr_0}{\sexpr_1} : \tdyn
+    }
+
+    \inferrule*{
+      \tenv_0 \sWTO \sexpr_0 : \stype_0
+    }{
+      \tenv_0 \sWTO \esta{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\sexpr_0} : \tdyn
+    }
+
+  \end{mathpar}}
+
+  \lbl{\fbox{$\stypefst : \ffun{\stype}{\stype}$}}{
+    \begin{mfarray}
+      \ftypefst{\tpair{\stype_0}{\stype_1}} & \feq & \stype_0
+    \end{mfarray}
+  }
+
+  \lbl{\fbox{$\stypesnd : \ffun{\stype}{\stype}$}}{
+    \begin{mfarray}
+      \ftypesnd{\tpair{\stype_0}{\stype_1}} & \feq & \stype_1
+    \end{mfarray}
+  }
+
+  \lbl{\fbox{$\stypedom : \ffun{\stype}{\stype}$}}{
+    \begin{mfarray}
+      \ftypedom{\tfun{\stype_0}{\stype_1}} & \feq & \stype_0
+    \end{mfarray}
+  }
+
+  \lbl{\fbox{$\stypecod : \ffun{\stype}{\stype}$}}{
+    \begin{mfarray}
+      \ftypecod{\tfun{\stype_0}{\stype_1}} & \feq & \stype_1
+    \end{mfarray}
+  }
+
+  \lbl{\fbox{$\cdot\sconcat\cdot : \ffun{\tpair{\sownerlist}{\sownerlist}}{\sownerlist}$} append labels, but remove consecutive duplicates}{
+    \begin{mfarray}
+      \fconcat{(\fcons{\sowner_0}{\fcons{\cdots\!}{\sowner_n}})}{(\fcons{\sowner_m}{\fcons{\cdots\!}{\sowner_k}})}
+      & \feq
+      & \fcons{\sowner_0}{\fcons{\cdots\!}{\fcons{\sowner_n}{\fcons{\sowner_m}{\fcons{\cdots\!}{\sowner_k}}}}}
+      \\ \sidecond{if $\sowner_n \neq \sowner_m$}
+      \\
+      \fconcat{(\fcons{\sowner_0}{\fcons{\cdots\!}{\sowner_n}})}{(\fcons{\sowner_n}{\fcons{\cdots\!}{\sowner_k}})}
+      & \feq
+      & \fcons{\sowner_0}{\fcons{\cdots\!}{\fcons{\sowner_n}{\fcons{\cdots\!}{\sowner_k}}}}
+    \end{mfarray}
+  }
+
+  \lbl{\fbox{$\cdot\sconcat\cdot : \ffun{\tpair{\sblist}{\sblist}}{\sblist}$} append boundaries}{
+    \begin{mfarray}
+      \fconcat{\snil}{\sblist_1} & \feq & \sblist_1
+      \\
+      \fconcat{(\fcons{\sbnd_0}{\sblist_0})}{\sblist_1} & \feq & \fcons{\sbnd_0}{(\fconcat{\sblist_0}{\sblist_1})}
+    \end{mfarray}
+  }
+
+  \lbl{\fbox{$\srev : \ffun{\sownerlist}{\sownerlist}$} reverse a list of ownership labels}{
+    \begin{mfarray}
+      \frev{\fcons{\sowner_0}{\fcons{\cdots\!}{\sowner_n}}} & \feq & \fcons{\sowner_n}{\fcons{\cdots\!}{\sowner_0}}
+    \end{mfarray}
+  }
+
+  \lbl{\fbox{$\fbndeqowners{\sblist}{\sownerlist}$}}{\begin{mathpar}
+    \inferrule*{
+    }{
+      \fbndeqowners{\fcons{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\snil}}{\fcons{\snil}{\fcons{\sowner_1}{\sowner_0}}}
+    }
+
+    \inferrule*{
+      \fbndeqowners{\sblist_1}{\fcons{\sownerlist_2}{\sowner_1}}
+    }{
+      \fbndeqowners{\fcons{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\sblist_1}}{\fcons{\fcons{\sownerlist_2}{\sowner_1}}{\sowner_0}}
+    }
+  \end{mathpar}}
+
+  \lbl{\fbox{$\sholeowner : \ffun{\ctx}{\sowner}$} return the ownership label that surrounds the hole}{
+    \begin{mfarray}
+      \fholeowner{\ctx_0} & \feq & \fholeowneraux{\sownertop}{\ctx_0}
+    \end{mfarray}
+  }
+
+  \lbl{\fbox{$\sholeowneraux : \ffun{\tpair{\sowner}{\ctx}}{\sowner}$}}{
+    \begin{mfarray}
+      \fholeowneraux{\sowner_0}{\ctxhole} & \feq & \sowner_0
+      \\
+      \fholeowneraux{\sowner_0}{\epair{\ctx_0}{\sexpr_1}} & \feq & \fholeowneraux{\sowner_0}{\ctx_0}
+      \\
+      \fholeowneraux{\sowner_0}{\epair{\svalue_0}{\ctx_1}} & \feq & \fholeowneraux{\sowner_0}{\ctx_1}
+      \\
+      \fholeowneraux{\sowner_0}{\eapp{{\stoptional}}{\ctx_0}{\sexpr_1}} & \feq & \fholeowneraux{\sowner_0}{\ctx_0}
+      \\
+      \fholeowneraux{\sowner_0}{\eapp{{\stoptional}}{\svalue_0}{\ctx_1}} & \feq & \fholeowneraux{\sowner_0}{\ctx_1}
+      \\
+      \fholeowneraux{\sowner_0}{\eunopt{\stoptional}{\ctx_0}} & \feq & \fholeowneraux{\sowner_0}{\ctx_0}
+      \\
+      \fholeowneraux{\sowner_0}{\ebinopt{\stoptional}{\ctx_0}{\sexpr_1}} & \feq & \fholeowneraux{\sowner_0}{\ctx_0}
+      \\
+      \fholeowneraux{\sowner_0}{\ebinopt{\stoptional}{\svalue_0}{\ctx_1}} & \feq & \fholeowneraux{\sowner_0}{\ctx_1}
+      \\
+      \fholeowneraux{\sowner_0}{\edynb{\obnd{\sowner_1}{\stype_0}{\sowner_2}}{\ctx_0}} & \feq & \fholeowneraux{\sowner_0}{\ctx_0}
+      \\
+      \fholeowneraux{\sowner_0}{\estab{\obnd{\sowner_1}{\stype_0}{\sowner_2}}{\ctx_0}} & \feq & \fholeowneraux{\sowner_0}{\ctx_0}
+      \\
+      \fholeowneraux{\sowner_0}{\obars{\ctx_0}{\sowner_1}} & \feq & \fholeowneraux{\sowner_1}{\ctx_0}
+    \end{mfarray}
+  }
+
+  \lbl{\fbox{$\fhasbnd{\sexpr}{\sbnd}$} check if a boundary appears in an expression}{\begin{mathpar}
+    \inferrule*{
+      \fhasbnd{\sexpr_0}{\sbnd_0}
+    }{
+      \fhasbnd{\efun{\svar_0}{\sexpr_0}}{\sbnd_0}
+    }
+
+    \inferrule*{
+      \fhasbnd{\sexpr_0}{\sbnd_0}
+    }{
+      \fhasbnd{\efun{\tann{\svar_0}{{\stype_0}}}{\sexpr_0}}{\sbnd_0}
+    }
+
+    \inferrule*{
+      \fhasbnd{\sexpr_0}{\sbnd_0}
+    }{
+      \fhasbnd{\epair{\sexpr_0}{\sexpr_1}}{\sbnd_0}
+    }
+
+    \inferrule*{
+      \fhasbnd{\sexpr_1}{\sbnd_0}
+    }{
+      \fhasbnd{\epair{\sexpr_0}{\sexpr_1}}{\sbnd_0}
+    }
+
+    \inferrule*{
+      \fhasbnd{\sexpr_0}{\sbnd_0}
+    }{
+      \fhasbnd{\eapp{{\stoptional}}{\sexpr_0}{\sexpr_1}}{\sbnd_0}
+    }
+
+    \inferrule*{
+      \fhasbnd{\sexpr_1}{\sbnd_0}
+    }{
+      \fhasbnd{\eapp{{\stoptional}}{\sexpr_0}{\sexpr_1}}{\sbnd_0}
+    }
+
+    \inferrule*{
+      \fhasbnd{\sexpr_0}{\sbnd_0}
+    }{
+      \fhasbnd{\eunopt{\stoptional}{\sexpr_0}}{\sbnd_0}
+    }
+
+    \inferrule*{
+      \fhasbnd{\sexpr_0}{\sbnd_0}
+    }{
+      \fhasbnd{\ebinopt{\stoptional}{\sexpr_0}{\sexpr_1}}{\sbnd_0}
+    }
+
+    \inferrule*{
+      \fhasbnd{\sexpr_1}{\sbnd_0}
+    }{
+      \fhasbnd{\ebinopt{\stoptional}{\sexpr_0}{\sexpr_1}}{\sbnd_0}
+    }
+
+    \inferrule*{
+    }{
+      \fhasbnd{\edynb{\sbnd_0}{\sexpr_0}}{\sbnd_0}
+    }
+
+    \inferrule*{
+      \fhasbnd{\sexpr_0}{\sbnd_0}
+    }{
+      \fhasbnd{\edynb{\sbnd_1}{\sexpr_0}}{\sbnd_0}
+    }
+
+    \inferrule*{
+    }{
+      \fhasbnd{\estab{\sbnd_0}{\sexpr_0}}{\sbnd_0}
+    }
+
+    \inferrule*{
+      \fhasbnd{\sexpr_0}{\sbnd_0}
+    }{
+      \fhasbnd{\estab{\sbnd_1}{\sexpr_0}}{\sbnd_0}
+    }
+
+  \end{mathpar}}
+
+  \lbl{\fbox{$\saddtrace : \ffun{\tpair{\sblist}{\svalue}}{\svalue}$} extend existing trace (if any), otherwise start a new one}{
+    \begin{mfarray}
+      \faddtrace{\snil}{\svalue_1}
+      & \feq
+      & \svalue_1
+      \\
+      \faddtrace{\sblist_0}{\obbars{\ehist{\sblist_1}{\svalue_1}}{\sownerlist_2}}
+      & \feq
+      & \ehist{\fconcat{\sblist_0}{\sblist_1}}{\obbars{\svalue_1}{\sownerlist_2}}
+      \\\sidecond{if $\sblist_0 \neq \snil$}
+      \\
+      \faddtrace{\sblist_0}{\svalue_1}
+      & \feq
+      & \ehist{\sblist_0}{\svalue_1}
+      \\\sidecond{if $\sblist_0 \neq \snil$
+                  and $\svalue_1 \not\in \obbars{\ehist{\sblist}{\svalue}}{\sownerlist}$}
+    \end{mfarray}
+  }
+
+  \lbl{\fbox{$\sgettrace : \ffun{\svalue}{\sblist}$} get trace (if any) from a value}{
+    \begin{mfarray}
+      \fgettrace{\ehist{\sblist_0}{\obbars{\svalue_0}{\sownerlist_1}}}
+      & \feq
+      & \sblist_0
+      \\
+      \fgettrace{\svalue_0}
+      & \feq
+      & \snil
+      \\\sidecond{if $\svalue_0 \not\in {\ehist{\sblist}{\obbars{\svalue}{\sownerlist}}}$}
+    \end{mfarray}
+  }
+
+  \lbl{\fbox{$\sremtrace : \ffun{\svalue}{\svalue}$} remove trace (if any) from a value}{
+    \begin{mfarray}
+      \fremtrace{\obbars{\ehist{\sblist_0}{\obbars{\svalue_0}{\sownerlist_1}}}{\sownerlist_2}}
+      & \feq
+      & \obbars{\svalue_0}{\fconcat{\sownerlist_1}{\sownerlist_2}}
+      \\
+      \fremtrace{\svalue_0}
+      & \feq
+      & \svalue_0
+      \\\sidecond{if $\svalue_0 \not\in \obbars{\ehist{\sblist}{\obbars{\svalue}{\sownerlist}}}{\sownerlist}$}
+    \end{mfarray}
+  }
+
+   \lbl{\fbox{$\svalueowners : \ffun{\svalue}{\sownerlist}$}}{
+    \begin{mfarray}
+        \fvalueowners{\svalue_0} & \feq & \eset{\sowner_0} \cup
+        \fvalueowners{\svalue_1} \\
+           \sidecond{if $\svalue_0 \eeq \obars{\svalue_1}{\sowner_0}$}
+        \\
+      \fvalueowners{\svalue_0}  & \feq & \fvalueowners{\svalue_1}\\
+         \sidecond{if $\svalue_0 \eeq \ehist{\sblist_0}{\svalue_1}$}
+        \\
+        \fvalueowners{\svalue_0}  & \feq & \eset{} \\
+         \sidecond{otherwise}
+      \end{mfarray}
+    }
+
+  \lbl{\fbox{$\sblistsenders : \ffun{\sblist}{\sownerlist}$}}{
+  \begin{mfarray}
+     \fblistsenders{\snil}  & \feq & \eset{} \\
+        \fblistsenders{\sblist_0} & \feq & \eset{\sowner_1} \cup
+        \fblistsenders{\sblist_1} \\
+           \sidecond{if $\sblist_0 \eeq
+           \fcons{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\sblist_1}$}
+      \end{mfarray}
+    }
+
+  \lbl{\fbox{$\sforget : \ffun{\sexpr}{\sexpr}$}}{
+    \begin{mfarray}
+      \fforget{\obars{\sexpr_0}{\sowner_0}} & \feq & \fforget{\sexpr_0}
+      \\
+      \fforget{\svar_0} & \feq & \svar_0
+      \\
+      \fforget{\sint_0} & \feq & \sint_0
+      \\
+      \fforget{\efun{\svar_0}{\sexpr_0}} & \feq & \efun{\svar_0}{\fforget{\sexpr_0}}
+      \\
+      \fforget{\efun{\tann{\svar_0}{\stype_0}}{\sexpr_0}} & \feq & \efun{\tann{\svar_0}{\stype_0}}{\fforget{\sexpr_0}}
+      \\
+      \fforget{\epair{\sexpr_0}{\sexpr_1}} & \feq & \epair{\fforget{\sexpr_0}}{\fforget{\sexpr_1}}
+      \\
+      \fforget{\eapp{\stoptional}{\sexpr_0}{\sexpr_1}} & \feq & \eapp{\stoptional}{\fforget{\sexpr_0}}{\fforget{\sexpr_1}}
+      \\
+      \fforget{\eunopt{\stoptional}{\sexpr_0}} & \feq & \eunopt{\stoptional}{\fforget{\sexpr_0}}
+      \\
+      \fforget{\ebinopt{\stoptional}{\sexpr_0}{\sexpr_1}} & \feq & \ebinopt{\stoptional}{\fforget{\sexpr_0}}{\fforget{\sexpr_1}}
+      \\
+      \fforget{\edynb{\sbnd_0}{\sexpr_0}} & \feq & \edynb{\sbnd_0}{\fforget{\sexpr_0}}
+      \\
+      \fforget{\estab{\sbnd_0}{\sexpr_0}} & \feq & \estab{\sbnd_0}{\fforget{\sexpr_0}}
+    \end{mfarray}
+  }
+
+  \lbl{\fbox{$\smondepth : \ffun{\svalue}{\snat}$} count monitors around a value}{
+    \begin{mfarray}
+      \fmondepth{\sint} & \feq & 0
+      \\
+      \fmondepth{\epair{\svalue_0}{\svalue_1}} & \feq & 0
+      \\
+      \fmondepth{\efun{\svar_0}{\sexpr_0}} & \feq & 0
+      \\
+      \fmondepth{\efun{\tann{\svar_0}{\stype_0}}{\sexpr_0}} & \feq & 0
+      \\
+      \fmondepth{\ehist{\sblist_0}{\svalue_0}} & \feq & \fmondepth{\svalue_0}
+      \\
+      \fmondepth{\emon{\sbnd_0}{\svalue_0}} & \feq * 1 + \fmondepth{\svalue_0}
+    \end{mfarray}
+  }
+
+  \lbl{\fbox{$\slast : \ffun{\sownerlist}{\sowner}$} count monitors around a value}{
+    \begin{mfarray}
+      \flast{\sowner_0 \cdots \sowner_n} & \feq & \sowner_n
+    \end{mfarray}
+  }
+\end{flushleft}
+
+
+\subsection{Abbreviations}
+\begin{flushleft}
+  \(\begin{array}{l}
+  \sexpr_0 \eeq \obbars{\sexpr_1}{\sownerlist_0}
+  \sabbreveq
+  \sexpr_0 \eeq \obars{\cdots \obars{\sexpr_1}{\sowner_n} \cdots}{\sowner_1}
+  \\
+  (\ehopt{\sblist_0}{\svalue_1}) \eeq \svalue_0 \sabbreveq
+      \mbox{$\fremtrace{\svalue_0} \eeq \svalue_1$ and $\fgettrace{\svalue_0} \eeq \sblist_0$}
+  \\
+  (\emopt{\sbnd_0}{\svalue_1}) \eeq \svalue_0 \sabbreveq
+      \mbox{if $\svalue_0 \eeq \emon{\sbnd_0}{\svalue_1}$ or $\svalue_0 \not\in \emon{\sbnd}{\svalue}$}
+  \\
+  (\emoptplus{\sbnd_0 \ldots \sbnd_n}{\svalue_1}) \eeq \svalue_0 \sabbreveq
+      \svalue_0 \eeq \emon{\sbnd_0}{(\ldots \emon{\sbnd_n}{\svalue_0} \ldots)}
+  \\
+  \ctx_0{\ctxbars{\sexpr_0}{\sowner_0}} \sabbreveq \fholeowner{\ctx_0} \feq \sowner_0
+  \end{array}\)
+\end{flushleft}
+

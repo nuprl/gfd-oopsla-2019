@@ -1,0 +1,27 @@
+\contentsline {section}{Abstract}{1}{section*.1}
+\contentsline {section}{Contents}{1}{section*.2}
+\contentsline {section}{\numberline {1}Common Definitions}{2}{section.1}
+\contentsline {subsection}{\numberline {1.1}Surface Definitions}{2}{subsection.1.1}
+\contentsline {subsection}{\numberline {1.2}Evaluation Definitions}{4}{subsection.1.2}
+\contentsline {subsection}{\numberline {1.3}Ownership Evaluation Definitions}{6}{subsection.1.3}
+\contentsline {subsection}{\numberline {1.4}Abbreviations}{10}{subsection.1.4}
+\contentsline {section}{\numberline {2}$\mathsf {Natural}${}}{11}{section.2}
+\contentsline {subsection}{\numberline {2.1}Normal $\mathsf {Natural}${}}{11}{subsection.2.1}
+\contentsline {subsection}{\numberline {2.2}$\mathsf {Natural}${} Ownership Lifting}{12}{subsection.2.2}
+\contentsline {section}{\numberline {3}$\mathsf {Transient}${}}{15}{section.3}
+\contentsline {subsection}{\numberline {3.1}Normal $\mathsf {Transient}${}}{15}{subsection.3.1}
+\contentsline {subsection}{\numberline {3.2}$\mathsf {Transient}${} (Path-Based) Ownership Lifting}{19}{subsection.3.2}
+\contentsline {subsection}{\numberline {3.3}$\mathsf {Transient}${} Heap-Based Ownership Lifting}{21}{subsection.3.3}
+\contentsline {section}{\numberline {4}$\mathsf {Amnesic}${}}{24}{section.4}
+\contentsline {subsection}{\numberline {4.1}Normal $\mathsf {Amnesic}${}}{24}{subsection.4.1}
+\contentsline {subsection}{\numberline {4.2}$\mathsf {Amnesic}${} Ownership Lifting}{26}{subsection.4.2}
+\contentsline {section}{\numberline {5}$\mathsf {Natural}${}\ Theorems, Lemmas, and Proofs}{29}{section.5}
+\contentsline {subsection}{\numberline {5.1}$\mathsf {Natural}${}\ Theorems}{29}{subsection.5.1}
+\contentsline {subsection}{\numberline {5.2}$\mathsf {Natural}${}\ Lemmas}{30}{subsection.5.2}
+\contentsline {section}{\numberline {6}$\mathsf {Transient}${}\ Theorems, Lemmas, and Proofs}{54}{section.6}
+\contentsline {subsection}{\numberline {6.1}$\mathsf {Transient}${}\ Theorems}{54}{subsection.6.1}
+\contentsline {section}{\numberline {7}$\mathsf {Amnesic}${}\ Theorems, Lemmas, and Proofs}{57}{section.7}
+\contentsline {subsection}{\numberline {7.1}$\mathsf {Amnesic}${}\ Theorems}{57}{subsection.7.1}
+\contentsline {subsection}{\numberline {7.2}$\mathsf {Amnesic}${}\ Lemmas}{59}{subsection.7.2}
+\contentsline {section}{\numberline {8}N/A\ Simulation}{89}{section.8}
+\contentsline {section}{\numberline {9}A/T\ Simulation}{134}{section.9}

@@ -1,0 +1,818 @@
+\subsection{Normal \Tname{}}
+\begin{flushleft}
+
+  %% ---------------------------------------------------------------------------
+  %% Syntax
+  \lbl{\fbox{\Tname{}\ Language} extends Base \sevallang{}}{
+    \begin{langarray}
+      \eloc & \BNFeq    & % \locations
+        \textrm{\scountable{} set of heap locations}
+      \\
+      \svalue & \BNFeq &
+        \sint \mid \snat \mid \eloc
+      \\
+      \sprevalue & \BNFeq &
+        {\efun{\svar}{\sexpr}}
+        \mid {\efun{\tann{\svar}{\stype}}{\sexpr}}
+        \mid {\epair{\svalue}{\svalue}}
+      \\
+      \sexpr & \BNFeq &
+        \ldots \mid \eloc \mid \echecktwo{\stoptional}{\sexpr}{\eloc}
+      \\
+      \ctx & \BNFeq &
+        \ldots \mid \echecktwo{\stoptional}{\ctx}{\eloc}
+      \\
+      \vstore & \BNFeq &
+        \powerset{(\vrecord{\eloc}{\sprevalue})}
+      \\
+      \bstore & \BNFeq &
+        \powerset{(\brecord{\eloc}{\sbset})}
+      \\
+      \vstoretype & \BNFeq &
+        \snil \mid \fcons{\tann{\eloc}{\stoptional}}{\vstoretype}
+    \end{langarray}
+  }
+
+  %% ---------------------------------------------------------------------------
+  %% Metafunctions
+
+  \medskip
+  \lbl{\fbox{$\fmapref{\cdot}{\cdot} : \ffun{\tpair{\vstore}{\svalue}}{\svalue}$} heap dereference}{
+    \(\begin{array}[t]{l@{~~}c@{~~}l}
+      \fmapref{\vstore_0}{\svalue_0} & \feq &
+      \left\{\begin{array}{l@{\quad}l}
+        \sprevalue_0 & \mbox{if $\svalue_0 \in \eloc$ and $(\vrecord{\svalue_0}{\sprevalue_0}) \in \vstore_0$}
+        \\
+        \svalue_0 & \mbox{if $\svalue_0 \not\in \eloc$}
+      \end{array}\right.\end{array}\)
+  }
+
+  \medskip
+  \lbl{\fbox{$\fmapref{\cdot}{\cdot} : \ffun{\tpair{\bstore}{\svalue}}{\sbset}$} blame map dereference}{
+    \(\begin{array}[t]{l@{~~}c@{~~}l}
+      \fmapref{\bstore_0}{\svalue_0} & \feq &
+      \left\{\begin{array}{l@{\quad}l}
+        \sbset_0 & \mbox{if $\svalue_0 \in \eloc$ and $(\brecord{\svalue_0}{\sbset_0}) \in \bstore_0$}
+        \\
+        \semptymap & \mbox{otherwise}
+      \end{array}\right.\end{array}\)
+  }
+
+  \medskip
+  \lbl{\fbox{$\fmapreplace{\cdot}{\cdot}{\cdot} : \ffun{\tpair{\bstore}{\tpair{\svalue}{\sbset}}}{\bstore}$} blame map replace}{
+    \(\begin{array}[t]{l@{~~}c@{~~}l}
+      \fmapreplace{\bstore_0}{\svalue_0}{\sbset_0} & \feq &
+      \left\{\begin{array}{l@{\quad}l}
+        \zerowidth{\eset{\vrecord{\svalue_0}{\sbset_0}} \cup {(\bstore_0 \setminus (\vrecord{\svalue_0}{\sbset_1}))}}
+        \\
+        & \mbox{if $\svalue_0 \in \eloc$ and $(\vrecord{\svalue_0}{\sbset_1}) \in \bstore_0$}
+        \\
+        \bstore_0 & \mbox{otherwise}
+      \end{array}\right.\end{array}\)
+  }
+
+  \medskip
+  \lbl{\fbox{$\fmapupdate{\cdot}{\cdot}{\cdot} : \ffun{\tpair{\bstore}{\svalue}}{\sbset}$} blame map update}{
+    \(\begin{array}[t]{l@{~~}c@{~~}l}
+      \fmapupdate{\bstore_0}{\svalue_0}{\sbset_0} & \feq &
+        \quad \fmapreplace{\bstore_0}{\svalue_0}{\bappend{\sbset_0}{\fmapref{\bstore_0}{\svalue_0}}}
+    \end{array}\)
+  }
+
+  %% ---------------------------------------------------------------------------
+  %% Types
+
+  \lbl{\fbox{$\vstoretype; \stypeenv \sWTT \sexpr : \stag$}}{\begin{mathpar}
+    \inferrule*{
+      \tann{\eloc_0}{\stype_0} \in \vstoretype_0
+    }{
+      \vstoretype_0; \stypeenv_0 \sWTT \eloc_0 : \tagof{\stype_0}
+    }
+
+    \inferrule*{
+      \vstoretype_0; \stypeenv_0 \sWTT \sexpr_0 : \stag_0
+    }{
+      \vstoretype_0; \stypeenv_0 \sWTT \echecktwo{\stype_0}{\sexpr_0}{\eloc_0} : \tagof{\stype_0}
+    }
+
+    \inferrule*{
+      \vstoretype_0; \stypeenv_0 \sWTT \sexpr_0 : \tdyn
+    }{
+      \vstoretype_0; \stypeenv_0 \sWTT \echecktwo{\stype_0}{\sexpr_0}{\eloc_0} : \tagof{\stype_0}
+    }
+
+    \inferrule*{
+      \fmember{\tann{\svar_0}{\stype_0}}{\stypeenv_0}
+      %% TODO need a dyn var rule? if so, need an Any tag
+    }{
+      \vstoretype_0; \stypeenv_0 \sWTT \svar_0 : \tagof{\stype_0}
+    }
+
+    \inferrule*{
+    }{
+      \vstoretype_0; \stypeenv_0 \sWTT \snat_0 : \knat
+    }
+
+    \inferrule*{
+    }{
+      \vstoretype_0; \stypeenv_0 \sWTT \sint_0 : \kint
+    }
+
+    \inferrule*{
+      \vstoretype_0; \fcons{\tann{\svar_0}{\stype_0}}{\stypeenv_0} \sWTT \sexpr_0 : \stag_0
+    }{
+      \vstoretype_0; \stypeenv_0 \sWTT \efun{\tann{\svar_0}{\stype_0}}{\sexpr_0} : \kfun
+    }
+
+    \inferrule*{
+      \vstoretype_0; \fcons{\tann{\svar_0}{\tdyn}}{\stypeenv_0} \sWTT \sexpr_0 : \tdyn
+    }{
+      \vstoretype_0; \stypeenv_0 \sWTT \efun{\svar_0}{\sexpr_0} : \kfun
+    }
+
+    \inferrule*{
+      \vstoretype_0; \stypeenv_0 \sWTT \sexpr_0 : \stag_0
+      \\\\
+      \vstoretype_0; \stypeenv_0 \sWTT \sexpr_1 : \stag_1
+    }{
+      \vstoretype_0; \stypeenv_0 \sWTT \epair{\sexpr_0}{\sexpr_1} : \kpair
+    }
+
+    \inferrule*{
+      \vstoretype_0; \tenv_0 \sWTT \sexpr_0 : \kfun
+      \\\\
+      \vstoretype_0; \tenv_0 \sWTT \sexpr_1 : \stag_0
+    }{
+      \vstoretype_0; \tenv_0 \sWTT \eapp{\stype_1}{\sexpr_0}{\sexpr_1} : \tagof{\stype_1}
+    }
+
+    \inferrule*{
+      \vstoretype_0; \tenv_0 \sWTT \sexpr_0 : \stag_0
+      \\\\
+      \sDelta(\sunop, \stag_0) \feq \stag_1
+      \\\\
+      \stag_1 \subteq \tagof{\stype_2}
+    }{
+      \vstoretype_0; \tenv_0 \sWTT \eunopt{\stype_2}{\sexpr_0} : \tagof{\stype_2}
+    }
+
+    \inferrule*{
+      \vstoretype_0; \tenv_0 \sWTT \sexpr_0 : \stag_0
+      \\\\
+      \vstoretype_0; \tenv_0 \sWTT \sexpr_1 : \stag_1
+      \\\\
+      \sDelta(\sbinop, \stag_0, \stag_1) \feq \stag_2
+      \\\\
+      \stag_2 \subteq \tagof{\stype_3}
+    }{
+      \vstoretype_0; \tenv_0 \sWTT \ebinopt{\stype_3}{\sexpr_0}{\sexpr_1} : \tagof{\stype_3}
+    }
+
+    \inferrule*{
+      \vstoretype_0; \tenv_0 \sWTT \sexpr_0 : \tdyn
+    }{
+      \vstoretype_0; \tenv_0 \sWTT \edyn{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\sexpr_0} : \tagof{\stype_0}
+    }
+
+    \inferrule*{
+      \vstoretype_0; \tenv_0 \sWTT \sexpr_0 : \stag_0
+      \\\\
+      \stag_0 \subteq \stag_1
+    }{
+      \vstoretype_0; \tenv_0 \sWTT \sexpr_0 : \stag_1
+    }
+  \end{mathpar}}
+
+  \medskip
+  \lbl{\fbox{$\vstoretype; \stypeenv \sWTT \sexpr : \tdyn$}}{\begin{mathpar}
+    \inferrule*{
+      \tann{\eloc_0}{\tdyn} \in \vstoretype_0
+    }{
+      \vstoretype_0; \stypeenv_0 \sWTT \eloc_0 : \tdyn
+    }
+
+    \inferrule*{
+      \vstoretype_0; \stypeenv_0 \sWTT \sexpr_0 : \tdyn
+    }{
+      \vstoretype_0; \stypeenv_0 \sWTT \echecktwo{\tdyn}{\sexpr_0}{\eloc_0} : \tdyn
+    }
+
+    \inferrule*{
+      \vstoretype_0; \stypeenv_0 \sWTT \sexpr_0 : \stag_0
+    }{
+      \vstoretype_0; \stypeenv_0 \sWTT \echecktwo{\tdyn}{\sexpr_0}{\eloc_0} : \tdyn
+    }
+
+    %% TODO need this rule?
+    %\inferrule*{
+    %  \fmember{\tann{\svar_0}{\stype_0}}{\stypeenv_0}
+    %}{
+    %  \vstoretype_0; \stypeenv_0 \sWTT \svar_0 : \tdyn
+    %}
+
+    \inferrule*{
+      \fmember{\tann{\svar_0}{\tdyn}}{\stypeenv_0}
+    }{
+      \vstoretype_0; \stypeenv_0 \sWTT \svar_0 : \tdyn
+    }
+
+    \inferrule*{
+    }{
+      \vstoretype_0; \stypeenv_0 \sWTT \snat_0 : \tdyn
+    }
+
+    \inferrule*{
+    }{
+      \vstoretype_0; \stypeenv_0 \sWTT \sint_0 : \tdyn
+    }
+
+    \inferrule*{
+      \vstoretype_0; \fcons{\tann{\svar_0}{\stype_0}}{\stypeenv_0} \sWTT \sexpr_0 : \stag_0
+    }{
+      \vstoretype_0; \stypeenv_0 \sWTT \efun{\tann{\svar_0}{\stype_0}}{\sexpr_0} : \tdyn
+    }
+
+    \inferrule*{
+      \vstoretype_0; \fcons{\tann{\svar_0}{\tdyn}}{\stypeenv_0} \sWTT \sexpr_0 : \tdyn
+    }{
+      \vstoretype_0; \stypeenv_0 \sWTT \efun{\svar_0}{\sexpr_0} : \tdyn
+    }
+
+    \inferrule*{
+      \vstoretype_0; \stypeenv_0 \sWTT \sexpr_0 : \tdyn
+      \\\\
+      \vstoretype_0; \stypeenv_0 \sWTT \sexpr_1 : \tdyn
+    }{
+      \vstoretype_0; \stypeenv_0 \sWTT \epair{\sexpr_0}{\sexpr_1} : \tdyn
+    }
+
+    \inferrule*{
+      \vstoretype_0; \tenv_0 \sWTT \sexpr_0 : \tdyn
+      \\\\
+      \vstoretype_0; \tenv_0 \sWTT \sexpr_1 : \tdyn
+    }{
+      \vstoretype_0; \tenv_0 \sWTT \eapp{\stype_1}{\sexpr_0}{\sexpr_1} : \tdyn
+    }
+
+    \inferrule*{
+      \vstoretype_0; \tenv_0 \sWTT \sexpr_0 : \tdyn
+    }{
+      \vstoretype_0; \tenv_0 \sWTT \eunopt{\stype_2}{\sexpr_0} : \tdyn
+    }
+
+    \inferrule*{
+      \vstoretype_0; \tenv_0 \sWTT \sexpr_0 : \tdyn
+      \\\\
+      \vstoretype_0; \tenv_0 \sWTT \sexpr_1 : \tdyn
+    }{
+      \vstoretype_0; \tenv_0 \sWTT \ebinopt{\stype_3}{\sexpr_0}{\sexpr_1} : \tdyn
+    }
+
+    \inferrule*{
+      \vstoretype_0; \tenv_0 \sWTT \sexpr_0 : \stag_0
+    }{
+      \vstoretype_0; \tenv_0 \sWTT \estab{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\sexpr_0} : \tdyn
+    }
+  \end{mathpar}}
+
+  \medskip
+  \lbl{\fbox{$\vstoretype \sWTT \vstore$}}{\begin{mathpar}
+    \inferrule*{
+      \forall (\vrecord{\eloc_0}{\svalue_0}) \in \vstore_0\,.~\vstoretype_0; \cdot \sWTT \svalue_0 : \vstoretype_0(\eloc_0)
+    }{
+      \vstoretype_0 \sWTT \vstore_0
+    }
+  \end{mathpar}}
+
+  \medskip
+  \lbl{\fbox{$\stag \subteq \stag$}}{\begin{mathpar}
+    \inferrule*{
+    }{
+      \knat \subteq \kint
+    }
+
+    \inferrule*{
+    }{
+      \stag_0 \subteq \stag_0
+    }
+  \end{mathpar}}
+
+
+  %% ---------------------------------------------------------------------------
+  %% Reduction relations
+
+  \lbl{\fbox{$\rredT$} reflexive-transitive closure of $\credT$}{}
+
+  \lbl{\fbox{$\conf{\sexpr}{\vstore}{\bstore} \credT \conf{\sexpr}{\vstore}{\bstore}$}}{
+    \begin{rrarray}
+      \conf{\ctx[\sexpr_0]}{\vstore_0}{\bstore_0}
+      & \credT
+      & \conf{\ctx[\sexpr_1]}{\vstore_1}{\bstore_1}
+      \\\sidecond{if $\conf{\sexpr_0}{\vstore_0}{\bstore_0} \nredTX \conf{\sexpr_1}{\vstore_1}{\bstore_1}$}
+      \\
+      \conf{\ctx[\eerr]}{\vstore_0}{\bstore_0}
+      & \credT
+      & \conf{\eerr}{\vstore_0}{\bstore_0}
+    \end{rrarray}
+  }
+
+  \lbl{\fbox{$\conf{\sexpr}{\vstore}{\bstore} \nredTX \conf{\sexpr}{\vstore}{\bstore}$}}{
+    \begin{rrarray}
+      \conf{\sprevalue_0}{\vstore_0}{\bstore_0}
+      &  \nredTX
+      &  \conf{\eloc_0}{(\eset{\vrecord{\eloc_0}{\sprevalue_0}} \cup \vstore_0)}{(\eset{\brecord{\eloc_0}{\semptymap}} \cup {\bstore_0})}
+      \\\sidecond{where $\ffresh{\eloc_0}{\vstore_0\mbox{ and }\bstore_0}$}
+      \\
+      \conf{(\eunopt{\stype_0}{\svalue_0})}{\vstore_0}{\bstore_0}
+      &  \nredTX
+      &  \conf{\tagerrorS}{\vstore_0}{\bstore_0}
+      \\\sidecond{if $\sdelta(\sunop, {\vstore_0(\svalue_0)})$ is undefined}
+      \\
+      \conf{(\eunopt{\tdyn}{\svalue_0})}{\vstore_0}{\bstore_0}
+      &  \nredTX
+      &  \conf{\tagerrorD}{\vstore_0}{\bstore_0}
+      \\\sidecond{if $\sdelta(\sunop, {\vstore_0(\svalue_0)})$ is undefined}
+      \\
+      \conf{(\eunopt{\stoptional}{\eloc_0})}{\vstore_0}{\bstore_0}
+      &  \nredTX
+      &  \conf{(\echecktwo{\stoptional}{\sdelta(\sunop, \vstore_0(\eloc_0))}{\eloc_0})}{\vstore_0}{\bstore_0}
+      \\\sidecond{if $\sdelta(\sunop, \vstore_0(\eloc_0))$ is defined}
+      \\
+      \conf{(\ebinopt{\stype_0}{\svalue_0}{\svalue_1})}{\vstore_0}{\bstore_0}
+      &  \nredTX
+      &  \conf{\tagerrorS}{\vstore_0}{\bstore_0}
+      \\\sidecond{if \(\sdelta(\sbinop, \svalue_0, \svalue_1)\) is undefined}
+      \\
+      \conf{(\ebinopt{\tdyn}{\svalue_0}{\svalue_1})}{\vstore_0}{\bstore_0}
+      &  \nredTX
+      &  \conf{\tagerrorD}{\vstore_0}{\bstore_0}
+      \\\sidecond{if \(\sdelta(\sbinop, \svalue_0, \svalue_1)\) is undefined}
+      \\
+      \conf{(\ebinopt{\toptional}{\sint_0}{\sint_1})}{\vstore_0}{\bstore_0}
+      &  \nredTX
+      &  \conf{\sdelta(\sbinop, \sint_0, \sint_1)}{\vstore_0}{\bstore_0}
+      \\\sidecond{if \(\sdelta(\sbinop, \sint_0, \sint_1)\) is defined}
+      \\
+      \conf{(\eapp{\stype_0}{\svalue_0}{\svalue_1})}{\vstore_0}{\bstore_0}
+      &  \nredTX
+      & \conf{\tagerrorS}{\vstore_0}{\bstore_0}
+      \\\sidecond{if \(\fmapref{\vstore_{0}}{\svalue_0} \not\in (\efun{\svar}{\sexpr}) \cup (\efun{\tann{\svar}{\stype}}{\sexpr})\)}
+      \\
+      \conf{(\eapp{\tdyn}{\svalue_0}{\svalue_1})}{\vstore_0}{\bstore_0}
+      &  \nredTX
+      & \conf{\tagerrorD}{\vstore_0}{\bstore_0}
+      \\\sidecond{if \(\fmapref{\vstore_{0}}{\svalue_0} \not\in (\efun{\svar}{\sexpr}) \cup (\efun{\tann{\svar}{\stype}}{\sexpr})\)}
+      \\
+      \conf{(\eapp{\stoptional}{\eloc_0}{\svalue_0})}{\vstore_0}{\bstore_0}
+      &  \nredTX
+      & \conf{(\echecktwo{\stoptional}{\esubst{\sexpr_0}{\svar_0}{\svalue_0}}{\eloc_0})}{\vstore_0}{\fmapupdate{\bstore_0}{\svalue_0}{\frev{\bstore_0(\eloc_0)}}}
+      \\\sidecond{if $\fmapref{\vstore_{0}}{\eloc_0}=\efun{\tann{\svar_0}{{\stype_0}}}{\sexpr_0}$
+                  and $\fshallow{\ftagof{\stype_0}}{\fmapref{\vstore_0}{\svalue_0}}$}
+      \\
+      \conf{(\eapp{\stoptional}{\eloc_0}{\svalue_0})}{\vstore_0}{\bstore_0}
+      &  \nredTX
+      & \conf{\boundaryerror{\fmapref{\bstore_0}{\eloc_0}}{\svalue_0}}{\vstore_0}{\bstore_0}
+      \\\sidecond{if $\fmapref{\vstore_{0}}{\eloc_0}=\efun{\tann{\svar_0}{{\stype_0}}}{\sexpr_0}$
+                  and $\neg \fshallow{\ftagof{\stype_0}}{\fmapref{\vstore_0}{\svalue_0}}$}
+      \\
+      \conf{(\eapp{\stype_0}{\eloc_0}{\svalue_0})}{\vstore_0}{\bstore_0}
+      & \nredTX
+      & \conf{(\echecktwo{\stype_0}{\esubst{\sexpr_0}{\svar_0}{\svalue_0}}{\eloc_0})}{\vstore_0}{\fmapupdate{\bstore_0}{\svalue_0}{\frev{\fmapref{\bstore_0}{\eloc_0}}}}
+      \\\sidecond{if \(\fmapref{\vstore_{0}}{\eloc_0}=\efun{\svar_0}{\sexpr_0}\)}
+      \\
+      \conf{(\eapp{\tdyn}{\eloc_0}{\svalue_0})}{\vstore_0}{\bstore_0}
+      &  \nredTX
+      & \conf{(\esubst{\sexpr_0}{\svar_0}{\svalue_0})}{\vstore_0}{\bstore_0}
+      \\\sidecond{if \(\fmapref{\vstore_{0}}{\eloc_0}=\efun{\svar_0}{\sexpr_0}\)}
+      \\
+      \conf{(\edynb{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\svalue_0})}{\vstore_0}{\bstore_0}
+      & \nredTX
+      & \conf{\svalue_0}{\vstore_0}{(\fmapupdate{\bstore_0}{\svalue_0}{\eset{\obnd{\sowner_0}{\stype_0}{\sowner_1}}})}
+      \\\sidecond{if $\fshallow{\ftagof{\stype_0}}{\fmapref{\vstore_0}{\svalue_0}}$}
+      \\
+      \conf{(\edynb{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\svalue_0})}{\vstore_0}{\bstore_0}
+      & \nredTX
+      & \conf{\boundaryerror{\eset{\obnd{\sowner_0}{\stype_0}{\sowner_1}}}{\svalue_0}}{\vstore_0}{\bstore_0}
+      \\\sidecond{if $\neg\fshallow{\ftagof{\stype_0}}{\fmapref{\vstore_0}{\svalue_0}}$}
+      \\
+      \conf{(\estab{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\svalue_0})}{\vstore_0}{\bstore_0}
+      & \nredTX
+      & \conf{\svalue_0}{\vstore_0}{(\fmapupdate{\bstore_0}{\svalue_0}{\eset{\obnd{\sowner_0}{\stype_0}{\sowner_1}}})}
+      \\\sidecond{if $\fshallow{\ftagof{\stype_0}}{\fmapref{\vstore_0}{\svalue_0}}$}
+      \\
+      \conf{(\estab{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\svalue_0})}{\vstore_0}{\bstore_0}
+      & \nredTX
+      & \conf{\tagerrorS}{\vstore_0}{\bstore_0}
+      \\\sidecond{if $\neg\fshallow{\ftagof{\stype_0}}{\fmapref{\vstore_0}{\svalue_0}}$}
+      \\
+      \conf{(\echecktwo{\tdyn}{\svalue_0}{\eloc_0})}{\vstore_0}{\bstore_0}
+      & \nredTX
+      & \conf{\svalue_0}{\vstore_0}{\bstore_0}
+      \\
+      \conf{(\echecktwo{\stype_0}{\svalue_0}{\eloc_0})}{\vstore_0}{\bstore_0}
+      &  \nredTX
+      & \conf{\svalue_0}{\vstore_0}{(\fmapupdate{\bstore_0}{\svalue_0}{\fmapref{\bstore_0}{\eloc_0}})}
+      \\\sidecond{if \(\fshallow{\ftagof{\stype_0}}{\fmapref{\vstore_0}{\svalue_0}}\)}
+      \\
+      \conf{(\echecktwo{\stype_0}{\svalue_0}{\eloc_0})}{\vstore_0}{\bstore_0}
+      & \nredTX
+      & \conf{\boundaryerror{\bappend{\fmapref{\bstore_0}{\svalue_0}}{\fmapref{\bstore_0}{\eloc_0}}}{\svalue_0}}{\vstore_0}{\bstore_0}
+      \\\sidecond{if \(\neg \fshallow{\ftagof{\stype_0}}{\fmapref{\vstore_0}{\svalue_0}}\)}
+    \end{rrarray}
+  }
+
+\end{flushleft}
+
+
+
+\subsection{\Tname{} (Path-Based) Ownership Lifting}
+\label{sec:T:path-based}
+\begin{flushleft}
+
+  %% ---------------------------------------------------------------------------
+  %% Syntax
+  \lbl{\fbox{\Tname{}\ Language} extends Ownership \sevallang{}}{
+    \begin{langarray}
+      \eloc & \BNFeq    & % \locations
+        \textrm{\scountable{} set of heap locations}
+      \\
+      \svalue & \BNFeq &
+        \sint \mid \snat \mid \eloc \mid \obars{\svalue}{\sowner}
+      \\
+      \sprevalue & \BNFeq &
+        {\efun{\svar}{\sexpr}}
+        \mid {\efun{\tann{\svar}{\stype}}{\sexpr}}
+        \mid {\epair{\svalue}{\svalue}}
+      \\
+      \sexpr & \BNFeq &
+        \ldots \mid \eloc \mid \echecktwo{\stoptional}{\sexpr}{\eloc} \mid \obars{\sexpr}{\sowner}
+      \\
+      \ctx & \BNFeq &
+        \ldots \mid \echecktwo{\stoptional}{\ctx}{\eloc} \mid \obars{\ctx}{\sowner}
+      \\
+      \vstore & \BNFeq &
+        \powerset{(\vrecord{\eloc}{\sprevalue})}
+      \\
+      \bstore & \BNFeq &
+        \powerset{(\brecord{\eloc}{\sbset})}
+      \\
+      \lstore & \BNFeq &
+        \powerset{(\lrecord{\eloc}{\sownerlist})}
+      \\
+      \vstoretype & \BNFeq &
+        \snil \mid \fcons{\tann{\eloc}{\stoptional}}{\vstoretype}
+    \end{langarray}
+  }
+
+  \medskip
+  \lbl{\fbox{$\fmapreplace{\cdot}{\cdot}{\cdot} : \ffun{\tpair{\lstore}{\tpair{\svalue}{\sownerset}}}{\lstore}$} ownership map replace}{
+    \(\begin{array}[t]{l@{~~}c@{~~}l}
+      \fmapreplace{\lstore_0}{\svalue_0}{\sownerset_0} & \feq &
+      \left\{\begin{array}{l@{\quad}l}
+        \zerowidth{\eset{\lrecord{\svalue_0}{\sownerset_0}} \cup {(\lstore_0 \setminus (\vrecord{\svalue_0}{\sownerset_1}))}}
+        \\
+        & \mbox{if $\svalue_0 \in \eloc$ and $(\vrecord{\svalue_0}{\sownerset_1}) \in \lstore_0$}
+        \\
+        \zerowidth{\fmapreplace{\lstore_0}{\svalue_1}{\sownerset_0}}
+        \\
+        & \mbox{if $\svalue_0 = \obbars{\svalue_1}{\sownerlist_0}$}
+        \\
+        \lstore_0 & \mbox{otherwise}
+      \end{array}\right.\end{array}\)
+  }
+
+  \medskip
+  \lbl{\fbox{$\fmapupdate{\cdot}{\cdot}{\cdot} : \ffun{\tpair{\lstore}{\svalue}}{\sownerset}$} ownership map update}{
+    \(\begin{array}[t]{l@{~~}c@{~~}l}
+      \fmapupdate{\lstore_0}{\svalue_0}{\sownerset_0} & \feq &
+        \quad \fmapreplace{\lstore_0}{\svalue_0}{\bappend{\sownerset_0}{\fmapref{\lstore_0}{\svalue_0}}}
+    \end{array}\)
+  }
+
+
+  %% ---------------------------------------------------------------------------
+  %% Types
+
+  \medskip
+  \lbl{\fbox{$\vstoretype; \stypeenv \sWTT \sexpr : \stag$} extends $\sWTT$}{\begin{mathpar}
+    \inferrule*{
+      \vstoretype_0; \stypeenv_0 \sWTT \sexpr_0 : \stag_0
+    }{
+      \vstoretype_0; \stypeenv_0 \sWTT \obars{\sexpr_0}{\sowner_0} : \stag_0
+    }
+  \end{mathpar}}
+
+  \medskip
+  \lbl{\fbox{$\vstoretype; \stypeenv \sWTT \sexpr : \tdyn$} extends $\sWTT$}{\begin{mathpar}
+    \inferrule*{
+      \vstoretype_0; \stypeenv_0 \sWTT \sexpr_0 : \tdyn
+    }{
+      \vstoretype_0; \stypeenv_0 \sWTT \obars{\sexpr_0}{\sowner_0} : \tdyn
+    }
+  \end{mathpar}}
+
+  \medskip
+  \lbl{\fbox{$\lstore; \sownerenv; \sowner \sWSOT \sexpr$}
+       lifts and extends $\sWL$ and enforces ownership consistency}{\begin{mathpar}
+     \inferrule*{
+       \lstore_0; \sownerenv_0; \sowner_0 \sWSOT \sexpr_0
+     }{
+       \lstore_0; \sownerenv_0; \sowner_0 \sWSOT \obars{\sexpr_0}{\sowner_0}
+     }
+
+     \inferrule*{
+       \lstore_0; \sownerenv_0; \sowner_0 \sWSOT \sexpr_0
+       \\\\
+       \lrecord{\eloc_0}{\sowner_0} \in \lstore_0
+     }{
+       \lstore_0; \sownerenv_0; \sowner_0 \sWSOT \echecktwo{\stoptional}{\sexpr_0}{\eloc_0}
+     }
+   \end{mathpar}}
+
+  %% ---------------------------------------------------------------------------
+  %% Reduction relations
+
+  \lbl{\fbox{$\rredTanns$} reflexive-transitive closure of $\credTanns$}{}
+
+  \lbl{\fbox{$\conf{\sexpr}{\vstore}{\bstore} \credTanns \conf{\sexpr}{\vstore}{\bstore}$}}{
+    \begin{rrarray}
+      \conf{\ctx\ctxbars{\sexpr_0}{\sowner_0}}{\vstore_0}{\bstore_0}
+      & \credTanns
+      & \conf{\ctx\ctxbars{\sexpr_1}{\sowner_0}}{\vstore_1}{\bstore_1}
+      \\\sidecond{if $\conf{\obars{\sexpr_0}{\sowner_0}}{\vstore_0}{\bstore_0} \nredTXanns \conf{\obars{\sexpr_1}{\sowner_0}}{\vstore_1}{\bstore_1}$}
+      \\
+      \conf{\ctx[\eerr]}{\vstore_0}{\bstore_0}
+      & \credTanns
+      & \conf{\eerr}{\vstore_0}{\bstore_0}
+    \end{rrarray}
+  }
+
+  \lbl{\fbox{$\conf{\obars{\sexpr}{\sowner}}{\vstore}{\bstore} \nredTXanns \conf{\obars{\sexpr}{\sowner}}{\vstore}{\bstore}$}}{
+    \begin{rrarray}
+      \conf{\obars{\sprevalue_0}{\sowner_0}}{\vstore_0}{\bstore_0}
+      &  \nredTXanns
+      &  \conf{\obars{\eloc_0}{\sowner_0}}{(\eset{\vrecord{\eloc_0}{\sprevalue_0}} \cup \vstore_0)}{(\eset{\brecord{\eloc_0}{\semptymap}} \cup {\bstore_0})}
+      \\\sidecond{where $\ffresh{\eloc_0}{\vstore_0\mbox{ and }\bstore_0}$}
+      \\
+      \conf{\obars{\eunopt{\stype_0}{\obbars{\svalue_0}{\sownerlist_0}}}{\sowner_1}}{\vstore_0}{\bstore_0}
+      &  \nredTXanns
+      &  \conf{\obars{\tagerrorS}{\sowner_1}}{\vstore_0}{\bstore_0}
+      \\\sidecond{if $\sdelta(\sunop, {\vstore_0(\svalue_0)})$ is undefined}
+      \\
+      \conf{\obars{\eunopt{\tdyn}{\obbars{\svalue_0}{\sownerlist_0}}}{\sowner_1}}{\vstore_0}{\bstore_0}
+      &  \nredTXanns
+      &  \conf{\obars{\tagerrorD}{\sowner_1}}{\vstore_0}{\bstore_0}
+      \\\sidecond{if $\sdelta(\sunop, {\vstore_0(\svalue_0)})$ is undefined}
+      \\
+      \conf{\obars{\eunopt{\stoptional}{\obbars{\eloc_0}{\sownerlist_0}}}{\sowner_1}}{\vstore_0}{\bstore_0}
+      &  \nredTXanns
+      &  \conf{\obars{\echecktwo{\stoptional}{\sdelta(\sunop, \vstore_0(\eloc_0))}{\eloc_0}}{\fconcat{\sownerlist_0}{\sowner_1}}}{\vstore_0}{\bstore_0}
+      \\\sidecond{if $\sdelta(\sunop, \vstore_0(\eloc_0))$ is defined}
+      \\
+      \conf{\obars{\ebinopt{\stype_0}{\obbars{\svalue_0}{\sownerlist_0}}{\obbars{\svalue_1}{\sownerlist_1}}}{\sowner_2}}{\vstore_0}{\bstore_0}
+      &  \nredTXanns
+      &  \conf{\obars{\tagerrorS}{\sowner_2}}{\vstore_0}{\bstore_0}
+      \\\sidecond{if \(\sdelta(\sbinop, \svalue_0, \svalue_1)\) is undefined}
+      \\
+      \conf{\obars{\ebinopt{\tdyn}{\obbars{\svalue_0}{\sownerlist_0}}{\obbars{\svalue_1}{\sownerlist_1}}}{\sowner_2}}{\vstore_0}{\bstore_0}
+      &  \nredTXanns
+      &  \conf{\obars{\tagerrorD}{\sowner_2}}{\vstore_0}{\bstore_0}
+      \\\sidecond{if \(\sdelta(\sbinop, \svalue_0, \svalue_1)\) is undefined}
+      \\
+      \conf{\obars{\ebinopt{\toptional}{\obbars{\sint_0}{\sownerlist_0}}{\obbars{\sint_1}{\sownerlist_1}}}{\sowner_2}}{\vstore_0}{\bstore_0}
+      &  \nredTXanns
+      &  \conf{\obars{\sdelta(\sbinop, \sint_0, \sint_1)}{\sowner_2}}{\vstore_0}{\bstore_0}
+      \\\sidecond{if \(\sdelta(\sbinop, \sint_0, \sint_1)\) is defined}
+      \\
+      \conf{\obars{\eapp{\stype_0}{\obbars{\svalue_0}{\sownerlist_0}}{\svalue_1}}{\sowner_1}}{\vstore_0}{\bstore_0}
+      &  \nredTXanns
+      & \conf{\obars{\tagerrorS}{\sowner_1}}{\vstore_0}{\bstore_0}
+      \\\sidecond{if \(\fmapref{\vstore_{0}}{\svalue_0} \not\in (\efun{\svar}{\sexpr}) \cup (\efun{\tann{\svar}{\stype}}{\sexpr})\)}
+      \\
+      \conf{\obars{\eapp{\tdyn}{\obbars{\svalue_0}{\sownerlist_0}}{\svalue_1}}{\sowner_1}}{\vstore_0}{\bstore_0}
+      &  \nredTXanns
+      & \conf{\obars{\tagerrorD}{\sowner_1}}{\vstore_0}{\bstore_0}
+      \\\sidecond{if \(\fmapref{\vstore_{0}}{\svalue_0} \not\in (\efun{\svar}{\sexpr}) \cup (\efun{\tann{\svar}{\stype}}{\sexpr})\)}
+      \\
+      \conf{\obars{\eapp{\stoptional}{\obbars{\eloc_0}{\sownerlist_0}}{\svalue_0}}{\sowner_1}}{\vstore_0}{\bstore_0}
+      &  \nredTXanns
+      & \conf{\obars{\echecktwo{\stoptional}{\esubst{\sexpr_0}{\svar_0}{\obbars{\svalue_0}{\fconcat{\sownerlist_1}{\frev{\sownerlist_0}}}}}{\eloc_0}}{\fconcat{\sownerlist_0}{\sowner_1}}}{\vstore_0}{\fmapupdate{\bstore_0}{\svalue_0}{\frev{\bstore_0(\eloc_0)}}}
+      \\\sidecond{if $\fmapref{\vstore_{0}}{\eloc_0}=\efun{\tann{\svar_0}{{\stype_0}}}{\sexpr_0}$
+                  and $\fshallow{\ftagof{\stype_0}}{\fmapref{\vstore_0}{\svalue_0}}$}
+      \\
+      \conf{\obars{\eapp{\stoptional}{\obbars{\eloc_0}{\sownerlist_0}}{\svalue_0}}{\sowner_1}}{\vstore_0}{\bstore_0}
+      &  \nredTXanns
+      & \conf{\obars{\boundaryerror{\obbars{\fmapref{\bstore_0}{\eloc_0}}{\sownerlist_0}}{\svalue_0}}{\sowner_1}}{\vstore_0}{\bstore_0}
+      \\\sidecond{if $\fmapref{\vstore_{0}}{\eloc_0}=\efun{\tann{\svar_0}{{\stype_0}}}{\sexpr_0}$
+                  and $\neg \fshallow{\ftagof{\stype_0}}{\fmapref{\vstore_0}{\svalue_0}}$}
+      \\
+      \conf{\obars{\eapp{\stype_0}{\obbars{\eloc_0}{\sownerlist_0}}{\svalue_0}}{\sowner_1}}{\vstore_0}{\bstore_0}
+      & \nredTXanns
+      & \conf{\obars{\echecktwo{\stype_0}{\esubst{\sexpr_0}{\svar_0}{\obbars{\svalue_0}{\fconcat{\sownerlist_1}{\frev{\sownerlist_0}}}}}{\eloc_0}}{\fconcat{\sownerlist_0}{\sowner_1}}}{\vstore_0}{\fmapupdate{\bstore_0}{\svalue_0}{\frev{\fmapref{\bstore_0}{\eloc_0}}}}
+      \\\sidecond{if \(\fmapref{\vstore_{0}}{\eloc_0}=\efun{\svar_0}{\sexpr_0}\)}
+      \\
+      \conf{\obars{\eapp{\tdyn}{\obbars{\eloc_0}{\sownerlist_0}}{\svalue_0}}{\sowner_1}}{\vstore_0}{\bstore_0}
+      &  \nredTXanns
+      & \conf{\obars{\esubst{\sexpr_0}{\svar_0}{\obbars{\svalue_0}{\fconcat{\sownerlist_1}{\frev{\sownerlist_0}}}}}{\fconcat{\sownerlist_0}{\sowner_1}}}{\vstore_0}{\bstore_0}
+      \\\sidecond{if \(\fmapref{\vstore_{0}}{\eloc_0}=\efun{\svar_0}{\sexpr_0}\)}
+      \\
+      \conf{\obars{\edynb{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\obbars{\svalue_0}{\sownerlist_0}}}{\sowner_2}}{\vstore_0}{\bstore_0}
+      & \nredTXanns
+      & \conf{\obars{\svalue_0}{\fconcat{\sownerlist_0}{\sowner_2}}}{\vstore_0}{(\fmapupdate{\bstore_0}{\svalue_0}{\eset{\obnd{\sowner_0}{\stype_0}{\sowner_1}}})}
+      \\\sidecond{if $\fshallow{\ftagof{\stype_0}}{\fmapref{\vstore_0}{\svalue_0}}$}
+      \\
+      \conf{\obars{\edynb{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\obbars{\svalue_0}{\sownerlist_0}}}{\sowner_2}}{\vstore_0}{\bstore_0}
+      & \nredTXanns
+      & \conf{\obars{\boundaryerror{\eset{\obnd{\sowner_0}{\stype_0}{\sowner_1}}}{\obbars{\svalue_0}{\sownerlist_0}}}{\sowner_2}}{\vstore_0}{\bstore_0}
+      \\\sidecond{if $\neg\fshallow{\ftagof{\stype_0}}{\fmapref{\vstore_0}{\svalue_0}}$}
+    \end{rrarray}
+  } % annoying, need a line break
+
+    \begin{rrarray}
+      \conf{\obars{\estab{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\obbars{\svalue_0}{\sownerlist_0}}}{\sowner_2}}{\vstore_0}{\bstore_0}
+      & \nredTXanns
+      & \conf{\obars{\svalue_0}{\fconcat{\sownerlist_0}{\sowner_2}}}{\vstore_0}{(\fmapupdate{\bstore_0}{\svalue_0}{\eset{\obnd{\sowner_0}{\stype_0}{\sowner_1}}})}
+      \\\sidecond{if $\fshallow{\ftagof{\stype_0}}{\fmapref{\vstore_0}{\svalue_0}}$}
+      \\
+      \conf{\obars{\estab{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\obbars{\svalue_0}{\sownerlist_0}}}{\sowner_2}}{\vstore_0}{\bstore_0}
+      & \nredTXanns
+      & \conf{\obars{\tagerrorS}{\sowner_2}}{\vstore_0}{\bstore_0}
+      \\\sidecond{if $\neg\fshallow{\ftagof{\stype_0}}{\fmapref{\vstore_0}{\svalue_0}}$}
+      \\
+      \conf{\obars{\echecktwo{\tdyn}{\obbars{\svalue_0}{\sownerlist_0}}{\eloc_0}}{\sowner_1}}{\vstore_0}{\bstore_0}
+      & \nredTXanns
+      & \conf{\obars{\svalue_0}{\fconcat{\sownerlist_0}{\sowner_1}}}{\vstore_0}{\bstore_0}
+      \\
+      \conf{\obars{\echecktwo{\stype_0}{\obbars{\svalue_0}{\sownerlist_0}}{\eloc_0}}{\sowner_1}}{\vstore_0}{\bstore_0}
+      &  \nredTXanns
+      & \conf{\obbars{\svalue_0}{\fconcat{\sownerlist_0}{\sowner_1}}}{\vstore_0}{(\fmapupdate{\bstore_0}{\svalue_0}{\fmapref{\bstore_0}{\eloc_0}})}
+      \\\sidecond{if \(\fshallow{\ftagof{\stype_0}}{\fmapref{\vstore_0}{\svalue_0}}\)}
+      \\
+      \conf{\obars{\echecktwo{\stype_0}{\obbars{\svalue_0}{\sownerlist_0}}{\eloc_0}}{\sowner_1}}{\vstore_0}{\bstore_0}
+      & \nredTXanns
+      & \conf{\obars{\boundaryerror{\bappend{\fmapref{\bstore_0}{\svalue_0}}{\fmapref{\bstore_0}{\eloc_0}}}{\obbars{\svalue_0}{\sownerlist_0}}}{\sowner_1}}{\vstore_0}{\bstore_0}
+      \\\sidecond{if \(\neg \fshallow{\ftagof{\stype_0}}{\fmapref{\vstore_0}{\svalue_0}}\)}
+    \end{rrarray}
+
+\end{flushleft}
+
+
+\subsection{\Tname{} Heap-Based Ownership Lifting}
+\label{sec:heap-based}
+\begin{flushleft}
+
+  %% ---------------------------------------------------------------------------
+  %% Syntax
+  \lbl{\fbox{\Tname{}\ Language} extends \Tname{} Ownership \sevallang{}}{
+    \begin{langarray}
+      \lstore & \BNFeq &
+        \powerset{(\lrecord{\eloc}{\sownerset})}
+    \end{langarray}
+  }
+
+  \medskip
+  \lbl{\fbox{$\lstore \sWSOT \vstore$} enforces ownership consistency for the heap}{\begin{mathpar}
+    \inferrule*{
+      \forall (\vrecord{\eloc_0}{\svalue_0}) \in \vstore_0\,.~ \lstore_0; \cdot; \lstore(\eloc_0) \sWSOT \svalue_0
+    }{
+      \lstore_0 \sWSOT \vstore_0
+    }
+  \end{mathpar}}
+
+  \medskip
+
+  %% ---------------------------------------------------------------------------
+  %% Reduction relations
+
+  \lbl{\fbox{$\rredTannsH$} reflexive-transitive closure of $\credTannsH$}{}
+
+  \lbl{\fbox{$\oconf{\sexpr}{\vstore}{\bstore}{\lstore} \credTannsH \oconf{\sexpr}{\vstore}{\bstore}{\lstore}$}}{
+    \begin{rrarray}
+      \oconf{\ctx\ctxbars{\sexpr_0}{\sowner_0}}{\vstore_0}{\bstore_0}{\lstore_0}
+      & \credTannsH
+      & \oconf{\ctx\ctxbars{\sexpr_1}{\sowner_0}}{\vstore_1}{\bstore_1}{\lstore_0}
+      \\\sidecond{if $\oconf{\obars{\sexpr_0}{\sowner_0}}{\vstore_0}{\bstore_0}{\lstore_0} \nredTXannsH \oconf{\obars{\sexpr_1}{\sowner_0}}{\vstore_1}{\bstore_1}{\lstore_0}$}
+      \\
+      \oconf{\ctx[\eerr]}{\vstore_0}{\bstore_0}{\lstore_0}
+      & \credTannsH
+      & \oconf{\eerr}{\vstore_0}{\bstore_0}{\lstore_0}
+    \end{rrarray}
+  }
+
+  \lbl{\fbox{$\oconf{\obars{\sexpr}{\sowner}}{\vstore}{\bstore}{\lstore} \nredTXannsH \oconf{\obars{\sexpr}{\sowner}}{\vstore}{\bstore}{\lstore}$}}{
+    \begin{rrarray}
+      \oconf{\obars{\sprevalue_0}{\sowner_0}}{\vstore_0}{\bstore_0}{\lstore_0}
+      &  \nredTXannsH
+      &  \oconf{\obars{\eloc_0}{\sowner_0}}{(\eset{\vrecord{\eloc_0}{\sprevalue_0}} \cup \vstore_0)}{(\eset{\brecord{\eloc_0}{\semptymap}} \cup {\bstore_0})}{(\eset{\lrecord{\eloc_0}{\sowner_0}} \cup {\lstore_0})}
+      \\\sidecond{where $\ffresh{\eloc_0}{\vstore_0\mbox{ and }\bstore_0\mbox{ and }\lstore_0}$}
+      \\
+      \oconf{\obars{\eunopt{\stype_0}{\obbars{\svalue_0}{\sownerlist_0}}}{\sowner_1}}{\vstore_0}{\bstore_0}{\lstore_0}
+      &  \nredTXannsH
+      &  \oconf{\obars{\tagerrorS}{\sowner_1}}{\vstore_0}{\bstore_0}{\lstore_0}
+      \\\sidecond{if $\sdelta(\sunop, {\vstore_0(\svalue_0)})$ is undefined}
+      \\
+      \oconf{\obars{\eunopt{\tdyn}{\obbars{\svalue_0}{\sownerlist_0}}}{\sowner_1}}{\vstore_0}{\bstore_0}{\lstore_0}
+      &  \nredTXannsH
+      &  \oconf{\obars{\tagerrorD}{\sowner_1}}{\vstore_0}{\bstore_0}{\lstore_0}
+      \\\sidecond{if $\sdelta(\sunop, {\vstore_0(\svalue_0)})$ is undefined}
+      \\
+      \oconf{\obars{\eunopt{\stoptional}{\obbars{\eloc_0}{\sownerlist_0}}}{\sowner_1}}{\vstore_0}{\bstore_0}{\lstore_0}
+      &  \nredTXannsH
+      &  \oconf{\obars{\echecktwo{\stoptional}{\sdelta(\sunop, \vstore_0(\eloc_0))}{\eloc_0}}{\fconcat{\sownerlist_0}{\sowner_1}}}{\vstore_0}{\bstore_0}{\lstore_0}
+      \\\sidecond{if $\sdelta(\sunop, \vstore_0(\eloc_0))$ is defined}
+      \\
+      \oconf{\obars{\ebinopt{\stype_0}{\obbars{\svalue_0}{\sownerlist_0}}{\obbars{\svalue_1}{\sownerlist_1}}}{\sowner_2}}{\vstore_0}{\bstore_0}{\lstore_0}
+      &  \nredTXannsH
+      &  \oconf{\obars{\tagerrorS}{\sowner_2}}{\vstore_0}{\bstore_0}{\lstore_0}
+      \\\sidecond{if \(\sdelta(\sbinop, \svalue_0, \svalue_1)\) is undefined}
+      \\
+      \oconf{\obars{\ebinopt{\tdyn}{\obbars{\svalue_0}{\sownerlist_0}}{\obbars{\svalue_1}{\sownerlist_1}}}{\sowner_2}}{\vstore_0}{\bstore_0}{\lstore_0}
+      &  \nredTXannsH
+      &  \oconf{\obars{\tagerrorD}{\sowner_2}}{\vstore_0}{\bstore_0}{\lstore_0}
+      \\\sidecond{if \(\sdelta(\sbinop, \svalue_0, \svalue_1)\) is undefined}
+      \\
+      \oconf{\obars{\ebinopt{\toptional}{\obbars{\sint_0}{\sownerlist_0}}{\obbars{\sint_1}{\sownerlist_1}}}{\sowner_2}}{\vstore_0}{\bstore_0}{\lstore_0}
+      &  \nredTXannsH
+      &  \oconf{\obars{\sdelta(\sbinop, \sint_0, \sint_1)}{\sowner_2}}{\vstore_0}{\bstore_0}{\lstore_0}
+      \\\sidecond{if \(\sdelta(\sbinop, \sint_0, \sint_1)\) is defined}
+      \\
+      \oconf{\obars{\eapp{\stype_0}{\obbars{\svalue_0}{\sownerlist_0}}{\svalue_1}}{\sowner_1}}{\vstore_0}{\bstore_0}{\lstore_0}
+      &  \nredTXannsH
+      & \oconf{\obars{\tagerrorS}{\sowner_1}}{\vstore_0}{\bstore_0}{\lstore_0}
+      \\\sidecond{if \(\fmapref{\vstore_{0}}{\svalue_0} \not\in (\efun{\svar}{\sexpr}) \cup (\efun{\tann{\svar}{\stype}}{\sexpr})\)}
+      \\
+      \oconf{\obars{\eapp{\tdyn}{\obbars{\svalue_0}{\sownerlist_0}}{\svalue_1}}{\sowner_1}}{\vstore_0}{\bstore_0}{\lstore_0}
+      &  \nredTXannsH
+      & \oconf{\obars{\tagerrorD}{\sowner_1}}{\vstore_0}{\bstore_0}{\lstore_0}
+      \\\sidecond{if \(\fmapref{\vstore_{0}}{\svalue_0} \not\in (\efun{\svar}{\sexpr}) \cup (\efun{\tann{\svar}{\stype}}{\sexpr})\)}
+      \\
+      \oconf{\obars{\eapp{\stoptional}{\obbars{\eloc_0}{\sownerlist_0}}{\svalue_0}}{\sowner_1}}{\vstore_0}{\bstore_0}{\lstore_0}
+      &  \nredTXannsH
+      \\ \zerowidth{\qquad
+          \oconf{\obars{\echecktwo{\stoptional}{\esubst{\sexpr_0}{\svar_0}{\obbars{\svalue_0}{\fconcat{\sowner_1}{\frev{\sownerlist_0}}}}}{\eloc_0}}{\fconcat{\sownerlist_0}{\sowner_1}}}{\vstore_0}{\fmapupdate{\bstore_0}{\svalue_0}{\frev{\bstore_0(\eloc_0)}}}{\fmapupdate{\lstore_0}{\svalue_1}{\funion{\fmapref{\lstore_0}{\eloc_0}}{\eset{\sowner_1}}}}
+      }
+      \\\sidecond{if $\fmapref{\vstore_{0}}{\eloc_0}=\efun{\tann{\svar_0}{{\stype_0}}}{\sexpr_0}$
+                  and $\fshallow{\ftagof{\stype_0}}{\fmapref{\vstore_0}{\svalue_0}}$}
+      \\
+      \oconf{\obars{\eapp{\stoptional}{\obbars{\eloc_0}{\sownerlist_0}}{\svalue_0}}{\sowner_1}}{\vstore_0}{\bstore_0}{\lstore_0}
+      &  \nredTXannsH
+      \\ \zerowidth{\qquad
+          \oconf{\obars{\boundaryerror{\obbars{\fmapref{\bstore_0}{\eloc_0}}{\sownerlist_0}}{\obbars{\svalue_0}{\fconcat{\sowner_1}{\frev{\sownerlist_0}}}}}{\sowner_1}}{\vstore_0}{\bstore_0}{\fmapupdate{\lstore_0}{\svalue_0}{\funion{\fmapref{\lstore_0}{\eloc_0}}{\sowner_1}}}
+      }
+      \\\sidecond{if $\fmapref{\vstore_{0}}{\eloc_0}=\efun{\tann{\svar_0}{{\stype_0}}}{\sexpr_0}$
+                  and $\neg \fshallow{\ftagof{\stype_0}}{\fmapref{\vstore_0}{\svalue_0}}$}
+      \\
+      \oconf{\obars{\eapp{\stype_0}{\obbars{\eloc_0}{\sownerlist_0}}{\svalue_0}}{\sowner_1}}{\vstore_0}{\bstore_0}{\lstore_0}
+      & \nredTXannsH
+      \\ \zerowidth{\qquad
+          \oconf{\obars{\echecktwo{\stype_0}{\esubst{\sexpr_0}{\svar_0}{\obbars{\svalue_0}{\fconcat{\sowner_1}{\frev{\sownerlist_0}}}}}{\eloc_0}}{\fconcat{\sownerlist_0}{\sowner_1}}}{\vstore_0}{\fmapupdate{\bstore_0}{\svalue_0}{\frev{\fmapref{\bstore_0}{\eloc_0}}}}{\fmapupdate{\lstore_0}{\svalue_0}{\funion{\fmapref{\lstore_0}{\eloc_0}}{\eset{\sowner_0}}}}
+      }
+      \\\sidecond{if \(\fmapref{\vstore_{0}}{\eloc_0}=\efun{\svar_0}{\sexpr_0}\)}
+      \\
+      \oconf{\obars{\eapp{\tdyn}{\obbars{\eloc_0}{\sownerlist_0}}{\svalue_0}}{\sowner_1}}{\vstore_0}{\bstore_0}{\lstore_0}
+      &  \nredTXannsH
+      & \oconf{\obars{\esubst{\sexpr_0}{\svar_0}{\obbars{\svalue_0}{\fconcat{\sowner_1}{\frev{\sownerlist_0}}}}}{\fconcat{\sownerlist_0}{\sowner_1}}}{\vstore_0}{\bstore_0}{\fmapupdate{\lstore_0}{\svalue_0}{\funion{\fmapref{\lstore_0}{\eloc_0}}{\eset{\sowner_0}}}}
+      \\\sidecond{if \(\fmapref{\vstore_{0}}{\eloc_0}=\efun{\svar_0}{\sexpr_0}\)}
+      \\
+      \oconf{\obars{\edynb{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\obbars{\svalue_0}{\sownerlist_0}}}{\sowner_2}}{\vstore_0}{\bstore_0}{\lstore_0}
+      & \nredTXannsH
+      & \oconf{\obars{\svalue_0}{\fconcat{\sownerlist_0}{\sowner_2}}}{\vstore_0}{(\fmapupdate{\bstore_0}{\svalue_0}{\eset{\obnd{\sowner_0}{\stype_0}{\sowner_1}}})}{\fmapupdate{\lstore_0}{\svalue_0}{\sowner_2}}
+      \\\sidecond{if $\fshallow{\ftagof{\stype_0}}{\fmapref{\vstore_0}{\svalue_0}}$}
+      \\
+      \oconf{\obars{\edynb{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\obbars{\svalue_0}{\sownerlist_0}}}{\sowner_2}}{\vstore_0}{\bstore_0}{\lstore_0}
+      & \nredTXannsH
+      & \oconf{\obars{\boundaryerror{\eset{\obnd{\sowner_0}{\stype_0}{\sowner_1}}}{\obbars{\svalue_0}{\sownerlist_0}}}{\sowner_1}}{\vstore_0}{\bstore_0}{\lstore_0}
+      \\\sidecond{if $\neg\fshallow{\ftagof{\stype_0}}{\fmapref{\vstore_0}{\svalue_0}}$}
+    \end{rrarray}
+    }
+
+    \begin{rrarray}
+      \oconf{\obars{\estab{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\obbars{\svalue_0}{\sownerlist_0}}}{\sowner_2}}{\vstore_0}{\bstore_0}{\lstore_0}
+      & \nredTXannsH
+      & \oconf{\obars{\svalue_0}{\fconcat{\sownerlist_0}{\sowner_2}}}{\vstore_0}{(\fmapupdate{\bstore_0}{\svalue_0}{\eset{\obnd{\sowner_0}{\stype_0}{\sowner_1}}})}{\fmapupdate{\lstore_0}{\svalue_0}{\eset{\sowner_2}}}
+      \\\sidecond{if $\fshallow{\ftagof{\stype_0}}{\fmapref{\vstore_0}{\svalue_0}}$}
+      \\
+      % TODO its okay to not update the map right? This state never happens.
+      \oconf{\obars{\estab{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\obbars{\svalue_0}{\sownerlist_0}}}{\sowner_2}}{\vstore_0}{\bstore_0}{\lstore_0}
+      & \nredTXannsH
+      & \oconf{\obars{\tagerrorS}{\sowner_1}}{\vstore_0}{\bstore_0}{\lstore_0}
+      \\\sidecond{if $\neg\fshallow{\ftagof{\stype_0}}{\fmapref{\vstore_0}{\svalue_0}}$}
+      \\
+      %% TODO why is this adding p0 owners? ... shouldn't they already be on the heap???
+      \oconf{\obars{\echecktwo{\tdyn}{\obbars{\svalue_0}{\sownerlist_0}}{\eloc_0}}{\sowner_1}}{\vstore_0}{\bstore_0}{\lstore_0}
+      & \nredTXannsH
+      & \oconf{\obars{\svalue_0}{\fconcat{\sownerlist_0}{\sowner_1}}}{\vstore_0}{\bstore_0}{\fmapupdate{\lstore_0}{\svalue_0}{\fmapref{\lstore_0}{\eloc_0}}}
+      \\
+      \oconf{\obars{\echecktwo{\stype_0}{\obbars{\svalue_0}{\sownerlist_0}}{\eloc_0}}{\sowner_1}}{\vstore_0}{\bstore_0}{\lstore_0}
+      &  \nredTXannsH
+      & \oconf{\obars{\svalue_0}{\fconcat{\sownerlist_0}{\sowner_1}}}{\vstore_0}{(\fmapupdate{\bstore_0}{\svalue_0}{\fmapref{\bstore_0}{\eloc_0}})}{\fmapupdate{\lstore_0}{\svalue_0}{\fmapref{\lstore_0}{\eloc_0}}}
+      \\\sidecond{if \(\fshallow{\ftagof{\stype_0}}{\fmapref{\vstore_0}{\svalue_0}}\)}
+      \\
+      \oconf{\obars{\echecktwo{\stype_0}{\obbars{\svalue_0}{\sownerlist_0}}{\eloc_0}}{\sowner_1}}{\vstore_0}{\bstore_0}{\lstore_0}
+      & \nredTXannsH
+      & \oconf{\obars{\boundaryerror{\bappend{\fmapref{\bstore_0}{\svalue_0}}{\fmapref{\bstore_0}{\eloc_0}}}{\obbars{\svalue_0}{\sownerlist_0}}}{\sowner_1}}{\vstore_0}{\bstore_0}{\fmapupdate{\lstore_0}{\svalue_0}{\fmapref{\lstore_0}{\eloc_0}}}
+      \\\sidecond{if \(\neg \fshallow{\ftagof{\stype_0}}{\fmapref{\vstore_0}{\svalue_0}}\)}
+    \end{rrarray}
+
+\end{flushleft}
+

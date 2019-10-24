@@ -1,0 +1,365 @@
+\newcommand{\raisedsowner}{\raisebox{0.8ex}{$\scriptstyle\sowner_0$}} % hack for proof terms
+
+In addition to the difference between \Nname{} on one hand and \Tname{} and
+\Aname{} on the other, ownership also explains the difference
+between \Tname{} and \Aname{}. While \Tname{} reduces a program to an
+error if and only if \Aname{} does, the two errors may contain
+completely different blame information. Consider the example of a function
+$f$ that is defined in component $\sowner_0$ and exported to two unrelated components:
+$\sowner_1$ and $\sowner_2$. Now, suppose that applications of $f$ in
+$\sowner_1$ all return well-typed results, but an application in $\sowner_2$
+ends in a type mismatch (\figureref{fig:napkin}).%
+\begin{wrapfigure}{r}{0.37\columnwidth}
+  \begin{center}
+    \begin{tikzpicture}[
+      triangle/.style = {fill=red!20, regular polygon, regular polygon sides=3}
+    ]
+      \node (0) {$\sowner_1$};
+      \node (1) [right of=0,xshift=4mm] {$\sowner_0$};
+      \node (2) [right of=1,xshift=1.2cm] {$\sowner_2$};
+      \node (3) [right of=2,xshift=1mm] {};
+
+      \node (3) [below of=1,yshift=-4mm] {\hphantom{$\sowner_1$}};
+      \draw[dashed] (1.north west) -- (3.south west);
+      \node (4) [below of=2,yshift=-4mm] {\hphantom{$\sowner_2$}};
+      \draw[dashed] (2.north west) -- (4.south west);
+
+      \node[draw,triangle,shape border rotate=180,inner sep=2pt] (5) [right of=1,xshift=-1mm,yshift=-7mm] {$f$};
+      \node (6) [right of=0,xshift=-5mm,yshift=-7mm] {\scalebox{1.5}{\bigcheckmark}};
+      \draw[->] (5) -- (6);
+      \node (7) [outer sep=4pt,right of=2,xshift=-5mm,yshift=-7mm] {\scalebox{2.2}{!}};
+      \draw[->] (5) -- (7);
+    \end{tikzpicture}
+  \end{center}
+  \Description{A rectangular area split into three sections. The center section
+    defines a value; arrows point from this value into the other sections.
+    The left section contains a check mark. The right section contains an
+    exclamation mark.}
+  \caption{Function $f$ flows to $\sowner_1$ and $\sowner_2$, only $\sowner_2$ reports a type mismatch}
+  \label{fig:napkin}
+\end{wrapfigure}%
+\Aname{} blames the boundary between $\sowner_0$ and $\sowner_2$, which is
+ precisely where the miscommunication occurred.
+\Tname{} blames both boundaries, even though component $\sowner_1$
+ had nothing to do with the mismatch.
+
+Abstractly, this difference in blame comes about because \Aname{} associates
+ boundaries to values using wrappers and \Tname{} combines
+ boundaries in a global map. The question is whether one strategy
+ is better than the other. To decide this question, we need a way to determine
+ which components are responsible for a value.
+
+The concept of ownership provides the ground truth that we need.
+Let us start from what a boundary error is about.
+Roughly, a boundary error blames a set of boundaries $\sbset_0$ and a value
+$\svalue_0$ for a type mismatch.
+Each boundary specification $\obnd{\sowner_0}{\stype_0}{\sowner_1}$ in the
+set is a claim that one component ($\sowner_1$) sent the value to another
+component ($\sowner_0$).
+If these claims are correct, then a programmer can
+modify $\sowner_1$, the boundary type, and/or $\sowner_0$
+to resolve the issue.
+
+Based on this explanation, we can see that blame information can be
+incorrect in two basic ways.  First, the set may contain a boundary that
+the reported value did not actually cross during evaluation.  A blamed set
+is \emph{unsound}\/ if it includes any such false positives.  Second, the
+set may omit a boundary that the value did in fact cross.  A blamed set is
+\emph{incomplete}\/ if it lacks any part of the value's path through the program.
+
+Using our notion of ownership, we can translate this informal description
+into a formal one. To do so, we introduce the metafunction $\sbsetsenders$,
+which returns the component names on the right side of a boundary
+specifications in a blame set:
+$$ \fbsetsenders{\sbset_0} 
+   \feq 
+   \eset{\sowner_1 \mid \obnd{\sowner_0}{\stype_0}{\sowner_1} \in \sbset_0} .
+$$ 
+Now, given a boundary error with its blame set and value,
+ blame soundness and blame completeness compare the senders in the set with
+ the owners of the value.\footnote{The properties must consider senders because an error occurs before a value
+ is able to cross an incompatible boundary.}
+
+\begin{definition}[blame soundness, blame completeness]
+  For all well-formed $\sexpr_0$ such that
+  $\sexpr_0 \rredX \boundaryerror{\sbset_0}{\svalue_0}$ and,
+  consequently,
+  $\obars{\sexpr_0}{\sowner_0} \rredXanns \boundaryerror{\sbset_0}{\obbars{\svalue_0}{\sownerlist_0}}$:
+  \begin{itemize}
+    \itemsep0.1ex
+    \item
+      $\rredX$ satisfies blame soundness ($\propbs{}$) 
+      iff
+      $\fbsetsenders{\sbset_0} \subseteq \fvalueowners{\obbars{\svalue_0}{\sownerlist_0}}$
+    \item
+      $\rredX$ satisfies blame completeness ($\propbc{}$)
+      iff
+      $\fbsetsenders{\sbset_0} \supseteq \fvalueowners{\obbars{\svalue_0}{\sownerlist_0}}$
+  \end{itemize}
+\end{definition}
+
+\noindent Our three semantics relate to blame soundness and completeness in
+three different ways.
+
+\begin{theorem}\leavevmode
+  \begin{enumerate}
+    \itemsep0.8ex
+    \item
+      $\rredN$ satisfies\/ $\propbs{}$ and\/ $\propbc{}$, and furthermore blames exactly one boundary
+    \item
+      $\rredT$ satisfies neither\/ $\propbs{}$ nor\/ $\propbc{}$
+    \item
+      $\rredA$ satisfies\/ $\propbs{}$ and\/ $\propbc{}$
+  \end{enumerate}
+\end{theorem}
+
+Complete monitoring has major implications for blame soundness and completeness.
+If a semantics is a complete monitor, then there exists a single-boundary
+ explanation for every type mismatch; namely, the boundary at which the mismatch
+ occurred.
+
+\begin{lemma}\label{lem:blame-N}
+  If $\obars{\sexpr_0}{\sowner_0}$ is well-formed
+  and  $\obars{\sexpr_0}{\sowner_0} \rredNanns\!\boundaryerror{\sbset_0}{\svalue_0}$,
+ $\fbsetsenders{\sbset_0}\!=\!\fvalueowners{\svalue_0}$ and furthermore
+  $\sbset_0$ contains one boundary specification.
+\end{lemma}
+\begin{proof}
+  By inspection, the only \Nname{} rule that outputs a boundary error
+   blames a single boundary:
+  \(
+    \obars{\sexpr_0}{\sowner_0} \rredNanns \ctx[\edynb{\obnd{\sowner_1}{\stype_0}{\sowner_2}}{\obars{\svalue_1}{\sowner_2}}] \rredNanns \boundaryerror{\eset{\obnd{\sowner_1}{\stype_0}{\sowner_2}}}{\obars{\svalue_1}{\sowner_2}}
+  \).
+  Thus $\sbset_0 = \eset{\obnd{\sowner_1}{\stype_0}{\sowner_2}}$ and $\fbsetsenders{\sbset_0} \feq \eset{\sowner_2}$.
+
+  \Lemmaref{lem:cm-N} implies $\sowner_0 \sWSOP \ctx[\edynb{\obnd{\sowner_1}{\stype_0}{\sowner_2}}{\obars{\svalue_1}{\sowner_2}}]$,
+   and therefore $\fvalueowners{\obars{\svalue_1}{\sowner_2}} \feq \eset{\sowner_2}$.
+\end{proof}
+
+The \Tname{} semantics is neither blame-sound nor blame-complete.\footnote{The
+upcoming \Tname{} counterexamples use $\slet$ expressions to abbreviate untyped
+function applications.}
+Blame soundness fails because the global map conflates information when
+multiple clients reference the same value.
+
+\begin{lemma}\label{lem:blame-Ta}
+  There exists a well-formed expression\/ $\obars{\sexpr_0}{\sowner_0}$
+  such that\/ $\obars{\sexpr_0}{\sowner_0} \rredTanns \boundaryerror{\sbset_0}{\svalue_0}$
+  and\/ $\fbsetsenders{\sbset_0} \not\subseteq \fvalueowners{\svalue_0}$.
+\end{lemma}
+\begin{proof}
+  The following example formalizes the illustration in \figref{fig:napkin}.
+  Function $f_0$ enters two unrelated components,
+  causes a type mismatch in one of them, and yet both get blamed.
+
+  \smallskip
+  \(
+  \newcommand{\theexampleint}{5}
+  \newcommand{\theexampletype}{(\tfun{\tint}{\tint})}
+  \begin{array}[t]{l}
+    (\eletdecl{f_0}{(\efun{\svar_0}{\epair{\svar_0}{\svar_0}})}
+    \\
+      ~\eletdecl{f_1}{(\estab{\obnd{\sowner_0}{\theexampletype}{\sowner_1}}{\obars{\edynb{\obnd{\sowner_1}{\theexampletype}{\sowner_0}}{\obars{f_0}{\sowner_0}}}{\sowner_1}})}
+    \\
+      ~\conf{\estab{\obnd{\sowner_0}{\tint}{\sowner_2}}{\obars{\eapp{\tint}{(\edynb{\obnd{\sowner_2}{\theexampletype}{\sowner_0}}{\obars{f_0}{\sowner_0}})}{\theexampleint}}{\sowner_2}})^{\raisedsowner}}{\emptyset}{\emptyset}
+    \\[0.1ex]
+    \rredTanns
+      \conf{\obars{\estab{\obnd{\sowner_0}{\tint}{\sowner_2}}{\obars{\eapp{\tint}{\obbars{\eloc_0}{\fconcat{\sowner_0}{\sowner_2}}}{\theexampleint}}{\sowner_2}}}{\sowner_0}}{\vstore_0}{\bstore_0}
+    \\[1.0ex]
+      \mbox{\quad where\, $\vstore_0 = \eset{\vrecord{\eloc_0}{\efun{\svar_0}{\epair{\svar_0}{\svar_0}}}}$}
+    \\[0.2ex]
+      \mbox{\quad and\, $\bstore_0 = \eset{\brecord{\eloc_0}{\obnd{\sowner_1}{\theexampletype}{\sowner_0}, \obnd{\sowner_0}{\theexampletype}{\sowner_1}, \obnd{\sowner_2}{\theexampletype}{\sowner_0}}}$}
+    \\[0.2ex]
+    \rredTanns
+      \conf{\obars{\estab{\obnd{\sowner_0}{\tint}{\sowner_2}}{\obars{\echecktwo{\tint}{\obbars{\eloc_1}{\fconcat{\sowner_0}{\sowner_2}}}{\eloc_0}}{\sowner_2}}}{\sowner_0}}{\vstore_1}{\bstore_1}
+    \\[1.0ex]
+    \rredTanns
+      \conf{\boundaryerror{\fmapref{\bstore_1}{\eloc_1} \cup \fmapref{\bstore_1}{\eloc_0}}{\obbars{\eloc_1}{\fconcat{\sowner_0}{\sowner_2}}}}{\vstore_1}{\bstore_1}
+    \\[1.2ex]
+      \mbox{\quad where\, $\vstore_1 = \vstore_0 \cup \eset{\vrecord{\eloc_1}{\epair{\theexampleint}{\theexampleint}}}$}
+    \\[0.2ex]
+      \mbox{\quad and\, $\bstore_1 = \bstore_0 \cup \eset{\brecord{\eloc_1}{\semptymap}}$}
+
+  \end{array}\)\smallskip
+
+  \noindent
+  Thus $\fbsetsenders{\fmapref{\bstore_1}{\eloc_1} \cup \fmapref{\bstore_1}{\eloc_0}} \eeq \eset{\sowner_0, \sowner_1} \not\subseteq \eset{\sowner_0, \sowner_2} \eeq \fvalueowners{\obbars{\eloc_1}{\fconcat{\sowner_0}{\sowner_2}}}$.
+  Specifically, component $\sowner_1$ has nothing to do with the type mismatch.
+\end{proof}
+
+
+Blame completeness fails
+because \Tname{} does not update the blame map when an untyped function is
+applied in an untyped context.
+This fact suggests that a mixed-typed language cannot satisfy blame
+completeness if it has no control over untyped code.
+
+\begin{lemma}\label{lem:blame-Tb}
+  There exists a well-formed expression\/ $\obars{\sexpr_0}{\sowner_0}$
+  such that\/ $\obars{\sexpr_0}{\sowner_0} \rredTanns \boundaryerror{\sbset_0}{\svalue_0}$
+  and\/ $\fbsetsenders{\sbset_0} \not\supseteq \fvalueowners{\svalue_0}$.
+\end{lemma}
+\begin{proof}
+  The expression below presents an untyped function $f_1$ that updates
+  the type assigned to another function ($f_0$). Because the update happens in
+  untyped code, the blame map does not record the crucial boundary.
+
+{
+  \newcommand{\theexamplefun}{\efun{\svar_0}{\svar_0}}
+  \newcommand{\typea}{(\tfun{\tint}{\tint})}
+  \newcommand{\typeb}{(\tfun{\tint}{\tpair{\tint}{\tint}})}
+  \newcommand{\typeatxt}{\stype_0}
+  \newcommand{\typebtxt}{\stype_1}
+  \newcommand{\deepfowners}{\fconcat{\sowner_2}{\fconcat{\sowner_1}{\fconcat{\sowner_0}{\fconcat{\sowner_3}{\fconcat{\sowner_4}{\fconcat{\sowner_3}{\fconcat{\sowner_0}{\sowner_5}}}}}}}}
+
+  \(
+  \begin{array}[t]{l}
+    (\eletdecl{f_0}{\estab{\obnd{\sowner_0}{\typeatxt}{\sowner_1}}{(\edynb{\obnd{\sowner_1}{\typeatxt}{\sowner_2}}{(\theexamplefun)})}}
+    \\[0.7ex]
+    ~\eletdecl{f_1}{\estab{\obnd{\sowner_0}{(\tfun{\typeatxt}{\typebtxt})}{\sowner_3}}{(\edynb{\obnd{\sowner_3}{(\tfun{\typeatxt}{\typebtxt})}{\sowner_4}}{(\efun{\svar_1}{\svar_1})})}}
+    \\[0.7ex]
+    ~\estab{\obnd{\sowner_0}{(\tpair{\tint}{\tint})}{\sowner_5}}{}
+    \\\qquad\conf{\zeroheight{\obars{\eapp{\tpair{\tint}{\tint}}{(\edynb{\obnd{\sowner_5}{\typebtxt}{\sowner_0}}{\obars{\eapp{\tdyn}{f_1}{f_0}}{\sowner_0}})}{42}}{\sowner_5})^{\raisedsowner}}}{\semptymap}{\semptymap}
+    \\[1.4ex]
+    \rredTanns
+    (\estab{\obnd{\sowner_0}{(\tpair{\tint}{\tint})}{\sowner_5}}{}
+    \\\qquad\qquad\conf{\zeroheight{\obars{\eapp{\tpair{\tint}{\tint}}{(\edynb{\obnd{\sowner_5}{\typebtxt}{\sowner_0}}{\obars{\eapp{\tdyn}{\obbars{\eloc_1}{\fconcat{\sowner_4}{\fconcat{\sowner_3}{\sowner_0}}}}{\obbars{\eloc_0}{\fconcat{\sowner_2}{\fconcat{\sowner_1}{\sowner_0}}}}}{\sowner_0}})}{42}}{\sowner_5})^{\raisebox{1.5ex}{$\scriptstyle\sowner_0$}}}}{\vstore_0}{\bstore_0}
+    \\[0.6ex]
+    \rredTanns
+      \conf{\obars{\estab{\obnd{\sowner_0}{(\tpair{\tint}{\tint})}{\sowner_5}}{\obars{\eapp{\tpair{\tint}{\tint}}{\obbars{\eloc_0}{\sownerlist_0}}{42}}{\sowner_5}}}{\sowner_0}}{\vstore_1}{\bstore_1}
+    \\[0.6ex]
+    \rredTanns
+      \conf{\obars{\estab{\obnd{\sowner_0}{(\tpair{\tint}{\tint})}{\sowner_5}}{\obars{\echecktwo{(\tpair{\tint}{\tint})}{\obbars{42}{\sownerlist_1}}{\eloc_0}}{\sowner_5}}}{\sowner_0}}{\vstore_2}{\bstore_2}
+    \\[1.2ex]
+    \rredTanns
+      \conf{\boundaryerror{\fmapref{\bstore_2}{\eloc_0}}{\obbars{42}{\sownerlist_1}}}{\vstore_2}{\bstore_2}
+    \\[1.2ex]
+      \mbox{\quad where $\typeatxt = \typea$}
+    \\[0.3ex]
+      \mbox{\quad and $\typebtxt = \typeb$}
+    \\[0.5ex]
+      \mbox{\quad and $\sownerlist_0 = \deepfowners$}
+    \\[0.5ex]
+      \mbox{\quad and $\sownerlist_1 = \fconcat{\fconcat{\sowner_5}{\sownerlist_0}}{(\frev{\sownerlist_0})}$}
+    \\[0.5ex]
+      \mbox{\quad and $\vstore_2 = \eset{(\vrecord{\eloc_0}{\theexamplefun}), (\vrecord{\eloc_1}{\efun{\svar_1}{\svar_1}})}$}
+    \\[0.5ex]
+      \mbox{\quad and $\bstore_2 = \{(\vrecord{\eloc_0}{\eset{\obnd{\sowner_0}{\typeatxt}{\sowner_1}, \obnd{\sowner_1}{\typeatxt}{\sowner_2}, \obnd{\sowner_5}{\typebtxt}{\sowner_0}}}),$}
+    \\[0.2ex]
+      \mbox{\quad \hphantom{and $\bstore_2 = \{$}$(\vrecord{\eloc_1}{\eset{\obnd{\sowner_0}{(\tfun{\typeatxt}{\typebtxt})}{\sowner_3}, \obnd{\sowner_3}{(\tfun{\typeatxt}{\typebtxt})}{\sowner_4}}})\}$}
+  \end{array}\)\smallskip
+}
+
+
+  Hence,
+$\fbsetsenders{\fmapref{\bstore_2}{\eloc_0}}
+  \eeq
+  \eset{\sowner_0, \sowner_1, \sowner_2}
+  \not\supseteq
+  \eset{\sowner_0, \sowner_1, \sowner_2, \sowner_3, \sowner_4, \sowner_5} 
+  \eeq \fvalueowners{\obbars{42}{\sownerlist_1}}
+$.
+  The crucial labels $\sowner_3$ and $\sowner_4$ are nowhere to be found.
+\end{proof}
+
+Finally, to prove blame soundness for \Aname{}, we reuse the proof technique for
+complete monitoring. The key invariant is that only trace-wrapped values
+may accumulate multiple owners; other terms satisfy the consistency
+relation. We turn this observation into a judgment, $\sWLA$, that weakens
+$\sWSOP$ just enough.
+Technically, we weaken the trace rules. For example:
+
+{\begin{mathpar}
+  \inferrule*{
+    \eset{\sowner_0, \sowner_1, \ldots, \sowner_n}
+    = \bigcup \eset{\eset{\sowner_j, \sowner_k} \mid \obnd{\sowner_j}{\stype_0}{\sowner_k} \in \sbset_0}
+    \\
+    \sownerenv_0; \sowner_n \sWLA \sexpr_0
+  }{
+    \sownerenv_0; \sowner_0 \sWLA \obars{\eprehist{\sbset_0}{\obbars{\sexpr_0}{\sowner_n \ldots \sowner_1}}}{\sowner_0}
+  }
+
+\end{mathpar}}
+
+\begin{lemma}\label{lem:blame-A}
+  If\/ $\obars{\sexpr_0}{\sowner_0}$
+  is well-formed and\/ $\obars{\sexpr_0}{\sowner_0} \rredAanns\!\boundaryerror{\sbset_0}{\svalue_0}$,
+  $\fbsetsenders{\sbset_0}\!=\!\fvalueowners{\svalue_0}$.
+\end{lemma}
+\begin{proofsketch}
+  By a preservation lemma for the $\sWLA$ judgment; see the \techreport{}.
+\end{proofsketch}
+
+In fact, a variant of \Aname{} satisfies a stronger property than
+lemma~\ref{lem:blame-A}.  The variant uses lists of boundaries rather than
+sets, and a similar proof effort shows that \Aname{} reports the
+inter-component path that propagates a value to a mismatched boundary. We 
+refer the interested reader to the \techreport{}.
+
+%% -----------------------------------------------------------------------------
+\subsection{Discussion: The Trade-Off Between the Precision and Cost of Blame} 
+\label{sec:tradeoff}
+
+The exploration of blame points to three insights about the precision and
+cost of blame.
+First, \Nname{} is best for developers who wish to get
+precise blame information, and it obviously suffers from high overhead.
+As \citet{gt-dead-ben} point out, the latter is partly due to the wrappers
+needed to protect typed values from bad untyped code and untyped values
+from bad types.
+
+%% ---------------------------------
+
+Second, the design of \Tname{} represents a rather different trade-off.
+The runtime cost of types can be much lower than \Nname{} in programs that mix
+typed and untyped code~\cite{gf-icfp-2018}, but \Tname{} types offer few
+guarantees to programmers.
+The type soundness theorem for \Tname{} ensures only the top-level shape of
+values in typed code.
+\Tname{} fails complete monitoring, meaning it omits some runtime checks
+to the detriment of the developers of untyped code.
+And because \Tname{} is neither blame-sound nor blame-complete, it may send developers
+looking for type violations in the wrong place.
+
+A strong type soundness theorem, complete monitoring, and blame
+completeness are not in reach for \Tname{}.  The design's key axiom is
+freedom from wrappers~\cite{vss-popl-2017}, but without wrappers there is
+no interposition point in untyped code for checking channels and for updating
+blame information.
+
+There are at least two ways that a variant of \Tname{} can satisfy a notion
+ of blame soundness.
+One way is to blame fewer boundaries.
+Reporting zero boundaries in the $\sapp$ and $\scheck$ rules, while keeping
+ the current $\sdyn$ rules, is sure to eliminate all irrelevant boundaries.
+A second option is to weaken the ownership rules advocated in \secref{sec:ownership}.
+Instead of path-based ownership, a language can advocate a heap-based notion
+ that merges all paths to the same address.
+It remains to be seen whether heap-based ownership can be useful to developers,
+ but the \techreport{} provides a definition and proves heap-based blame soundness
+ for \Tname{}.
+
+%% ---------------------------------
+
+Third, the design of \Aname{} is best understood as a variation of
+\Tname{} that accepts a limited number (three) of wrappers (monitor and/or
+trace) per value.  On one hand, this seemingly small compromise strictly
+improves the theoretical properties of \Tname{}. On the other hand,
+\Aname{} remains a proof-of-concept semantics.
+
+A practical implementation of \Aname{} must address two problems.
+The first concerns space consumption.
+\Aname{} satisfies blame completeness
+because it records {\em every\/} boundary that a value crosses, meaning this record
+may actually consume an unbounded amount of space.  The simplest fix is to
+sacrifice blame completeness by limiting the number of elements in a blame set.
+Another option is to invent a compression scheme that reduces the space
+needs of a blame set.
+The second problem concerns the na{\"i}ve assumption of the model that every
+value can be wrapped with metadata to trace its provenance. This is clearly
+impractical for fixed-width integers and other basic values.  Again, an
+implementation may omit such wrappers at the cost of blame completeness
+when it detects a type mismatch for an unwrapped value.
+Because of these challenges, we predict
+that an implementation of trace wrappers will be
+blame-sound but blame-incomplete.

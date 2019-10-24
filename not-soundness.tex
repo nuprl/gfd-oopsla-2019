@@ -1,0 +1,104 @@
+Theorem~\ref{thm:type-soundness} states that \Nname{} and \Aname{} satisfy
+the {\em same\/} type soundness property. This may falsely suggest that
+\Nname{} and \Aname{} produce the same results (values, errors) for all
+programs. But type soundness merely says that a reduction relation maps
+well-typed programs to well-typed results according to some typing judgment,
+and nothing more.
+
+Recall that \Aname{} uses lazy monitors to protect pairs of values while
+\Nname{} eagerly checks pairs, so it is straightforward to construct an
+example that highlights the differences: 
+
+\medskip
+\(\begin{array}[t]{l}
+  \mbox{\it define~}
+      \sexpr_0 = \equotient{\tnat}{
+                    (\efst{\tnat}{(\edynb{\obnd{\sowner_0}{\tpair{\tnat}{\tnat}}{\sowner_1}}{\epair{1}{{-1}}})})}{0}
+  \\[0.8ex]
+      \sexpr_0 \rredN \boundaryerror{\eset{\obnd{\sowner_0}{\tnat}{\sowner_1}}}{{-1}}
+  \\[0.8ex]
+    \sexpr_0 \rredA \divisionbyzeroerror
+\end{array}\)
+\smallskip
+
+\noindent Generally speaking, \Aname{} is closer to \Tname{} in the sense
+that both recognize the same set of erroneous expressions. \Nname{}
+identifies strictly more.
+
+\begin{theorem}
+  The following statements hold for all well-formed expressions:
+  \begin{enumerate}
+    \itemsep0.5ex
+    \item
+      If\/
+      $\sexpr_0 \rredA \eerr$
+      then\/
+      $\sexpr_0 \rredN \eerr$,
+    \item
+      $\sexpr_0 \rredA \eerr$
+      if and only if\/
+      $\sexpr_0 \rredT \eerr$
+  \end{enumerate}
+\end{theorem}
+\begin{proofsketch}
+  By two stuttering simulations.
+  \Nname{} and \Aname{} stutter when: \Nname{} traverses a pair,
+   \Nname{} applies a monitored function,
+   or \Aname{} projects an element of a monitored pair.
+  \Aname{} and \Tname{} may stutter when \Aname{} eliminates a monitor or
+   \Tname{} reaches a $\scheck$ expression.
+  The \techreport{} works through the details.
+\end{proofsketch}
+
+Even this theorem does not capture the complete differences between the
+semantics. Subtle differences show up when a value crosses multiple
+boundaries.  Suppose, as in \figref{fig:tr-example}, an untyped function
+flows into a typed component and out again to an untyped client.  The
+client can trust the types in \Nname{}, but not in \Aname{}:
+
+\medskip
+{\(
+\newcommand{\theexampleint}{8}
+  \begin{array}[t]{l}
+    \mbox{\it define~}
+      \sexpr_1 = \eapp{\tdyn}{
+		    {\estab{\obnd{\sowner_0}{\tfun{\tnat}{\tnat}}{\sowner_1}}
+			   {(\edynb{\obnd{\sowner_1}{\tfun{\tnat}{\tnat}}{\sowner_2}}
+				   {(\efun{\svar_0}{\efun{\svar_1}{\svar_0}})})}}}
+		      {\theexampleint}
+    \\[0.8ex]
+
+  \sexpr_1 \rredN \boundaryerror{\eset{\obnd{\sowner_0}{\tnat}{\sowner_1}}}{(\efun{\svar_1}{\theexampleint})}
+    \\[0.8ex]
+  \sexpr_1 \rredA \efun{\svar_1}{\theexampleint}
+\end{array}
+\)}
+\smallskip
+
+\noindent
+Clearly, \Aname{} is missing some essential runtime checks
+that prevent the discovery of problematic value flows. And
+type soundness---the idea that typed operations manipulate only values of
+the correct shape---cannot explain this difference. 
+
+The remainder of this paper presents a novel framework for characterizing
+the differences between two mixed-typed semantics that
+satisfy the same type soundness property but implement
+different guarantees for different parts of the code. There are two key insights:
+\begin{enumerate}
+
+\item The first is to recognize that channels of communication between
+typed and untyped code dynamically appear and disappear. 
+
+\item The second is that type specifications impose obligations on these
+channels, and therefore all channels deserve observation. 
+
+\end{enumerate}
+The key technique is a tracking device for values, dubbed ownership.
+Intuitively, a component in a
+program owns the values that it contains. A reduction semantics ``moves''
+values from one component to another across channels with obligations. If
+the obligations can be discharged, the transfer is complete and the
+receiving component takes on full responsibility---or ownership. If not,
+both components co-own. Hence checking for ownership properties becomes a
+way to state and check for meta-properties of mixed-typed languages.

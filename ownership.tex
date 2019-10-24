@@ -1,0 +1,411 @@
+
+Ownership labels decorate an expression with the names of the currently-responsible
+components. In
+the original program, each component owns all of its subexpressions. An
+expression reduces to a value; if a value crosses a boundary, it gains
+a label.
+A value loses a label only when it
+fully matches a boundary type.  This section provides a formal language of
+ownership and explains:
+\begin{itemize}
+  \item how to lift an expression into an ownership-labeled syntax, and
+  \item how to lift a reduction relation to propagate ownership labels in a path-based sense.
+\end{itemize}
+
+\subsection{Ownership-labeled Syntax}
+
+\begin{figure}\flushleft
+  \begin{minipage}[t]{0.35\columnwidth}\vspace{-8mm}
+  \lbl{\fbox{Ownership Language}}{
+    \begin{langarray}
+      \sexpr & \BNFeq &
+        \ldots
+        \mid \obars{\sexpr}{\sowner}
+        \mid \edyn{\sbnd}{\obars{\sexpr}{\sowner}} \mid
+      \\ & &
+        \esta{\sbnd}{\obars{\sexpr}{\sowner}}
+        \mid \emon{\sbnd}{\obars{\sexpr}{\sowner}}
+      \\
+      \svalue & \BNFeq &
+        \ldots
+        \mid \obars{\svalue}{\sowner}
+      \\
+      \sowner & \BNFeq &
+        \textrm{\scountable{} set} %, with an implicit mapping to component names}
+        % TODO what to call them? boundary labels, component names, blame labels, 
+        % make the blame/ownership distinction clear in explanation, the new type is only superscripts
+      \\
+      \sowners & \BNFeq &
+        \powerset{\sowner}
+      \\
+      \sownerlist & \BNFeq &
+        \ % empty ... use ldots instead?
+        \mid \fconcat{\sowner}{\sownerlist}
+    \end{langarray}
+  }
+
+  \end{minipage}\begin{minipage}[t]{0.65\columnwidth}
+    \(\begin{array}[t]{l@{~~}c@{~}l}
+    \fvalueowners{\svalue_0} & \feq &
+      \left\{\begin{array}{ll}
+        \eset{\sowner_0} \cup \fvalueowners{\svalue_1}
+         & \mbox{if $\svalue_0 \eeq \obars{\svalue_1}{\sowner_0}$}
+        \\
+        \fvalueowners{\svalue_1}
+         & \mbox{if $\svalue_0 \eeq \ehist{\sbset_0}{\svalue_1}$}
+        \\
+        \eset{}
+         & \mbox{otherwise}
+      \end{array}\right.
+    \\\\
+    \frev{\sowner_0 \ldots \sowner_n} & \feq &
+      \sowner_n \ldots \sowner_0
+    \\\\
+      \zerowidth{
+        \sexpr_0 \eeq \obbars{\sexpr_1}{\sownerlist_0}
+        \sabbreveq
+        \sexpr_0 \eeq \obars{\cdots \obars{\sexpr_1}{\sowner_n} \cdots}{\sowner_1}}
+  \end{array}\)
+
+  \end{minipage}
+
+  \medskip
+  \begin{minipage}[t]{0.46\columnwidth}
+  \lbl{\fbox{$\fwellformedO{\sexpr}{\stoptional}$}}{\(\begin{array}{l@{}l} % well-formed expression
+    \fwellformedO{\obars{\sexpr_0}{\sowner_0}}{\stype_0} &
+    \mbox{ iff } \sowner_0 \sWSOP \obars{\sexpr_0}{\sowner_0}
+    \mbox{ and} \sWTO \obars{\sexpr_0}{\sowner_0} : \stype_0\!\!
+    \\
+    \fwellformedO{\obars{\sexpr_0}{\sowner_0}}{\tdyn} &
+    \mbox{ iff } \sowner_0 \sWSOP \obars{\sexpr_0}{\sowner_0}
+    \mbox{ and} \sWTO \obars{\sexpr_0}{\sowner_0} : \tdyn\!\!
+  \end{array}\)}{}
+
+  \end{minipage}\begin{minipage}[t]{0.264\columnwidth}
+    \lbl{\fbox{$\stypeenv\!\sWTO\!\sexpr\!:\!\stype\!$} \missingrules{}}{\begin{mathpar}
+      \inferrule*{
+        \stypeenv_0 \sWTO \sexpr_0 : \stype_0
+      }{
+        \stypeenv_0 \sWTO \obars{\sexpr_0}{\sowner_0} : \stype_0
+      }
+    \end{mathpar}}
+
+  \end{minipage}\begin{minipage}[t]{0.264\columnwidth}
+    \lbl{\fbox{$\stypeenv\!\sWTO\!\sexpr : \tdyn\!$} \missingrules{}}{\begin{mathpar}
+      \inferrule*{
+        \stypeenv_0 \sWTO \sexpr_0 : \tdyn
+      }{
+        \stypeenv_0 \sWTO \obars{\sexpr_0}{\sowner_0} : \tdyn
+      }
+    \end{mathpar}}
+  \end{minipage}
+
+  \smallskip
+  \lbl{\fbox{$\sownerenv; \sowner \sWSOP \sexpr$} \missingrules{}}{\begin{mathpar} %  well-named-and-labeled components (selected rules)
+    \inferrule*{
+      \sownerenv_0; \sowner_0 \sWSOP \sexpr_0
+    }{
+      \sownerenv_0; \sowner_0 \sWSOP \obars{\sexpr_0}{\sowner_0}
+    }
+
+    \inferrule*{
+      \tann{\svar_0}{\sowner_0} \in \sownerenv_0
+    }{
+      \sownerenv_0; \sowner_0 \sWSOP \svar_0
+    }
+
+    \inferrule*{
+      \fcons{\tann{\svar_0}{\sowner_0}}{\sownerenv_0}; \sowner_0 \sWSOP \sexpr_0
+    }{
+      \sownerenv_0; \sowner_0 \sWSOP \efun{\svar_0}{\sexpr_0}
+    }
+
+    \inferrule*{
+      \fcons{\tann{\svar_0}{\sowner_0}}{\sownerenv_0}; \sowner_0 \sWSOP \sexpr_0
+    }{
+      \sownerenv_0; \sowner_0 \sWSOP \efun{\tann{\svar_0}{\stype_0}}{\sexpr_0}
+    }
+
+    \inferrule*{
+      \sownerenv_0; \sowner_0 \sWSOP \sexpr_0
+      \quad
+      \sownerenv_0; \sowner_0 \sWSOP \sexpr_1
+    }{
+      \sownerenv_0; \sowner_0 \sWSOP \eapp{\stoptional}{\sexpr_0}{\sexpr_1}
+      %\sownerenv_0; \sowner_0 \sWSOP \ebinop{\sexpr_0}{\sexpr_1}
+    }
+
+    \inferrule*{
+      \sownerenv_0; \sowner_1 \sWSOP \sexpr_0
+    }{
+      \sownerenv_0; \sowner_0 \sWSOP \edynb{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\obars{\sexpr_0}{\sowner_1}}
+    }
+
+    \inferrule*{
+      \sownerenv_0; \sowner_1 \sWSOP \sexpr_0
+    }{
+      \sownerenv_0; \sowner_0 \sWSOP \estab{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\obars{\sexpr_0}{\sowner_1}}
+    }
+
+    \inferrule*{
+      \sownerenv_0; \sowner_1 \sWSOP \svalue_0
+    }{
+      \sownerenv_0; \sowner_0 \sWSOP \emon{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\obars{\svalue_0}{\sowner_1}}
+    }
+
+    \inferrule*{
+      \sownerenv_0; \sowner_0 \sWSOP \svalue_0
+    }{
+      \sownerenv_0; \sowner_0 \sWSOP \ehist{\sbset_0}{\svalue_0}
+    }
+
+  \end{mathpar}}
+
+  \Description[Grammar extensions, metafunctions, and judgment forms.]{Syntax
+    and judgments for ownership. Expressions and values may have labels;
+    boundary expressions must have labels. An `owners' metafunction gets
+    the labels from a value; a `rev' metafunction reverses a sequence of labels.
+    An abbreviation captures a sequence of labels. There is a new well-formedness
+    judgment, which relies on extended typing judgments and an extended
+    labeling judgment. The typing judgments accept labeled expressions. The
+    labeling judgment checks that every boundary has a label.
+  }
+  \caption{Ownership language extensions}
+  \label{fig:annotated-syntax}
+\end{figure}
+
+\noindent The addition of ownership labels adds new syntax and one
+requirement to an evaluation language.
+Ownership labels $\sowner$ form a new syntactic category, but correspond to
+component names.
+Labels annotate expressions as superscripts:
+$\obars{\sexpr}{\sowner}$.
+The new requirement is that in each boundary term the enclosed expression
+comes with a label that matches the sender name, e.g.,
+the unlabeled term $(\estab{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\sexpr_0})$
+must add the label $\sowner_1$ to the inner expression.
+
+Initially, only the immediate subexpressions of boundary terms have an explicit label.
+All other expressions implicitly have the same owner as the context they appear
+in.
+Contracting a redex may combine labels from different
+subexpressions onto the same term. Hence expressions and values may become
+nested under a sequence of labels.  A value that occurs under
+several distinct ownership labels (including the label of its context) has
+multiple owners.
+
+\Figref{fig:annotated-syntax} defines an extended grammar, metafunctions,
+ and judgments for an ownership-labeled language.
+The main judgment, $\fwellformedO{\sexpr}{\stoptional}$,
+ states that a well-formed expression has a top-most owner,
+ contains names and labels that satisfy the $\sWSOP$ judgment,
+ and is well-typed.
+The $\sWSOP$ judgment formalizes an \emph{ownership consistency relation}\/
+ with respect to a name $\sowner$ for the enclosing component and a map
+ $\sownerenv$ from variables to component names.\footnote{\Tname{} additionally
+ requires a heap labeling. The details are standard and appear in the
+ \techreport{}.}
+ Within one component, consistency
+ requires that every labeled expression $\obars{\sexpr_0}{\sowner_0}$
+ matches the enclosing component and that every variable is bound by a
+ function defined in a matching component.  Other values and non-boundary
+ expressions satisfy consistency if their subexpressions do.  At the
+ boundaries between components, the client side of the boundary
+ specification must match the enclosing component and the sender-side name
+ must match the required label on the subexpression.
+
+The metafunction $\svalueowners$\/ formally defines the owners of a value
+ as the set of labels around an unlabeled value stripped of any trace-wrapper
+ metadata.
+Monitor wrappers are not stripped because they represent boundaries.
+\Figref{fig:annotated-syntax} lastly overloads the $\srev$\/ metafunction
+ to reverse a sequence of labels, and defines the abbreviation
+ $\obbars{\sexpr}{\sownerlist}$ to capture labels around an expression.
+For example, $\obbars{4}{\fconcat{\sowner_0}{\sowner_1}}$
+ is short for $\obars{\obars{4}{\sowner_0}}{\sowner_1}$
+ and $\obbars{5}{\sownerlist_0}$ matches $5$ with $\sownerlist_0$ bound to
+ the empty sequence.
+
+
+%% -----------------------------------------------------------------------------
+\subsection{Ownership-labeled Reduction}
+
+A notion of reduction for an evaluation language may be systematically lifted
+ to a labeled language in two steps.
+Each lifted rule must first handle terms with an arbitrary number of
+ ownership labels per expression
+ and must second propagate labels to reflect changes in the expression.
+
+The following laws explain how to propagate labels.
+Each handles one scenario in which labels may be
+ transferred or dropped and comes with an example reduction rule.
+No new labels may be created during a reduction:
+
+{\begin{enumerate}
+    \itemsep1ex
+    % creation = (+ 2 2) creates 4, dyn Nan <1,2> creates <...,...>
+    %[law of creation]
+    \item \label{ax:new}
+      Every newly-created value is owned by the enclosing context.
+    \subitem
+      $\obars{\esum{\tnat}{\obars{2}{\sowner_0}}{\obars{2}{\sowner_1}}}{\sowner_2}
+       \rrarrow \obars{4}{\sowner_2}$
+    \subitem
+      \emph{The result\/ $4$ is a new value introduced by the runtime system via\/ the $\sdelta$ metafunction.}
+
+    % positive elim = fst/snd projection, result of fun. application, ...
+    %[law of positive elimination]
+    \item \label{ax:pos}
+      Every value that flows out of a value $\svalue_0$
+      acquires the labels of $\svalue_0$ and the context.
+    \subitem
+      $\obars{\esnd{\tdyn}{\obbars{\epair{\obars{1}{\sowner_0}}{\obars{2}{\sowner_0}}}{\fconcat{\sowner_1}{\sowner_2}}}}{\sowner_3}
+       \rrarrow \obbars{2}{\fconcat{\sowner_0}{\fconcat{\sowner_1}{\fconcat{\sowner_2}{\sowner_3}}}}$
+    \subitem
+      \emph{The value\/ $2$ flows out of the pair\/ $\epair{1}{2}$ and thereby acquires the labels on the pair.}
+
+    % negative elim = argument to function, ...
+    %[law of negative elimination]
+    \item \label{ax:neg}
+      Every value that flows into $\svalue_0$ acquires the label
+      of the context and the reversed labels of $\svalue_0$.
+    \subitem
+      $\newcommand{\thevalue}{\epair{8}{6}}
+       \obars{\eapp{\tdyn}{\obbars{\efun{\svar_0}{\efst{\tdyn}{\svar_0}}}{\fconcat{\sowner_0}{\sowner_1}}}{\obars{\thevalue}{\sowner_2}}}{\sowner_3}
+       \rrarrow
+       \obars{\obbars{\efst{\tdyn}{\obbars{\thevalue}{\fconcat{\sowner_2}{\fconcat{\sowner_3}{\fconcat{\sowner_1}{\sowner_0}}}}}}{\fconcat{\sowner_0}{\sowner_1}}}{\sowner_3}$
+    \subitem
+      \emph{The argument value\/ $\epair{8}{6}$ is input to the function. The substituted body\/ $(\efst{\tdyn}{\epair{8}{6}})$}
+    \subitem
+      \emph{flows out of the function, and by \lawref{ax:pos} acquires the function's labels.}
+
+    %[law of base checks]
+    \item \label{ax:base}
+      If a base value reaches a boundary with a matching base type,
+      then the value may drop its current labels and
+      cross the boundary as a new value in the new context.
+    \subitem $\newcommand{\thevalue}{0}
+              \obars{\estab{\obnd{\sowner_0}{\tnat}{\sowner_1}}{\obars{\thevalue}{\fconcat{\sowner_2}{\sowner_1}}}}{\sowner_0}
+              \rrarrow \obars{\thevalue}{\sowner_0}$
+    \subitem
+      \emph{The value\/ $0$ fully matches the type\/ $\tnat$\/ $(\ftagof{\tnat} \eeq \knat \wedge \fshallow{\ftagof{\tnat}}{0})$.}
+
+    %[law of no-check transfer]
+    \item \label{ax:cross}
+      Any other value that crosses a boundary must acquire the label of
+      the new context.
+    \subitem
+      $\newcommand{\thevalue}{\epair{{-2}}{1}}
+                \obars{\estab{\obnd{\sowner_0}{\tnat}{\sowner_1}}{\obars{\thevalue}{\sowner_1}}}{\sowner_0}
+                \rrarrow \obbars{\thevalue}{\fconcat{\sowner_1}{\sowner_0}}$
+    \subitem
+      \emph{The pair\/ $\epair{{-2}}{1}$ does not match the type $\tnat$ and therefore keeps its old label.}
+
+    \item \label{ax:dup}
+      Consecutive equal labels may be dropped.
+      \subitem $\obbars{0}{\fconcat{\sowner_0}{\fconcat{\sowner_0}{\fconcat{\sowner_1}{\sowner_0}}}} \eeq \obars{0}{\fconcat{\sowner_0}{\fconcat{\sowner_1}{\sowner_0}}}$
+
+    \item \label{ax:error}
+      Labels on an error term may be dropped.
+      \subitem $\ctx[\obars{\divisionbyzeroerror}{\sowner_0}] \rrarrow \divisionbyzeroerror$
+
+  \end{enumerate}}
+
+ All told, the laws reflect an algebraic intuition about how
+ values travel across a program.  The same intuition is implicit in
+ \secref{sec:motivation} and further motivated in prior work on higher-order
+ contracts~\cite{dtf-esop-2012}.
+Note that function application is the only ``input'' operation in our models;
+ the addition of mutable cells would add another kind of input.
+
+% \footnote{Any set of LAWS is subject to criticism and competition.
+%  \Secref{sec:tradeoff} outlines a heap-based form of ownership tailored to
+%  \Tname{}, though it remains to be seen whether this neutered alternative
+%  is compelling.}
+
+Lifting does not otherwise change a reduction relation, meaning the
+behavior of any expression remains the same. After all, the purpose of
+lifting a base semantics to a labeled language is to prove properties (that
+can be stated in terms of ownership labels) about the base semantics.
+
+\subsection{Lifting by Example}
+
+As a first application of the laws, let us modify the \Nname{} rule that
+ creates a new monitor for an untyped function that reaches a boundary.
+The unlabeled rule follows:
+
+\smallskip\(\begin{array}{l}
+  \edynb{\obnd{\sowner_0}{(\tfun{\stype_0}{\stype_1})}{\sowner_1}}{\svalue_0}
+    \nredNS
+    \emon{\obnd{\sowner_0}{(\tfun{\stype_0}{\stype_1})}{\sowner_1}}{\svalue_0}
+  \\\mbox{\quad if $\fshallow{\ftagof{\tfun{\stype_0}{\stype_1}}}{\svalue_0}$}
+\end{array}\)\smallskip
+
+Lifting the left-hand side of the rule introduces
+ a label $\sowner_3$ for the owner of the context and a sequence of owners
+ $\sownerlist_2$ around the untyped function:
+
+\smallskip\(\begin{array}{l}
+  \obars{\edynb{\obnd{\sowner_0}{(\tfun{\stype_0}{\stype_1})}{\sowner_1}}{\obbars{\svalue_0}{\sownerlist_2}}}{\sowner_3}
+    \nredNSanns
+    ~~\ldots
+  \\\mbox{\quad if $\fshallow{\ftagof{\tfun{\stype_0}{\stype_1}}}{\svalue_0}$}
+\end{array}\)\smallskip
+
+\noindent
+The lifted rule does not require that the names in the boundary specification
+ match the ownership labels.
+In particular, both $\sowner_0 \neq \sowner_3$ and $\sowner_1 \neq \sownerlist_2$
+ may hold of a labeled redex.
+
+The propagation laws assign the label of the context to the newly-created
+ monitor (\lawref{ax:new}):
+
+\(\begin{array}{l}
+  \obars{\edynb{\obnd{\sowner_0}{(\tfun{\stype_0}{\stype_1})}{\sowner_1}}{\obbars{\svalue_0}{\sownerlist_2}}}{\sowner_3}
+    \nredNSanns
+    \obars{\emon{\obnd{\sowner_0}{(\tfun{\stype_0}{\stype_1})}{\sowner_1}}{\obbars{\svalue_0}{\sownerlist_2}}}{\sowner_3}
+  \\\mbox{\quad if $\fshallow{\ftagof{\tfun{\stype_0}{\stype_1}}}{\svalue_0}$}
+\end{array}\)\smallskip
+
+\noindent
+No other laws apply.
+Laws~\ref{ax:pos} and \ref{ax:neg} do not apply because only one value is
+ involved and nothing flows out of it.
+Laws~\ref{ax:base} and \ref{ax:cross} do not apply because $\svalue_0$ does
+ not cross a boundary; rather, the monitor preserves the $\sowner_0$--$\,\sowner_1$
+ boundary.
+\Lawref{ax:dup} does not apply because the rule does not create or extend
+ a sequence of labels, and \lawref{ax:error} does not apply because there are
+ no errors.
+
+For a second example, the following lifted \Aname{} rule projects the
+ first element of a traced and monitored pair in a dynamically-typed context.
+The left side of the rule introduces
+ one list of owners around the trace wrapper ($\sownerlist_4$),
+ another list around the monitor ($\sownerlist_3$),
+ one label for the context within the monitor ($\sowner_2$),
+ and one label for the outer context ($\sowner_5$).
+The rule creates a $\sfst$ application inside the monitor boundary:
+
+\vspace{-2mm}
+\(\begin{array}{l}
+  \obars{\efst{\tdyn}{\obbars{\ehopt{\sbset_0}{\obbars{\emon{\obnd{\sowner_0}{(\tpair{\stype_0}{\stype_1})}{\sowner_1}}{\obars{\svalue_0}{\sowner_2}}}{\sownerlist_3}}}{\sownerlist_4}}}{\sowner_5}
+  \\\hspace{0.42\columnwidth}
+  \nredADanns
+  \obars{\eprehist{\sbset_0}{\obbars{\estab{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\obars{\efst{\stype_1}{\svalue_0}}{\sowner_2}}}{\fconcat{\sownerlist_3}{\sownerlist_4}}}}{\sowner_5}
+\end{array}\)\smallskip
+
+\noindent
+The new $\ssta$ boundary mediates between the same two components as the monitor,
+ and therefore has the same $\sowner_2$ label.
+\Lawref{ax:new} applies this label to the $\sfst$ application.
+\Lawref{ax:pos} determines the labels outside the $\ssta$ expression
+ because this expression is the result of eliminating two wrappers.
+The other laws do not apply.
+
+Lifted variants of the semantics from \secref{sec:semantics} appear
+ in the \techreport{}.
+Henceforth, the symbol $\rredXanns\,$ refers to the lifted variant
+ of the $\rredX$ reduction relation.
+

@@ -1,0 +1,449 @@
+\subsection{Normal \Aname{}}
+\begin{flushleft}
+
+  \lbl{\fbox{\Aname{}\ Language} extends Base \sevallang{}}{
+    \begin{langarray}
+      \svalue & \BNFeq &
+        \ldots
+        \mid \ehist{\sblist}{\svalue}
+        \mid \emon{\obnd{\sowner}{\tfun{\stype}{\stype}}{\sowner}}{\obars{\svalue}{\sowner}}
+        \mid \emon{\obnd{\sowner}{\tpair{\stype}{\stype}}{\sowner}}{\obars{\svalue}{\sowner}}
+      \\
+      \sexpr & \BNFeq &
+        \ldots \mid \eprehist{\sblist}{\sexpr}
+      \\
+      \ctx & \BNFeq &
+        \ldots \mid \eprehist{\sblist}{\ctx}
+    \end{langarray}
+  }
+
+  %% ---------------------------------------------------------------------------
+  %% Types
+
+  \lbl{\fbox{$\stypeenv \sWTA \sexpr : \stype$} extends $\stypeenv \sWT \sexpr : \stype$}{\begin{mathpar}
+    \inferrule*{
+      \stypeenv \sWTA \svalue_0 : \tdyn
+    }{
+      \stypeenv \sWTA \emon{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\svalue_0} : \stype_0
+    }
+
+    \inferrule*{
+    }{
+      \stypeenv \sWTA \eerr : \stype_0
+    }
+  \end{mathpar}}
+
+  \lbl{\fbox{$\stypeenv \sWTA \sexpr : \tdyn$} extends $\stypeenv \sWT \sexpr : \tdyn$}{\begin{mathpar}
+    \inferrule*{
+      \stypeenv \sWTA \svalue_0 : \stype_0
+    }{
+      \stypeenv \sWTA \emon{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\svalue_0} : \tdyn
+    }
+
+    \inferrule*{
+      \stypeenv \sWTA \sexpr_0 : \tdyn
+    }{
+      \stypeenv \sWTA \eprehist{\sblist_0}{\sexpr_0} : \tdyn
+    }
+
+    \inferrule*{
+      \stypeenv \sWTA \sexpr_0 : \tdyn
+    }{
+      \stypeenv \sWTA \ehist{\sblist_0}{\sexpr_0} : \tdyn
+    }
+
+    \inferrule*{
+    }{
+      \stypeenv \sWTA \eerr : \tdyn
+    }
+  \end{mathpar}}
+
+  %% ---------------------------------------------------------------------------
+  %% Reduction relations
+
+  \lbl{\fbox{$\ehopt{\sblist_0}{\svalue_0}$} short for a $\svalue_1$ such that $\fgettrace{\svalue_1} \eeq \sblist_0$ and $\fremtrace{\svalue_1} \eeq \svalue_0$}{}
+
+  \lbl{\fbox{$\rredA$} reflexive-transitive closure of $\credA$}{}
+
+  \lbl{\fbox{$\credN$} compatible closure of $\nredAS\!\cup \nredAD$}{}
+
+  \lbl{\fbox{$\sexpr \nredAS \sexpr$}}{
+    \begin{rrarray}
+      \eunopt{\stype_0}{\svalue_0}
+      & \nredAS
+      & \tagerrorS
+      \\\sidecond{if ${\svalue_0} \not\in {(\emon{\obnd{\sowner}{(\tpair{\stype}{\stype})}{\sowner}}{\svalue})}$
+                  and $\sdelta(\sunop, {\svalue_0})$ is undefined}
+      \\
+      \eunopt{\stype_0}{\svalue_0}
+      & \nredAS
+      & {\sdelta(\sunop, {\svalue_0})}
+      \\\sidecond{if  $\sdelta(\sunop, {\svalue_0})$ is defined}
+      \\
+      \efst{\stype_0}{(\emon{\obnd{\sowner_0}{\stype_1}{\sowner_1}}{\svalue_0})}
+      & \nredAS
+      & \edynb{\sbnd_0}{(\efst{\tdyn}{\svalue_0})}
+      \\\sidecond{where $\stype_2 \sassign \ftypefst{\stype_1}$
+                  and $\sbnd_0 \sassign \obnd{\sowner_0}{\stype_2}{\sowner_1}$}
+      \\
+      \esnd{\stype_0}{(\emon{\obnd{\sowner_0}{\stype_1}{\sowner_1}}{\svalue_0}}
+      & \nredAS
+      & \edynb{\sbnd_0}{(\esnd{\tdyn}{\svalue_0})}
+      \\\sidecond{where $\stype_2 \sassign \ftypesnd{\stype_1}$
+                  and $\sbnd_0 \sassign \obnd{\sowner_0}{\stype_2}{\sowner_1}$}
+      \\
+      \ebinopt{\stype_0}{\svalue_0}{\svalue_1}
+      & \nredAS
+      & \tagerrorS
+      \\ \sidecond{if $\sdelta(\sbinop, {\svalue_0}, {\svalue_1})$ is undefined}
+      \\
+      \ebinopt{\stype_0}{\svalue_0}{\svalue_1}
+      & \nredAS
+      & \sdelta(\sbinop, \svalue_0, \svalue_1)
+      \\\sidecond{if $\sdelta(\sbinop, \svalue_0, \svalue_1)$ is defined}
+      \\
+      \eapp{\stype_0}{\svalue_0}{\svalue_1}
+      & \nredAS
+      & \tagerrorS
+      \\\sidecond{if $\svalue_0 \not\in (\efun{\tann{\svar}{{\stype}}}{\sexpr}) \cup (\emon{\obnd{\sowner}{(\tfun{\stype}{\stype})}{\sowner}}{\svalue})$}
+      \\
+      \eapp{\stype_0}{(\efun{\tann{\svar_0}{{\stype_1}}}{\sexpr_0})}{\svalue_1}
+      & \nredAS
+      & \esubst{\sexpr_0}{\svar_0}{\svalue_1}
+      \\
+      \eapp{\stype_0}{(\emon{\obnd{\sowner_0}{\stype_1}{\sowner_1}}{\svalue_0})}{\svalue_1}
+      & \nredAS
+      & \edynb{\sbnd_0}{(\eapp{\tdyn}{\svalue_0}{(\estab{\sbnd_1}{\svalue_1})})}
+      \\\sidecond{where $\sbnd_0 \sassign \obnd{\sowner_0}{\stype_0}{\sowner_1}$
+                  and $\sbnd_1 \sassign \obnd{\sowner_1}{\ftypedom{\stype_1}}{\sowner_0}$}
+      \\
+      \edynb{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\svalue_0}
+      & \nredAS
+      & \emon{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\svalue_0}
+      \\\sidecond{if $\fshallow{\tagof{\stype_0}}{\svalue_0}$
+                  and $\svalue_0 \in (\ehopt{\sblist}{(\efun{\tann{\svar}{{\stype}}}{\sexpr})}) \cup 
+                                     (\ehopt{\sblist}{(\emon{\obnd{\sowner}{(\tfun{\stype}{\stype})}{\sowner}}{\svalue})})$}
+      \\
+      \edynb{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{(\ehopt{\sblist_0}{\sint_0})}
+      & \nredAS
+      & \sint_0
+      \\\sidecond{if $\fshallow{\tagof{\stype_0}}{\sint_0}$}
+      \\
+      \edynb{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\svalue_0}
+      & \nredAS
+      & \boundaryerror{\fconcat{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\sblist_0}}{\svalue_0}
+      \\\sidecond{if $\neg\fshallow{\tagof{\stype_0}}{\svalue_0}$
+                  and $\sblist_0 \eeq \fgettrace{\svalue_0}$}
+    \end{rrarray}
+  }
+
+  \lbl{\fbox{$\sexpr \nredAD \sexpr$}}{
+    \begin{rrarray}
+      \eunopt{\tdyn}{\svalue_0}
+      & \nredAD
+      & \tagerrorD
+      \\\sidecond{if $\svalue_1 \sassign \fremtrace{\svalue_0}$
+                  and ${\svalue_1} \not\in {\emon{\obnd{\sowner}{(\tpair{\stype}{\stype})}{\sowner}}{\svalue}}$
+                  and $\sdelta(\sunop, {\svalue_1})$ is undefined}
+      \\
+      \eunopt{\tdyn}{\svalue_0}
+      & \nredAD
+      & \faddtrace{\fgettrace{\svalue_0}}{\sdelta(\sunop, {\svalue_1})}
+      \\\sidecond{if $\svalue_1 \sassign \fremtrace{\svalue_0}$
+                  and $\sdelta(\sunop, {\svalue_1})$ is defined}
+      \\
+      \efst{\tdyn}{(\ehopt{\sblist_0}{(\emon{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\svalue_0})})}
+      & \nredAD
+      & \eprehist{\sblist_0}{(\estab{\sbnd_0}{(\efst{\stype_1}{\svalue_0})})}
+      \\\sidecond{where $\stype_1 \sassign \ftypefst{\stype_0}$
+                  and $\sbnd_0 \sassign \obnd{\sowner_0}{\stype_1}{\sowner_1}$}
+      \\
+      \esnd{\tdyn}{(\ehopt{\sblist_0}{(\emon{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\svalue_0})})}
+      & \nredAD
+      & \eprehist{\sblist_0}{(\estab{\sbnd_0}{(\esnd{\stype_1}{\svalue_0})})}
+      \\\sidecond{where $\stype_1 \sassign \ftypesnd{\stype_0}$
+                  and $\sbnd_0 \sassign \obnd{\sowner_0}{\stype_1}{\sowner_1}$}
+      \\
+      \ebinopt{\tdyn}{\svalue_0}{\svalue_1}
+      & \nredAD
+      & \tagerrorD
+      \\ \sidecond{if $\svalue_2 \sassign \fremtrace{\svalue_0}$
+                   and $\svalue_3 \sassign \fremtrace{\svalue_1}$
+                   and $\sdelta(\sbinop, {\svalue_2}, {\svalue_3})$ is undefined}
+      \\
+      \ebinopt{\tdyn}{\svalue_0}{\svalue_1}
+      &\nredAD
+      & \sdelta(\sbinop, {\svalue_2}, {\svalue_3})
+      \\ \sidecond{if $\svalue_2 \sassign \fremtrace{\svalue_0}$
+                   and $\svalue_3 \sassign \fremtrace{\svalue_1}$
+                   and $\sdelta(\sbinop, {\svalue_2}, {\svalue_3})$ is defined}
+      \\
+      \eapp{\tdyn}{\svalue_0}{\svalue_1}
+      & \nredAD
+      & \tagerrorD
+      \\\sidecond{if $\svalue_0 \not\in (\ehopt{\sblist}{(\efun{\svar}{\sexpr})}) \cup
+                                        (\ehopt{\sblist}{(\emon{\obnd{\sowner}{(\tfun{\stype}{\stype})}{\sowner}}{\svalue})})$}
+      \\
+      \eapp{\tdyn}{(\ehopt{\sblist_0}{(\efun{\svar_0}{\sexpr_0})})}{\svalue_0}
+      & \nredAD
+      & \eprehist{\sblist_0}{(\esubst{\sexpr_0}{\svar_0}{\svalue_1})}
+      \\\sidecond{where $\svalue_1 \sassign \faddtrace{\frev{\sblist_0}}{\svalue_0}$}
+      \\
+      \eapp{\tdyn}{(\ehopt{\sblist_0}{(\emon{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\svalue_0})})}{\svalue_1}
+      & \nredAD
+      & \eprehist{\sblist_0}{(\estab{\sbnd_0}{(\eapp{\stype_2}{\svalue_0}{(\edynb{\sbnd_1}{\svalue_2})})})}
+      \\\sidecond{where $\stype_2 \sassign \ftypecod{\stype_0}$
+                  and $\sbnd_0 \sassign \obnd{\sowner_0}{\stype_2}{\sowner_1}$
+                  and $\sbnd_1 \sassign \obnd{\sowner_1}{\ftypedom{\stype_0}}{\sowner_0}$}
+      \\\sidecond{and $\svalue_2 \sassign \faddtrace{\frev{\sblist_0}}{\svalue_1}$}
+      \\
+      \estab{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\svalue_0}
+      & \nredAD
+      & \emon{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\svalue_0}
+      \\\sidecond{if $\fshallow{\tagof{\stype_0}}{\svalue_0}$
+                  and $\svalue_0 \in {(\efun{\tann{\svar}{{\stype}}}{\sexpr})} \cup {\epair{\svalue}{\svalue}}$}
+      \\
+      \estab{\sbnd_0}{(\emon{\sbnd_1}{(\ehopt{\sblist_0}{\svalue_0})})}
+      & \nredAD
+      & \eprehist{(\fconcat{\sbnd_0}{\fconcat{\sbnd_1}{\sblist_0}})}{\svalue_0}
+      \\\sidecond{if $\sbnd_0 \eeq \obnd{\sowner_0}{\stype_0}{\sowner_1}$
+                  and $\fshallow{\tagof{\stype_0}}{\svalue_0}$
+                  and $\svalue_0 \in (\efun{\svar}{\sexpr}) \cup (\epair{\svalue}{\svalue}) \cup (\emon{\sbnd}{(\efun{\tann{\svar}{\stype}}{\sexpr})}) \cup (\emon{\sbnd}{\epair{\svalue}{\svalue}})$}
+      \\
+      \estab{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\sint_0}
+      & \nredAD
+      & \sint_0
+      \\\sidecond{if $\fshallow{\tagof{\stype_0}{\sint_0}}$
+                  and $\sbnd_0 \eeq \obnd{\sowner_0}{\stype_0}{\sowner_1}$}
+      \\
+      \estab{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\svalue_0}
+      & \nredAD
+      & \tagerrorS
+      \\\sidecond{if $\neg\fshallow{\tagof{\stype_0}{\svalue_0}}$}
+      \\
+      \eprehist{\sblist_0}{\svalue_0}
+      & \nredAD
+      & \svalue_1
+      \\\sidecond{where $\svalue_1 \sassign \faddtrace{\sblist_0}{\svalue_0}$}
+    \end{rrarray}
+  }
+
+\end{flushleft}
+
+
+
+\subsection{\Aname{} Ownership Lifting}
+\label{sec:A:path-based}
+\begin{flushleft}
+
+  \lbl{\fbox{\Aname{}\ Ownership Language} extends Ownership \sevallang{}}{
+    \begin{langarray}
+      \svalue & \BNFeq &
+        \ldots
+        \mid \ehist{\sblist}{\svalue}
+        \mid \emon{\obnd{\sowner}{\tfun{\stype}{\stype}}{\sowner}}{\svalue}
+        \mid \emon{\obnd{\sowner}{\tpair{\stype}{\stype}}{\sowner}}{\svalue}
+      \\
+      \sexpr & \BNFeq & \ldots \mid \eprehist{\sblist}{\sexpr}
+      \\
+      \ctx & \BNFeq & \ldots \mid \eprehist{\sblist}{\ctx}
+    \end{langarray}
+  }
+
+  %% ---------------------------------------------------------------------------
+  %% Ownership
+
+  \lbl{\fbox{$\sownerenv; \sowner \sWLA \sexpr$} extends
+       $\sownerenv; \sowner \sWL \sexpr$ enforces sound and complete blame}{\begin{mathpar}
+    \inferrule*{
+      \sownerenv_0; \sowner_1 \sWLA \svalue_0
+    }{
+      \sownerenv_0; \sowner_0 \sWLA \emon{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\obars{\svalue_0}{\sowner_1}}
+    }
+
+    \inferrule*{
+      \fbndeqowners{\sblist_0}{(\sowner_n \cdots \sowner_0)}
+      \\
+      \sownerenv_0; \sowner_n \sWLA \sexpr_0
+    }{
+      \sownerenv_0; \sowner_0 \sWLA \eprehist{\sblist_0}{\obbars{\sexpr_0}{(\sowner_n \cdots \sowner_0)}}
+    }
+
+    \inferrule*{
+      \fbndeqowners{\sblist_0}{(\sowner_n \cdots \sowner_0)}
+      \\
+      \sownerenv_0; \sowner_n \sWLA \sexpr_0
+    }{
+      \sownerenv_0; \sowner_0 \sWLA \ehist{\sblist_0}{\obbars{\sexpr_0}{(\sowner_n \cdots \sowner_0)}}
+    }
+
+  \end{mathpar}}
+
+  \lbl{\fbox{$\rredAanns$} reflexive-transitive closure of $\credAanns$}{}
+
+  \lbl{\fbox{$\sexpr \credAanns \sexpr$} reflexive-transitive closure of $\nredNSanns \cup \nredNDanns$}{}
+
+  \lbl{\fbox{$\obars{\sexpr}{\sowner} \nredAS \obars{\sexpr}{\sowner}$}}{
+    \begin{rrarray}
+      \obars{\eunopt{\stype_0}{\svalue_0}}{\sowner_0}
+      & \nredAS
+      & \obars{\tagerrorS}{\sowner_0}
+      \\\sidecond{if ${\svalue_0} \not\in {(\emon{\obnd{\sowner}{(\tpair{\stype}{\stype})}{\sowner}}{\svalue})}$
+                  and $\sdelta(\sunop, {\svalue_0})$ is undefined}
+      \\
+      \obars{\eunopt{\stype_0}{\svalue_0}}{\sowner_0}
+      & \nredAS
+      & \obars{\sdelta(\sunop, {\svalue_0})}{\sowner_0}
+      \\\sidecond{if $\sdelta(\sunop, {\svalue_0})$ is defined}
+      \\
+      \obars{\efst{{\stype_0}}{\obbars{\emon{\obnd{\sowner_0}{\stype_1}{\sowner_1}}{\obars{\svalue_0}{\sowner_2}}}{\sowners_3}}}{\sowner_4}
+      & \nredAS
+      & \obbars{\edynb{\sbnd_0}{\obars{\efst{\tdyn}{\svalue_0}}{\sowner_2}}}{\fconcat{\sowners_3}{\sowner_4}}
+      \\\sidecond{where $\sbnd_0 \sassign \obnd{\sowner_0}{\stype_0}{\sowner_1}$}
+      \\
+      \obars{\esnd{{\stype_0}}{\obbars{\emon{\obnd{\sowner_0}{\stype_1}{\sowner_1}}{\obars{\svalue_0}{\sowner_2}}}{\sowners_3}}}{\sowner_4}
+      & \nredAS
+      & \obbars{\edynb{\sbnd_0}{\obars{\esnd{\tdyn}{\svalue_0}}{\sowner_2}}}{\fconcat{\sowners_3}{\sowner_4}}
+      \\\sidecond{where $\sbnd_0 \sassign \obnd{\sowner_0}{\stype_0}{\sowner_1}$}
+      \\
+      \obars{\ebinopt{\stype_0}{\svalue_0}{\svalue_1}}{\sowner_0}
+      & \nredAS
+      & \obars{\tagerrorS}{\sowner_0}
+      \\ \sidecond{if $\sdelta(\sbinop, {\svalue_0}, {\svalue_1})$ is undefined}
+      \\
+      \obars{\ebinopt{\stype_0}{\svalue_0}{\svalue_1}}{\sowner_0}
+      & \nredAS
+      & \obars{\sdelta(\sbinop, \svalue_0, \svalue_1)}{\sowner_0}
+      \\\sidecond{if $\sdelta(\sbinop, \svalue_0, \svalue_1)$ is defined}
+      \\
+      \obars{\eapp{\stype_0}{\svalue_0}{\svalue_1}}{\sowner_0}
+      & \nredAS
+      & \obars{\tagerrorS}{\sowner_0}
+      \\\sidecond{if $\svalue_0 \not\in \obbars{\efun{\tann{\svar}{{\stype}}}{\sexpr}}{\sowners} \cup
+                                        \obbars{\emon{\obnd{\sowner}{(\tfun{\stype}{\stype})}{\sowner}}{\svalue}}{\sowners}$}
+      \\
+      \obars{\eapp{\stype_0}{\obbars{\efun{\tann{\svar_0}{{\stype_1}}}{\sexpr_0}}{\sowners_0}}{\svalue_1}}{\sowner_1}
+      & \nredAS
+      & \obbars{\esubst{\sexpr_0}{\svar_0}{\obbars{\svalue_1}{\fconcat{\sowner_1}{\frev{\sowners_0}}}}}{\fconcat{\sowners_0}{\sowner_1}}
+      \\
+      \obars{\eapp{{\stype_0}}{\obbars{\emon{\obnd{\sowner_0}{\stype_1}{\sowner_1}}{\obars{\svalue_0}{\sowner_2}}}{\sowners_3}}{\svalue_1}}{\sowner_4}
+      & \nredAS
+      & \obbars{\edynb{\sbnd_0}{\obars{\eapp{\tdyn}{\svalue_0}{(\estab{\sbnd_1}{\obbars{\svalue_1}{\fconcat{\sowner_4}{\frev{\sowners_3}\sowner_2}}})}}{\sowner_2}}}{\fconcat{\sowners_3}{\sowner_4}}
+      \\\sidecond{where $\sbnd_0 \sassign \obnd{\sowner_0}{\stype_0}{\sowner_1}$
+                  and $\sbnd_1 \sassign \obnd{\sowner_1}{\ftypedom{\stype_1}}{\sowner_0}$}
+      \\
+      \obars{\edynb{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\obbars{\svalue_0}{\sowners_2}}}{\sowner_3}
+      & \nredAS
+      & \obars{\emon{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\obbars{\svalue_0}{\sowners_2}}}{\sowner_3}
+      \\\sidecond{if $\fshallow{\tagof{\stype_0}}{\svalue_0}$
+                  and $\fremtrace{\svalue_0} \in {\obbars{\efun{\svar}{\sexpr}}{\sowners}} \cup
+                                                 {\obbars{\epair{\svalue}{\svalue}}{\sowners}} \cup
+                                                 {\obbars{\emon{\sbnd}{\svalue}}{\sowners}}$}
+      \\
+      \obars{\edynb{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\obbars{\ehopt{\sblist_0}{\obbars{\sint_0}{\sowners_2}}}{\sowners_3}}}{\sowner_4}
+      & \nredAS
+      & \obars{\sint_0}{\sowner_4}
+      \\\sidecond{if $\fshallow{\tagof{\stype_0}}{\sint_0}$}
+      \\
+      \obars{\edynb{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\obbars{\svalue_0}{\sowners_2}}}{\sowner_3}
+      & \nredAS
+      &
+      \obars{\boundaryerror{\fconcat{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\sblist_0}}{\obbars{\svalue_0}{\sowners_2}}}{\sowner_3}
+      \\\sidecond{if $\neg\fshallow{\tagof{\stype_0}}{\svalue_0}$
+                  and $\sblist_0 \eeq \fgettrace{\svalue_0}$}
+    \end{rrarray}
+  }
+
+  \lbl{\fbox{$\obars{\sexpr}{\sowner} \nredAD \obars{\sexpr}{\sowner}$}}{
+    \begin{rrarray}
+      \obars{\eunopt{\tdyn}{\svalue_0}}{\sowner_0}
+      & \nredAD
+      & \obars{\tagerrorD}{\sowner_0}
+      \\\sidecond{if $\svalue_1 \sassign \fremtrace{\svalue_0}$
+                  and ${\svalue_1} \not\in {\emon{\obnd{\sowner}{(\tpair{\stype}{\stype})}{\sowner}}{\svalue}}$
+                  and $\sdelta(\sunop, \svalue_1)$ is undefined}
+      \\
+      \obars{\eunopt{\tdyn}{\svalue_0}}{\sowner_0}
+      & \nredAD
+      & \obars{\faddtrace{\fgettrace{\svalue_0}}{\sdelta(\sunop, {\svalue_1})}}{\sowner_0}
+      \\\sidecond{if $\svalue_1 \sassign \fremtrace{\svalue_0}$
+                  and $\sdelta(\sunop, {\svalue_1})$ is defined}
+      \\
+      \obars{\efst{\tdyn}{\obbars{\ehopt{\sblist_0}{\obbars{\emon{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\obars{\svalue_1}{\sowner_2}}}{\sowners_3}}}{\sowners_4}}}{\sowner_5}
+      & \nredAD
+      & \obars{\eprehist{\sblist_0}{\obbars{\estab{\sbnd_1}{\obars{\efst{{\stype_1}}{\svalue_1}}{\sowner_2}}}{\sowners_3}}}{\fconcat{\sowners_4}{\sowner_5}}
+      \\\sidecond{where $\stype_1 \sassign \ftypefst{\stype_0}$
+                  and $\sbnd_1 \sassign \obnd{\sowner_0}{\stype_1}{\sowner_1}$}
+      \\
+      \obars{\esnd{\tdyn}{\obbars{\ehopt{\sblist_0}{\obbars{\emon{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\obars{\svalue_1}{\sowner_2}}}{\sowners_3}}}{\sowners_4}}}{\sowner_5}
+      & \nredAD
+      & \obars{\eprehist{\sblist_0}{\obbars{\estab{\sbnd_1}{\obars{\esnd{\stype_1}{\svalue_1}}{\sowner_2}}}{\sowners_3}}}{\fconcat{\sowners_4}{\sowner_5}}
+      \\\sidecond{where $\stype_1 \sassign \ftypesnd{\stype_0}$
+                  and $\sbnd_1 \sassign \obnd{\sowner_0}{\stype_1}{\sowner_1}$}
+      \\
+      \obars{\ebinopt{\tdyn}{\svalue_0}{\svalue_1}}{\sowner_0}
+      & \nredAD
+      & \obars{\tagerrorD}{\sowner_0}
+      \\\sidecond{if $\svalue_2 \sassign \fremtrace{\svalue_0}$
+                  and $\svalue_3 \sassign \fremtrace{\svalue_1}$
+                  and $\sdelta(\sbinop, {\svalue_2}, {\svalue_3})$ is undefined}
+      \\
+      \obars{\ebinopt{\tdyn}{\svalue_0}{\svalue_1}}{\sowner_0}
+      & \nredAD
+      & \obars{\sdelta(\sbinop, {\svalue_2}, {\svalue_3})}{\sowner_0}
+      \\\sidecond{if $\svalue_2 \sassign \fremtrace{\svalue_0}$
+                  and $\svalue_3 \sassign \fremtrace{\svalue_1}$
+                  and $\sdelta(\sbinop, {\svalue_2}, {\svalue_3})$ is defined}
+      \\
+      \obars{\eapp{\tdyn}{\obbars{\ehopt{\sblist_0}{\obbars{\svalue_0}{\sowners_0}}}{\sowners_1}}{\svalue_1}}{\sowner_2}
+      & \nredAD
+      & \obars{\tagerrorD}{\sowner_0}
+      \\\sidecond{if $\svalue_0 \not\in (\efun{\svar}{\sexpr}) \cup (\emon{\obnd{\sowner}{\obars{\tfun{\stype}{\stype}}{\sowner}}{\sowner}}{\svalue})$}
+      \\
+      \obars{\eapp{\tdyn}{\obbars{\ehopt{\sblist_0}{\obbars{\efun{\svar_0}{\sexpr_0}}{\sowners_0}}}{\sowners_1}}{\svalue_1}}{\sowner_2}
+      & \nredAD
+      & \obars{\eprehist{\sblist_0}{\obbars{\esubst{\sexpr_0}{\svar_0}{\svalue_2}}{\sowners_0}}}{\fconcat{\sowners_1}{\sowner_2}}
+      \\\sidecond{where $\svalue_2 \sassign \faddtrace{\frev{\sblist_0}}{\obbars{\svalue_1}{\fconcat{\sowner_2}{\fconcat{\frev{\sowners_1}}{\frev{\sowners_0}}}}}$}
+      \\
+      \obars{\eapp{\tdyn}{\obbars{\ehopt{\sblist_0}{\obbars{\emon{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\obars{\svalue_0}{\sowner_2}}}{\sowners_3}}}{\sowners_4}}{\svalue_1}}{\sowner_5}
+      & \nredAD
+      &
+      \obbars{\eprehist{\sblist_0}{\obbars{\estab{\sbnd_1}{\obars{\eapp{{\stype_3}}{\svalue_0}{(\edynb{\sbnd_2}{\svalue_2})}}{\sowner_2}}}{\sowners_3}}}{\fconcat{\sowners_4}{\sowner_5}}
+      \\\sidecond{where $\stype_2 \sassign \ftypecod{\stype_0}$
+                  and $\sbnd_1 \sassign \obnd{\sowner_0}{\stype_2}{\sowner_1}$
+                  and $\sbnd_2 \sassign \obnd{\sowner_1}{\ftypedom{\stype_0}}{\sowner_0}$
+                  and ${\stype_3} \sassign \fforget{\stype_2}$}
+      \\\sidecond{and $\svalue_2 \sassign \obars{\faddtrace{\frev{\sblist_0}}
+                                      {\obbars{\svalue_1}{\fconcat{\sowner_5}{\frev{\fconcat{\sowners_3}{\sowners_4}}}}}}{\sowner_2}$}
+      \\
+      \obars{\estab{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\svalue_0}}{\sowner_2}
+      & \nredAD
+      & \obars{\emon{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\svalue_0}}{\sowner_2}
+      \\\sidecond{if $\fshallow{\tagof{\stype_0}}{\svalue_0}$
+                  and $\svalue_0 \in {\obbars{\efun{\tann{\svar}{{\stype}}}{\sexpr}}{\sowners}} \cup \obbars{\epair{\svalue}{\svalue}}{\sowners}$}
+      \\
+      \obars{\estab{\sbnd_0}{\obbars{\emon{\sbnd_1}{\obbars{\ehopt{\sblist_2}{\svalue_0}}{\sowners_0}}}{\sowners_1}}}{\sowner_2}
+      & \nredAD
+      & \obars{\eprehist{(\fconcat{\sbnd_0}{\fconcat{\sbnd_1}{\sblist_2}})}{\obbars{\svalue_0}{\fconcat{\sowners_0}{\fconcat{\sowners_1}{\sowner_2}}}}}{\sowner_2}
+      \\\sidecond{if $\sbnd_0 \eeq \obnd{\sowner_3}{\stype_0}{\sowner_4}$
+                  and $\fshallow{\tagof{\stype_0}}{\svalue_0}$}
+      \\\sidecond{and $\svalue_0 \in \obbars{\efun{\svar}{\sexpr}}{\sowners} \cup \obbars{\epair{\svalue}{\svalue}}{\sowners} \cup \obbars{\emon{\sbnd}{(\efun{\tann{\svar}{\stype}}{\sexpr})}}{\sowners} \cup \obbars{\emon{\sbnd}{\epair{\svalue}{\svalue}}}{\sowners}$}
+      \\
+      \obars{\estab{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\obbars{\sint_0}{\sowners_2}}}{\sowner_3}
+      & \nredAD
+      & \obars{\sint_0}{\sowner_3}
+      \\\sidecond{if $\fshallow{\tagof{\stype_0}}{\svalue_0}$}
+      \\
+      \obars{\estab{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\obbars{\svalue_0}{\sowners_2}}}{\sowner_3}
+      & \nredAD
+      & \obars{\tagerrorS}{\sowner_3}
+      \\\sidecond{if $\neg\fshallow{\tagof{\stype_0}}{\svalue_0}$}
+      \\
+      \obars{\eprehist{\sblist_0}{\svalue_0}}{\sowner_0}
+      & \nredAD
+      & \obars{\svalue_1}{\sowner_0}
+      \\\sidecond{where $\svalue_1 \sassign \faddtrace{\sblist_0}{\svalue_0}$}
+    \end{rrarray}
+  }
+
+\end{flushleft}

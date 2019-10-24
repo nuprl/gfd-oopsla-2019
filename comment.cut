@@ -1,0 +1,11 @@
+ We thank Michael M. Vitousek for conversations about Transient and its type soundness;
+   % "However, I don't think the soundness we guarantee is fundamentally different from soundness in Typed Racket; at
+   % least, the places where behavior differs are few." -- Mike V.
+ Amal Ahmed, Michael Ballantyne, Stephen Chang, and Max S. New for
+  conversations about complete monitoring;
+ and the anonymous OOPSLA reviewers for their questions, comments, and proofreading.
+ This work was partially supported by \grantsponsor{NSF}{NSF}{https://www.nsf.gov}
+  grants
+  \href{"https://www.nsf.gov/awardsearch/showAward?AWD_ID=1518844"}{\grantnum{NSF}{CCF 1518844}}
+  and
+  \href{"https://www.nsf.gov/awardsearch/showAward?AWD_ID=1763922"}{\grantnum{NSF}{CCF 1763922}}.

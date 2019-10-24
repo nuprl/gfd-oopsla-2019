@@ -1,0 +1,1482 @@
+This simulation uses the \Tname{} notion of reduction from the paper
+ and a modified \Aname{} notion of reduction that inserts $\scheck$
+ expressions that are guaranteed (by type soundness) to be no-ops.
+
+\begin{flushleft}
+
+\lbl{\fbox{$\atrexpr{\sexpr}{\sexpr}{\vstore}{\bstore}$}}{\begin{mathpar}
+  \inferrule*{
+    \atrexpr{\svalue_0}{\svalue_1}{\vstore_0}{\bstore_0}
+  }{
+    \atrexpr{\esuffix{\sblist_0}{\svalue_0}}{\svalue_1}{\vstore_0}{\bstore_0}
+  }
+
+  \inferrule*{
+    \atrexpr{\svalue_0}{\fmapref{\vstore_0}{\eloc_0}}{\vstore_0}{\bstore_0}
+  }{
+    \atrexpr{\svalue_0}{\eloc_0}{\vstore_0}{\bstore_0}
+  }
+
+  \inferrule*{
+  }{
+    \atrexpr{\sint_0}{\sint_0}{\vstore_0}{\bstore_0}
+  }
+
+  \inferrule*{
+  }{
+    \atrexpr{\ehist{\sblist_0}{\sint_0}}{\sint_0}{\vstore_0}{\bstore_0}
+  }
+
+  \inferrule*{
+    \atrexpr{\svalue_0}{\svalue_2}{\vstore_0}{\bstore_0}
+    \\
+    \atrexpr{\svalue_1}{\svalue_3}{\vstore_0}{\bstore_0}
+  }{
+    \atrexpr{\ehopt{\sblist_0}{\epair{\svalue_0}{\svalue_1}}}{\epair{\svalue_2}{\svalue_3}}{\vstore_0}{\bstore_0}
+  }
+
+  \inferrule*{
+    \atrexpr{\svalue_0}{\svalue_2}{\vstore_0}{\bstore_0}
+    \\
+    \atrexpr{\svalue_1}{\svalue_3}{\vstore_0}{\bstore_0}
+  }{
+    \atrexpr{\ehopt{\sblist_0}{(\emon{\sbnd_0}{(\ehopt{\sblist_1}{\epair{\svalue_0}{\svalue_1}})})}}{\epair{\svalue_2}{\svalue_3}}{\vstore_0}{\bstore_0}
+  }
+
+  \inferrule*{
+    \atrexpr{\svalue_0}{\svalue_2}{\vstore_0}{\bstore_0}
+    \\
+    \atrexpr{\svalue_1}{\svalue_3}{\vstore_0}{\bstore_0}
+  }{
+    \atrexpr{\emon{\sbnd_0}{(\ehopt{\sblist_0}{(\emon{\sbnd_1}{\epair{\svalue_0}{\svalue_1}})})}}{\epair{\svalue_2}{\svalue_3}}{\vstore_0}{\bstore_0}
+  }
+
+  \inferrule*{
+    \atrexpr{\sexpr_0}{\sexpr_1}{\vstore_0}{\bstore_0}
+  }{
+    \atrexpr{\ehopt{\sblist_0}{(\efun{\svar_0}{\sexpr_0})}}{\efun{\svar_0}{\sexpr_1}}{\vstore_0}{\bstore_0}
+  }
+
+  \inferrule*{
+    \atrexpr{\sexpr_0}{\sexpr_1}{\vstore_0}{\bstore_0}
+  }{
+    \atrexpr{\emon{\sbnd_0}{(\ehopt{\sblist_0}{(\efun{\svar_0}{\sexpr_0})})}}{\efun{\svar_0}{\sexpr_1}}{\vstore_0}{\bstore_0}
+  }
+
+  \inferrule*{
+    \atrexpr{\sexpr_0}{\sexpr_1}{\vstore_0}{\bstore_0}
+  }{
+    \atrexpr{\ehopt{\sblist_0}{(\efun{\tann{\svar_0}{\stype_0}}{\sexpr_0})}}{\efun{\tann{\svar_0}{\stype_0}}{\sexpr_1}}{\vstore_0}{\bstore_0}
+  }
+
+  \inferrule*{
+    \atrexpr{\sexpr_0}{\sexpr_1}{\vstore_0}{\bstore_0}
+  }{
+    \atrexpr{\ehopt{\sblist_0}{(\emon{\sbnd_0}{(\efun{\tann{\svar_0}{\stype_0}}{\sexpr_0})})}}{\efun{\tann{\svar_0}{\stype_0}}{\sexpr_1}}{\vstore_0}{\bstore_0}
+  }
+
+  \inferrule*{
+    \atrexpr{\sexpr_0}{\sexpr_1}{\vstore_0}{\bstore_0}
+  }{
+    \atrexpr{\emon{\sbnd_0}{(\ehopt{\sblist_0}{(\emon{\sbnd_1}{(\efun{\tann{\svar_0}{\stype_0}}{\sexpr_0})})})}}{\efun{\tann{\svar_0}{\stype_0}}{\sexpr_1}}{\vstore_0}{\bstore_0}
+  }
+
+  \inferrule*{
+  }{
+    \atrexpr{\svar_0}{\svar_0}{\vstore_0}{\bstore_0}
+  }
+
+  \inferrule*{
+    \atrexpr{\sexpr_0}{\sexpr_2}{\vstore_0}{\bstore_0}
+    \\
+    \atrexpr{\sexpr_1}{\sexpr_3}{\vstore_0}{\bstore_0}
+  }{
+    \atrexpr{\epair{\sexpr_0}{\sexpr_1}}{\epair{\sexpr_2}{\sexpr_3}}{\vstore_0}{\bstore_0}
+  }
+
+  \inferrule*{
+    \atrexpr{\sexpr_0}{\sexpr_2}{\vstore_0}{\bstore_0}
+    \\
+    \atrexpr{\sexpr_1}{\sexpr_3}{\vstore_0}{\bstore_0}
+  }{
+    \atrexpr{\eapp{\toptional}{\sexpr_0}{\sexpr_1}}{\eapp{\toptional}{\sexpr_2}{\sexpr_3}}{\vstore_0}{\bstore_0}
+  }
+
+  \inferrule*{
+    \atrexpr{\sexpr_0}{\sexpr_1}{\vstore_0}{\bstore_0}
+  }{
+    \atrexpr{\eunopt{\stoptional}{\sexpr_0}}{\eunopt{\stoptional}{\sexpr_1}}{\vstore_0}{\bstore_0}
+  }
+
+  \inferrule*{
+    \atrexpr{\sexpr_0}{\sexpr_2}{\vstore_0}{\bstore_0}
+    \\
+    \atrexpr{\sexpr_1}{\sexpr_3}{\vstore_0}{\bstore_0}
+  }{
+    \atrexpr{\ebinopt{\stoptional}{\sexpr_0}{\sexpr_1}}{\ebinopt{\stoptional}{\sexpr_2}{\sexpr_3}}{\vstore_0}{\bstore_0}
+  }
+
+  \inferrule*{
+    \atrexpr{\sexpr_0}{\sexpr_1}{\vstore_0}{\bstore_0}
+  }{
+    \atrexpr{\edynb{\sbnd_0}{\sexpr_0}}{\edynb{\sbnd_0}{\sexpr_1}}{\vstore_0}{\bstore_0}
+  }
+
+  \inferrule*{
+    \atrexpr{\sexpr_0}{\sexpr_1}{\vstore_0}{\bstore_0}
+  }{
+    \atrexpr{\estab{\sbnd_0}{\sexpr_0}}{\estab{\sbnd_0}{\sexpr_1}}{\vstore_0}{\bstore_0}
+  }
+
+  \inferrule*{
+    \atrexpr{\sexpr_0}{\sexpr_1}{\vstore_0}{\bstore_0}
+  }{
+    \atrexpr{\edynb{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\sexpr_0}}{\echecktwo{\stype_0}{\sexpr_1}{\eloc_0}}{\vstore_0}{\bstore_0}
+  }
+
+  \inferrule*{
+    \atrexpr{\sexpr_0}{\sexpr_1}{\vstore_0}{\bstore_0}
+  }{
+    \atrexpr{\estab{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\sexpr_0}}{\echecktwo{\tdyn}{\sexpr_1}{\eloc_0}}{\vstore_0}{\bstore_0}
+  }
+
+  \inferrule*{
+    \stype_1 \subteq \stype_0
+    \\
+    \atrexpr{\sexpr_0}{\sexpr_1}{\vstore_0}{\bstore_0}
+  }{
+    \atrexpr{\edynb{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{(\estab{\obnd{\sowner_2}{\stype_1}{\sowner_3}}{\sexpr_0})}}{\echecktwo{\stype_0}{\sexpr_1}{\eloc_0}}{\vstore_0}{\bstore_0}
+  }
+
+  \inferrule*{
+    \atrexpr{\sexpr_0}{\sexpr_1}{\vstore_0}{\bstore_0}
+  }{
+    \atrexpr{\echecktwo{\stoptional}{\sexpr_0}{\eloczero}}{\echecktwo{\stoptional}{\sexpr_1}{\eloc_0}}{\vstore_0}{\bstore_0}
+  }
+
+  \inferrule*{
+  }{
+    \atrexpr{\tagerrorS}{\tagerrorS}{\vstore_0}{\bstore_0}
+  }
+
+  \inferrule*{
+  }{
+    \atrexpr{\tagerrorD}{\tagerrorD}{\vstore_0}{\bstore_0}
+  }
+
+
+  \inferrule*{
+  }{
+    \atrexpr{\divisionbyzeroerror}{\divisionbyzeroerror}{\vstore_0}{\bstore_0}
+  }
+
+  \inferrule*{
+    \atrexpr{\svalue_0}{\svalue_1}{\vstore_0}{\bstore_0}
+  }{
+    \atrexpr{\boundaryerror{\sbnd_0}{\svalue_0}}{\boundaryerror{\sbnd_0}{\svalue_1}}{\vstore_0}{\bstore_0}
+  }
+
+\end{mathpar}}
+
+\lbl{\fbox{$\atrctx{\ctx}{\ctx}{\vstore}{\bstore}$}}{\begin{mathpar}
+  \inferrule*{
+    \atrctx{\ctx_0}{\ctx_1}{\vstore_0}{\bstore_0}
+  }{
+    \atrctx{\esuffix{\sblist_0}{\ctx_0}}{\ctx_1}{\vstore_0}{\bstore_0}
+  }
+
+  \inferrule*{
+  }{
+    \atrctx{\ctxhole}{\ctxhole}{\vstore_0}{\bstore_0}
+  }
+
+  \inferrule*{
+    \atrctx{\ctx_0}{\ctx_2}{\vstore_0}{\bstore_0}
+    \\
+    \atrexpr{\sexpr_1}{\sexpr_3}{\vstore_0}{\bstore_0}
+  }{
+    \atrctx{\epair{\ctx_0}{\sexpr_1}}{\epair{\ctx_2}{\sexpr_3}}{\vstore_0}{\bstore_0}
+  }
+
+  \inferrule*{
+    \atrexpr{\svalue_0}{\svalue_2}{\vstore_0}{\bstore_0}
+    \\
+    \atrctx{\ctx_1}{\ctx_3}{\vstore_0}{\bstore_0}
+  }{
+    \atrctx{\epair{\svalue_0}{\ctx_1}}{\epair{\svalue_2}{\ctx_3}}{\vstore_0}{\bstore_0}
+  }
+
+  \inferrule*{
+    \atrctx{\ctx_0}{\ctx_2}{\vstore_0}{\bstore_0}
+    \\
+    \atrexpr{\sexpr_1}{\sexpr_3}{\vstore_0}{\bstore_0}
+  }{
+    \atrctx{\eapp{\toptional}{\ctx_0}{\sexpr_1}}{\eapp{\toptional}{\ctx_2}{\sexpr_3}}{\vstore_0}{\bstore_0}
+  }
+
+  \inferrule*{
+    \atrexpr{\svalue_0}{\svalue_2}{\vstore_0}{\bstore_0}
+    \\
+    \atrctx{\ctx_1}{\ctx_3}{\vstore_0}{\bstore_0}
+  }{
+    \atrctx{\eapp{\toptional}{\svalue_0}{\ctx_1}}{\eapp{\toptional}{\svalue_2}{\ctx_3}}{\vstore_0}{\bstore_0}
+  }
+
+  \inferrule*{
+    \atrctx{\ctx_0}{\ctx_1}{\vstore_0}{\bstore_0}
+  }{
+    \atrctx{\eunopt{\stoptional}{\ctx_0}}{\eunopt{\stoptional}{\ctx_1}}{\vstore_0}{\bstore_0}
+  }
+
+  \inferrule*{
+    \atrctx{\ctx_0}{\ctx_2}{\vstore_0}{\bstore_0}
+    \\
+    \atrexpr{\sexpr_1}{\sexpr_3}{\vstore_0}{\bstore_0}
+  }{
+    \atrctx{\ebinopt{\stoptional}{\ctx_0}{\sexpr_1}}{\ebinopt{\stoptional}{\ctx_2}{\sexpr_3}}{\vstore_0}{\bstore_0}
+  }
+
+  \inferrule*{
+    \atrexpr{\svalue_0}{\svalue_2}{\vstore_0}{\bstore_0}
+    \\
+    \atrctx{\ctx_1}{\ctx_3}{\vstore_0}{\bstore_0}
+  }{
+    \atrctx{\ebinopt{\stoptional}{\svalue_0}{\ctx_1}}{\ebinopt{\stoptional}{\svalue_2}{\ctx_3}}{\vstore_0}{\bstore_0}
+  }
+
+  \inferrule*{
+    \atrctx{\ctx_0}{\ctx_1}{\vstore_0}{\bstore_0}
+  }{
+    \atrctx{\edynb{\sbnd_0}{\ctx_0}}{\edynb{\sbnd_0}{\ctx_1}}{\vstore_0}{\bstore_0}
+  }
+
+  \inferrule*{
+    \atrctx{\ctx_0}{\ctx_1}{\vstore_0}{\bstore_0}
+  }{
+    \atrctx{\estab{\sbnd_0}{\ctx_0}}{\estab{\sbnd_0}{\ctx_1}}{\vstore_0}{\bstore_0}
+  }
+
+  \inferrule*{
+    \ctx_0 \not\in \estab{\sbnd}{\ctx}
+    \\
+    \atrctx{\sctx_0}{\sctx_1}{\vstore_0}{\bstore_0}
+  }{
+    \atrctx{\edynb{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\sctx_0}}{\echecktwo{\stype_0}{\sctx_1}{\eloc_0}}{\vstore_0}{\bstore_0}
+  }
+
+  \inferrule*{
+    \atrctx{\sctx_0}{\sctx_1}{\vstore_0}{\bstore_0}
+  }{
+    \atrctx{\estab{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\sctx_0}}{\echecktwo{\tdyn}{\sctx_1}{\eloc_0}}{\vstore_0}{\bstore_0}
+  }
+
+  \inferrule*{
+    \stype_1 \subteq \stype_0
+    \\
+    \atrctx{\sctx_0}{\sctx_1}{\vstore_0}{\bstore_0}
+  }{
+    \atrctx{\edynb{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{(\estab{\obnd{\sowner_2}{\stype_1}{\sowner_3}}{\sctx_0})}}{\echecktwo{\stype_0}{\sctx_1}{\eloc_0}}{\vstore_0}{\bstore_0}
+  }
+
+  \inferrule*{
+    \atrctx{\sctx_0}{\sctx_1}{\vstore_0}{\bstore_0}
+  }{
+    \atrctx{\echecktwo{\stoptional}{\sctx_0}{\eloczero}}{\echecktwo{\stoptional}{\sctx_1}{\eloc_0}}{\vstore_0}{\bstore_0}
+  }
+
+\end{mathpar}}
+
+\end{flushleft}
+
+\vfill
+%% -----------------------------------------------------------------------------
+\newpage
+
+\begin{corollary}
+  $\fevalAunl{\fownerarrow{\ssurface_0}} \in \eerr$
+  if and only if\/
+  $\fevalTunl{\fownerarrow{\ssurface_0}} \in \eerr$
+\end{corollary}
+\begin{lamportproof}
+  By \lemmaref{AT-eval-simulation}
+\end{lamportproof}
+
+\begin{lemma}\label{AT-eval-simulation}
+  If\/ $\fevalAunl{\fownerarrow{\ssurface_0}} \eeq \sresult_0$
+  and\/ $\fevalTunl{\fownerarrow{\ssurface_0}} \eeq \conf{\sresult_1}{\vstore_0}{\bstore_0}$
+  then one of the following holds:
+  \begin{itemize}
+    \item
+      $\sresult_0 = \sresult_1 = \sdiverge$
+    \item
+      $\sresult_0 \neq \sdiverge$
+      and\/ $\sresult_1 \neq \sdiverge$
+      and\/ $\atrexpr{\sresult_0}{\sresult_1}{\vstore_0}{\bstore_0}$
+  \end{itemize}
+\end{lemma}
+\begin{lamportproof}
+  By \lemmaref{AT-init} and \lemmaref{AT-simulation}.
+\end{lamportproof}
+
+\begin{lemma}\label{AT-init}
+  $\atrexpr{\fblamearrow{\ssurface_0}}{\fblamearrow{\ssurface_0}}{\semptymap}{\semptymap}$
+  for all\/ $\fblamearrow{\ssurface_0}$
+\end{lemma}
+\begin{lamportproof}
+  By induction on the structure of $\ssurface_0$.
+
+  \step{0}{\case{$\ssurface_0 \eeq \svar_0$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          $\atrexpr{\svar_0}{\svar_0}{\vstore_0}{\bstore_0}$
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{1}{\case{$\ssurface_0 \eeq \sint_0$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          $\atrexpr{\sint_0}{\sint_0}{\vstore_0}{\bstore_0}$
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{2}{\case{$\ssurface_0 \eeq \efun{\svar_0}{\ssurface_0}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih and the definition of $\satrexpr$
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{3}{\case{$\ssurface_0 \eeq \efun{\tann{\svar_0}{\stype_0}}{\ssurface_1}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih and the definition of $\satrexpr$
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{4}{\case{$\ssurface_0 \eeq \epair{\ssurface_1}{\ssurface_2}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{5}{\case{$\ssurface_0 \eeq \eapp{\stype_0}{\ssurface_1}{\ssurface_2}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{6}{\case{$\ssurface_0 \eeq \eunopt{\stoptional}{\ssurface_1}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{7}{\case{$\ssurface_0 \eeq \ebinopt{\stoptional}{\ssurface_1}{\ssurface_2}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{8}{\case{$\ssurface_0 \eeq \edyn{\stype_0}{\ssurface_1}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{9}{\case{$\ssurface_0 \eeq \esta{\stype_0}{\ssurface_1}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+\end{lamportproof}
+
+\begin{lemma}\label{AT-simulation}
+  If\/ $\atrexpr{\sexpr_0}{\sexpr_1}{\vstore_0}{\bstore_0}$ then:
+  \begin{itemize}
+    \item
+      if\/ $\sexpr_0 \credA \sexpr_2$
+      then\/ $\sexpr_2 \rredA \sexpr_3$
+      and\/ $\conf{\sexpr_1}{\vstore_0}{\bstore_0} \rredT \conf{\sexpr_4}{\vstore_1}{\bstore_1}$
+      and\/ $\atrexpr{\sexpr_3}{\sexpr_4}{\vstore_1}{\bstore_1}$
+    \item
+      if\/ $\conf{\sexpr_1}{\vstore_0}{\bstore_0} \credT \conf{\sexpr_3}{\vstore_1}{\bstore_1}$
+      then\/ $\sexpr_0 \rredA \sexpr_2$
+      and\/ $\atrexpr{\sexpr_2}{\sexpr_3}{\vstore_1}{\bstore_1}$
+  \end{itemize}
+\end{lemma}
+\begin{lamportproof}
+  By \lemmaref{AT-A-ctx} and \lemmaref{AT-T-ctx} and \lemmaref{AT-ctx-subst} and \lemmaref{AT-A-step} and \lemmaref{AT-T-step}.
+\end{lamportproof}
+
+\begin{lemma}\label{AT-A-ctx}
+  If\/ $\atrexpr{\ctx_0[\sexpr_0]}{\sexpr_1}{\vstore_0}{\bstore_0}$
+  then\/ $\sexpr_1 \eeq \ctx_1[\sexpr_2]$
+  and\/ $\atrctx{\ctx_0}{\ctx_1}{\vstore_0}{\bstore_0}$
+  and\/ $\atrexpr{\sexpr_0}{\sexpr_2}{\vstore_0}{\bstore_0}$
+\end{lemma}
+\begin{lamportproof}
+  By induction on the structure of $\ctx_0$.
+
+  \step{0}{\case{$\ctx_0 \eeq \ctxhole$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          $\ctx_1 \eeq \ctxhole$
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{1}{\case{$\ctx_0 \eeq \epair{\ctx_2}{\sexpr_2}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{2}{\case{$\ctx_0 \eeq \epair{\svalue_0}{\ctx_2}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{2}{\case{$\ctx_0 \eeq \eapp{\stoptional}{\ctx_2}{\sexpr_2}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{3}{\case{$\ctx_0 \eeq \eapp{\stoptional}{\svalue_0}{\ctx_2}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{4}{\case{$\ctx_0 \eeq \eunopt{\stoptional}{\ctx_2}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{5}{\case{$\ctx_0 \eeq \ebinopt{\stoptional}{\ctx_2}{\sexpr_2}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{6}{\case{$\ctx_0 \eeq \ebinopt{\stoptional}{\ctx_2}{\sexpr_2}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{7}{\case{$\ctx_0 \eeq \edynb{\sbnd_0}{\ctx_2}$ and $\ctx_2 \neq \echecktwo{\stoptional}{\ctx_3}{\eloczero}$}}
+    \begin{pfproof}
+      \step{7.0}{\scase{$\ctx_1 \eeq \edynb{\sbnd_0}{\ctx_3}$}}
+        \begin{pfproof}
+          \qedstep
+            \begin{pfproof}
+              by \pfih
+            \end{pfproof}
+        \end{pfproof}
+      \step{7.1}{\scase{$\ctx_1 \eeq \echecktwo{\stype_0}{\ctx_3}{\eloc_0}$}}
+        \begin{pfproof}
+          \qedstep
+            \begin{pfproof}
+              by \pfih
+            \end{pfproof}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{8}{\case{$\ctx_0 \eeq \edynb{\sbnd_0}{(\estab{\sbnd_1}{\ctx_2})}$}}
+    \begin{pfproof}
+      \begin{pfproof}
+        \qedstep
+          \begin{pfproof}
+            by \pfih
+          \end{pfproof}
+      \end{pfproof}
+    \end{pfproof}
+
+  \step{9}{\case{$\ctx_0 \eeq \estab{\sbnd_0}{\ctx_2}$}}
+    \begin{pfproof}
+      \step{9.0}{\scase{$\ctx_1 \eeq \estab{\sbnd_0}{\ctx_3}$}}
+        \begin{pfproof}
+          \qedstep
+            \begin{pfproof}
+              by \pfih
+            \end{pfproof}
+        \end{pfproof}
+      \step{9.1}{\scase{$\ctx_1 \eeq \echecktwo{\tdyn}{\ctx_3}{\eloc_0}$}}
+        \begin{pfproof}
+          \qedstep
+            \begin{pfproof}
+              by \pfih
+            \end{pfproof}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{10}{\case{$\ctx_0 \eeq \echecktwo{\stoptional}{\ctx_2}{\eloczero}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+\end{lamportproof}
+
+\begin{lemma}\label{AT-T-ctx}
+  If\/ $\atrexpr{\sexpr_0}{\ctx_1[\sexpr_1]}{\vstore_0}{\bstore_0}$
+  then\/ $\sexpr_0 \eeq \ctx_0[\sexpr_2]$
+  and\/ $\atrctx{\ctx_0}{\ctx_1}{\vstore_0}{\bstore_0}$
+  and\/ $\atrexpr{\sexpr_2}{\sexpr_1}{\vstore_0}{\bstore_0}$
+\end{lemma}
+\begin{lamportproof}
+  By induction on the structure of $\ctx_1$ and $\ctx_0$;
+   the latter is because $\ctx_0$ may be a suffix context ($\esuffix{\sblist}{\ctx}$).
+
+  \step{0}{\case{$\ctx_1 \eeq \ctxhole$}}
+    \begin{pfproof}
+      \step{0.0}{\scase{$\ctx_0 \eeq \ctxhole$}}
+        \begin{pfproof}
+          \qedstep
+        \end{pfproof}
+      \step{0.1}{\scase{$\ctx_0 \eeq \esuffix{\sblist_0}{\ctx_2}$}}
+        \begin{pfproof}
+          \qedstep
+            \begin{pfproof}
+              by \pfih
+            \end{pfproof}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{1}{\case{$\ctx_1 \eeq \epair{\ctx_2}{\sexpr_3}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{2}{\case{$\ctx_1 \eeq \epair{\svalue_0}{\ctx_2}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{3}{\case{$\ctx_1 \eeq \eapp{\stoptional}{\ctx_2}{\sexpr_3}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{4}{\case{$\ctx_1 \eeq \eapp{\stoptional}{\svalue_0}{\ctx_2}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{5}{\case{$\ctx_1 \eeq \eunopt{\stoptional}{\ctx_2}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{6}{\case{$\ctx_1 \eeq \ebinopt{\stoptional}{\ctx_2}{\sexpr_3}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{7}{\case{$\ctx_1 \eeq \ebinopt{\stoptional}{\svalue_0}{\ctx_2}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{8}{\case{$\ctx_1 \eeq \edynb{\sbnd_0}{\ctx_2}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{9}{\case{$\ctx_1 \eeq \estab{\sbnd_0}{\ctx_2}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{10}{\case{$\ctx_1 \eeq \echecktwo{\stype_0}{\ctx_2}{\eloc_0}$}}
+    \begin{pfproof}
+      \step{10.0}{\scase{$\ctx_0 \eeq \edynb{\sbnd_0}{\ctx_3}$ and $\ctx_3 \not\in \estab{\sbnd}{\ctx}$}}
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+      \step{10.1}{\scase{$\ctx_0 \eeq \edynb{\sbnd_0}{(\estab{\sbnd_1}{\ctx_3})}$}}
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+      \step{10.2}{\scase{$\ctx_0 \eeq \echecktwo{\stype_0}{\ctx_3}{\eloczero}$}}
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{11}{\case{$\ctx_1 \eeq \echecktwo{\tdyn}{\ctx_2}{\eloc_0}$}}
+    \begin{pfproof}
+      \step{11.0}{\scase{$\ctx_0 \eeq \estab{\sbnd_0}{\ctx_3}$}}
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+      \step{11.2}{\scase{$\ctx_0 \eeq \echecktwo{\tdyn}{\ctx_3}{\eloczero}$}}
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+\end{lamportproof}
+
+\begin{lemma}\label{AT-ctx-subst}
+  If\/ $\atrctx{\ctx_0}{\ctx_1}{\vstore_0}{\bstore_0}$
+  and\/ $\atrexpr{\sexpr_0}{\sexpr_1}{\vstore_0}{\bstore_0}$
+  then\/ $\atrexpr{\ctx_0[\sexpr_0]}{\ctx_1[\sexpr_1]}{\vstore_0}{\bstore_0}$
+\end{lemma}
+\begin{lamportproof}
+  By case analysis of $\atrctx{\ctx_0}{\ctx_1}{\vstore_0}{\bstore_0}$
+  and induction on the structure of $\ctx_0$ and $\ctx_1$.
+
+  \step{0}{\case{$\atrctx{\esuffix{\sblist_0}{\ctx_2}}{\ctx_1}{\vstore_0}{\bstore_0}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{1}{\case{$\atrctx{\ctxhole}{\ctxhole}{\vstore_0}{\bstore_0}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by $\atrexpr{\sexpr_0}{\sexpr_1}{\vstore_0}{\bstore_0}$
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{2}{\case{$\atrctx{\epair{\ctx_2}{\sexpr_2}}{\epair{\ctx_3}{\sexpr_3}}{\vstore_0}{\bstore_0}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{3}{\case{$\atrctx{\epair{\svalue_0}{\ctx_2}}{\epair{\svalue_1}{\ctx_3}}{\vstore_0}{\bstore_0}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{4}{\case{$\atrctx{\eapp{\stoptional}{\ctx_2}{\sexpr_2}}{\eapp{\stoptional}{\ctx_3}{\sexpr_3}}{\vstore_0}{\bstore_0}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{5}{\case{$\atrctx{\eapp{\stoptional}{\svalue_0}{\ctx_2}}{\eapp{\stoptional}{\svalue_1}{\ctx_3}}{\vstore_0}{\bstore_0}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{6}{\case{$\atrctx{\eunopt{\stoptional}{\ctx_2}}{\eunopt{\stoptional}{\ctx_3}}{\vstore_0}{\bstore_0}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{7}{\case{$\atrctx{\ebinopt{\stoptional}{\ctx_2}{\sexpr_2}}{\ebinopt{\stoptional}{\ctx_3}{\sexpr_3}}{\vstore_0}{\bstore_0}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{8}{\case{$\atrctx{\ebinopt{\stoptional}{\svalue_0}{\ctx_2}}{\ebinopt{\stoptional}{\svalue_1}{\ctx_3}}{\vstore_0}{\bstore_0}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{9}{\case{$\atrctx{\edynb{\sbnd_0}{\ctx_2}}{\edynb{\sbnd_0}{\ctx_3}}{\vstore_0}{\bstore_0}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{10}{\case{$\atrctx{\estab{\sbnd_0}{\ctx_2}}{\estab{\sbnd_0}{\ctx_3}}{\vstore_0}{\bstore_0}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{11}{\case{$\atrctx{\edynb{\sbnd_0}{\ctx_2}}{\echecktwo{\stype_0}{\ctx_3}{\eloc_0}}{\vstore_0}{\bstore_0}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{12}{\case{$\atrctx{\estab{\sbnd_0}{\ctx_2}}{\echecktwo{\tdyn}{\ctx_3}{\eloc_0}}{\vstore_0}{\bstore_0}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{13}{\case{$\atrctx{\edynb{\sbnd_0}{(\estab{\sbnd_1}{\ctx_2})}}{\echecktwo{\stype_0}{\ctx_3}{\eloc_0}}{\vstore_0}{\bstore_0}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{14}{\case{$\atrctx{\echecktwo{\stoptional}{\ctx_2}{\eloczero}}{\echecktwo{\stoptional}{\ctx_3}{\eloc_0}}{\vstore_0}{\bstore_0}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+\end{lamportproof}
+
+\begin{lemma}\label{AT-A-step}
+  If\/ $\atrexpr{\sexpr_0}{\sexpr_1}{\vstore_0}{\bstore_0}$
+  and\/ $\sexpr_0 \nredAX \sexpr_2$
+  then\/ $\sexpr_2 \rredA \sexpr_3$
+  and\/ $\conf{\sexpr_1}{\vstore_0}{\bstore_0} \rredT \conf{\sexpr_4}{\vstore_1}{\bstore_1}$
+  and\/ $\atrexpr{\sexpr_3}{\sexpr_4}{\vstore_1}{\bstore_1}$
+\end{lemma}
+\begin{lamportproof}
+  By case analysis of $\nredAX$ and inversion on the $\satrexpr$ relation.
+  In short, the shape of the \Aname{} expression $\sexpr_0$ determines
+   (and matches) the shape of the \Tname{} expression.
+
+  Expressions on the \Tname{} side may be pre-values.
+  This proof assumes that all pre-values have already been allocated to the
+   heap by stutter steps (\lemmaref{AT-A-value}).
+
+  \step{0}{\case{$\eunopt{\stoptional}{\epair{\svalue_0}{\svalue_1}} \nredAS \sdelta(\sunop, \epair{\svalue_0}{\svalue_1})$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \lemmaref{AT-unop}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{1}{\case{$\ebinopt{\stoptional}{\svalue_0}{\svalue_1} \nredAS \sdelta(\sbinop, \svalue_0, \svalue_1)$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \lemmaref{AT-binop}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{2}{\case{$\efst{\stype_0}{(\emon{\obnd{\sowner_0}{\stype_1}{\sowner_1}}{\svalue_0})} \nredAS \edynb{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{(\efst{\tdyn}{\svalue_0})}$}}
+    \begin{pfproof}
+      \step{2.0}{\case{$\svalue_0 \eeq \epair{\svalue_1}{\svalue_2}$}}
+        \begin{pfproof}
+          \step{2.0.0}{$\edynb{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{(\efst{\tdyn}{\svalue_0})} \credA \edynb{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\sdelta(\tinst{\sfst}{\tdyn}, \svalue_0)}$}
+          \step{2.0.1}{$\sexpr_1 \eeq \eunopt{\stoptional}{\svalue_2}$ and $\conf{\sexpr_1}{\vstore_0}{\bstore_0} \rredT \conf{\echecktwo{\stype_0}{\sdelta(\tinst{\sfst}{\stype_0}, \svalue_2)}{\svalue_2}}{\vstore_0}{\bstore_0}$}
+          \qedstep
+            \begin{pfproof}
+              by definition $\satrexpr$
+            \end{pfproof}
+        \end{pfproof}
+      \step{2.1}{\case{$\svalue_0 \eeq \emon{\obnd{\sowner_2}{\stype_2}{\sowner_3}}{\epair{\svalue_1}{\svalue_2}}$}}
+        \begin{pfproof}
+          \step{2.1.0}{$\edynb{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{(\efst{\tdyn}{\svalue_0})}
+                        \credA \edynb{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{(\estab{\obnd{\sowner_2}{\ftypefst{\stype_2}}{\sowner_3}}{\sdelta(\tinst{\sfst}{\ftypefst{\stype_2}{\svalue_0}})})}$}
+          \step{2.1.1}{$\sexpr_1 \eeq \eunopt{\stoptional}{\svalue_2}$ and $\conf{\sexpr_1}{\vstore_0}{\bstore_0} \rredT \conf{\echecktwo{\stype_0}{\sdelta(\tinst{\sfst}{\stype_0}, \svalue_2)}{\svalue_2}}{\vstore_0}{\bstore_0}$}
+          \qedstep
+            \begin{pfproof}
+              by definition $\satrexpr$
+            \end{pfproof}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{3}{\case{$\esnd{\stype_0}{(\emon{\sbnd_0}{\svalue_0})} \nredAS \ldots$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          similar to ${\sfst}$ case
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{4}{\case{$\eapp{\stype_0}{(\efun{\tann{\svar_0}{\stype_0}}{\sexpr_2})}{\svalue_1} \nredAS \echecktwo{\stype_0}{\esubst{\sexpr_2}{\svar_0}{\svalue_0}}{\eloczero}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \lemmaref{AT-value-subst}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{5}{\case{$\eapp{\stype_0}{(\emon{\obnd{\sowner_0}{(\tfun{\stype_1}{\stype_2})}{\sowner_1}}{\svalue_0})}{\svalue_1} \nredAS \edynb{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{(\eapp{\tdyn}{\svalue_0}{(\estab{\obnd{\sowner_1}{\stype_1}{\sowner_0}}{\svalue_1})})}$}}
+    \begin{pfproof}
+      \step{5.0}{$\edynb{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{(\eapp{\tdyn}{\svalue_0}{(\estab{\obnd{\sowner_1}{\stype_1}{\sowner_0}}{\svalue_1})})}
+                  \credA \edynb{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{(\eapp{\tdyn}{\svalue_0}{\svalue_2})}$}
+      \qedstep
+        \begin{pfproof}
+          by \lemmaref{AT-addtrace}/\lemmaref{AT-addmon} for $\ssta$ and the definition of $\satrexpr$ for the whole
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{6}{\case{$\edynb{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\svalue_0} \nredAS \emon{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\svalue_0}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \lemmaref{AT-tagmatch} and \lemmaref{AT-addmon}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{7}{\case{$\edynb{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{(\ehopt{\sblist_0}{\sint_0})} \nredAS \sint_0$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \lemmaref{AT-tagmatch}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{8}{\case{$\edynb{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\svalue_0} \nredAS \boundaryerror{\sblist_0}{\svalue_0}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \lemmaref{AT-tagmatch}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{9}{\case{$\echecktwo{\stype_0}{\svalue_0}{\eloczero} \nredAS \svalue_0$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by inversion $\satrexpr$
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{10}{\case{$\echecktwo{\stype_0}{\svalue_0}{\eloczero} \nredAS \boundaryerror{\sblist_0}{\svalue_0}$}}
+    \begin{pfproof}
+      \absurdstep
+        \begin{pfproof}
+          by \theoremref{A-S-type-soundness}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{11}{\case{$\esuffix{\sblist_0}{\svalue_0} \nredAS \faddtrace{\sblist_0}{\svalue_0}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \lemmaref{AT-addtrace}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{12}{\case{$\eunopt{\stoptional}{\svalue_0} \nredAD \tagerrorD$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \lemmaref{AT-unop}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{13}{\case{$\eunopt{\stoptional}{\svalue_0} \nredAD \echecktwo{\tdyn}{\sdelta(\sunop, \svalue_0)}{\eloczero}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \lemmaref{AT-unop}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{14}{\case{$\ebinopt{\stoptional}{\svalue_0}{\svalue_1} \nredAD \tagerrorD$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \lemmaref{AT-binop}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{15}{\case{$\ebinopt{\stoptional}{\svalue_0}{\svalue_1} \nredAD \sdelta(\sbinop, \svalue_0, \svalue_1)$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \lemmaref{AT-binop}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{16}{\case{$\efst{\tdyn}{(\ehopt{\sblist_0}{(\emon{\obnd{\sowner_0}{(\tpair{\stype_0}{\stype_1})}{\sowner_1}}{\svalue_0})})}
+                   \nredAD \esuffix{\sblist_0}{(\estab{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\efst{\stype_0}{\svalue_0}})}$}}
+    \begin{pfproof}
+      \step{16.0}{$\esuffix{\sblist_0}{(\estab{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\efst{\stype_0}{\svalue_0}})}
+                   \credA \esuffix{\sblist_0}{(\estab{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\sdelta(\tinst{\sfst}{\ftypefst{\stype_0}}, {\svalue_0})})}$}
+      \step{16.1}{$\sexpr_1 \eeq \efst{\tdyn}{\svalue_1}$ and $\conf{\sexpr_1}{\vstore_0}{\bstore_0} \nredTX \conf{\echecktwo{\tdyn}{\sdelta(\tinst{\sfst}{\tdyn}, \svalue_1)}{\svalue_1}}{\vstore_0}{\bstore_0}$}
+      \qedstep
+        \begin{pfproof}
+          by definition $\satrexpr$
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{17}{\case{$\esnd{\tdyn}{\ldots} \nredAD \ldots$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          similar to previous case
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{18}{\case{$\eapp{\tdyn}{(\ehopt{\sblist_0}{(\efun{\svar_0}{\sexpr_0})})}{\svalue_0} \nredAD \esuffix{\sblist_0}{\echecktwo{\tdyn}{(\esubst{\sexpr_0}{\svar_0}{\svalue_0})}{\eloczero}}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \lemmaref{AT-value-subst}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{19}{\case{$\eapp{\tdyn}{(\ehopt{\sblist_0}{(\emon{\obnd{\sowner_0}{(\tfun{\stype_1}{\stype_2})}{\sowner_1}}{\svalue_0})})}{\svalue_1} \nredAD
+  \\ \esuffix{\sblist_0}{(\estab{\obnd{\sowner_0}{\stype_2}{\sowner_1}}{(\eapp{\stype_2}{\svalue_0}{(\edynb{\obnd{\sowner_1}{\stype_1}{\sowner_0}}{\svalue_1})})})}$}}
+    \begin{pfproof}
+      \step{19.0}{\case{$\esuffix{\sblist_0}{(\estab{\obnd{\sowner_0}{\stype_2}{\sowner_1}}{(\eapp{\stype_2}{\svalue_0}{(\edynb{\obnd{\sowner_1}{\stype_1}{\sowner_0}}{\svalue_1})})})}
+                         \credA
+                         \\\esuffix{\sblist_0}{(\estab{\obnd{\sowner_0}{\stype_2}{\sowner_1}}{(\eapp{\stype_2}{\svalue_0}{\svalue_2})})}$}}
+        \begin{pfproof}
+          \qedstep
+            \begin{pfproof}
+              by \lemmaref{AT-tagmatch}
+            \end{pfproof}
+        \end{pfproof}
+      \step{19.1}{\case{$\esuffix{\sblist_0}{(\estab{\obnd{\sowner_0}{\stype_2}{\sowner_1}}{(\eapp{\stype_2}{\svalue_0}{(\edynb{\obnd{\sowner_1}{\stype_1}{\sowner_0}}{\svalue_1})})})}
+                         \credA
+                         \\\esuffix{\sblist_0}{(\estab{\obnd{\sowner_0}{\stype_2}{\sowner_1}}{(\eapp{\stype_2}{\svalue_0}{\boundaryerror{\sblist_0}{\svalue_1}})})}$}}
+        \begin{pfproof}
+          \qedstep
+            \begin{pfproof}
+              by \lemmaref{AT-tagmatch}
+            \end{pfproof}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{20}{\case{$\estab{\sbnd_0}{\svalue_0} \nredAD \emon{\sbnd_0}{\svalue_0}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \lemmaref{AT-tagmatch} and \lemmaref{AT-addmon}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{21}{\case{$\estab{\sbnd_0}{(\emon{\sbnd_1}{(\ehopt{\sblist_0}{\svalue_0})})} \nredAD \esuffix{(\fconcat{\sbnd_0}{\fconcat{\sbnd_1}{\sblist_0}})\,}{\svalue_0}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \lemmaref{AT-tagmatch}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{22}{\case{$\estab{\sbnd_0}{\sint_0} \nredAD \sint_0$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \lemmaref{AT-tagmatch}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{23}{\case{$\echecktwo{\tdyn}{\svalue_0}{\eloc_0} \nredAD \svalue_0$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by inversion $\satrexpr$
+        \end{pfproof}
+    \end{pfproof}
+
+\end{lamportproof}
+
+\begin{lemma}\label{AT-T-step}
+  If\/ $\atrexpr{\sexpr_0}{\sexpr_1}{\vstore_0}{\bstore_0}$
+  and\/ $\conf{\sexpr_1}{\vstore_0}{\bstore_0} \nredTX \conf{\sexpr_3}{\vstore_1}{\bstore_1}$
+  then\/ $\sexpr_0 \rredA \sexpr_2$
+  and\/ $\atrexpr{\sexpr_2}{\sexpr_3}{\vstore_1}{\bstore_1}$
+\end{lemma}
+\begin{lamportproof}
+  By case analysis of $\nredTX$.
+
+  Any \Aname{} expression can have the form $(\esuffix{\sblist}{\svalue})$;
+   the proof assumes these have been reduced by stutter steps (\lemmaref{AT-T-value}).
+
+  \step{0}{\case{$\conf{\sprevalue_0}{\vstore_0}{\bstore_0} \nredTX \conf{\eloc_0}{\fcons{\vrecord{\eloc_0}{\sprevalue_0}}{\vstore_0}}{\fcons{\vrecord{\eloc_0}{\emptyset}}{\bstore_0}}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by inversion $\satrexpr$ and \lemmaref{AT-store-weakening}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{1}{\case{$\conf{\eunopt{\stoptional}{\eloc_0}}{\vstore_0}{\bstore_0} \nredTX \conf{\echecktwo{\stoptional}{\sdelta(\sunop, \svalue_0)}{\eloc_0}}{\vstore_0}{\bstore_0}$}}
+    \begin{pfproof}
+      \step{1.0}{\scase{$\sexpr_0 \in \eunopt{\stoptional}{\ehopt{\sblist}{\epair{\svalue}{\svalue}}}$}}
+        \begin{pfproof}
+          \qedstep
+            \begin{pfproof}
+              by \lemmaref{AT-unop}
+            \end{pfproof}
+        \end{pfproof}
+      \step{1.1}{\scase{$\sexpr_0 \eeq \eunopt{\stoptional}{\emon{\obnd{\sowner_0}{\stype_1}{\sowner_1}}{(\ehopt{\sblist_0}{\epair{\svalue_2}{\svalue_3}})}}$
+                        \\ and $\stoptional \eeq \stype_0$}}
+        \begin{pfproof}
+          \step{1.1.0}{$\sexpr_0 \rredA \edynb{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\sdelta(\sunop, \ehopt{\sblist_0}{\epair{\svalue_2}{\svalue_3}})}$}
+          \qedstep
+        \end{pfproof}
+      \step{1.2}{\scase{$\sexpr_0 \eeq \eunopt{\stoptional}{\emon{\obnd{\sowner_0}{\stype_1}{\sowner_1}}{(\ehopt{\sblist_0}{(\emon{\obnd{\sowner_2}{\tpair{\stype_2}{\stype_3}}{\sowner_3}}{\epair{\svalue_2}{\svalue_3}})})}}$
+                        \\ and $\stoptional \eeq \stype_0$}}
+        \begin{pfproof}
+          \step{1.2.0}{$\sexpr_0 \rredA \edynb{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{(\estab{\obnd{\sowner_2}{\stype_1}{\sowner_3}}{\sdelta(\sunop, \ehopt{\sblist_0}{\epair{\svalue_2}{\svalue_3}})})}$}
+          \qedstep
+        \end{pfproof}
+      \step{1.3}{\scase{$\sexpr_0 \eeq \eunopt{\stoptional}{\ehopt{\sblist_0}{(\emon{\obnd{\sowner_0}{\stype_1}{\sowner_1}}{\epair{\svalue_2}{\svalue_3}})}}$
+                        \\ and $\stoptional \eeq \tdyn$}}
+        \begin{pfproof}
+          \step{1.3.0}{$\sexpr_0 \rredA \estab{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\sdelta(\sunop, \ehopt{\sblist_0}{\epair{\svalue_2}{\svalue_3}})}$}
+          \qedstep
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{2}{\case{$\conf{\eunopt{\stoptional}{\svalue_0}}{\vstore_0}{\bstore_0} \nredTX
+  \conf{\tagerrorD}{\vstore_0}{\bstore_0}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by inversion $\satrexpr$
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{3}{\case{$\conf{\ebinopt{\stoptional}{\sint_0}{\sint_1}}{\vstore_0}{\bstore_0} \nredTX \conf{\sdelta(\sbinop, \svalue_0, \svalue_1)}{\vstore_0}{\bstore_0}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \lemmaref{AT-binop}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{4}{\case{$\conf{\ebinopt{\stoptional}{\sint_0}{\sint_1}}{\vstore_0}{\bstore_0}
+  \nredTX \conf{\tagerrorD}{\vstore_0}{\bstore_0}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \lemmaref{AT-binop}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{5}{\case{$\conf{\eapp{\toptional}{\eloc_0}{\svalue_0}}{\vstore_0}{\bstore_0} \nredTX \conf{\echecktwo{\stoptional}{\esubst{\sexpr_2}{\svar_0}{\svalue_0}}{\eloc_0}}{\vstore_0}{\fmapupdate{\bstore_0}{\svalue_0}{\frev{\fmapref{\bstore_0}{\eloc_0}}}}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \lemmaref{AT-value-subst}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{6}{\case{$\conf{\eapp{\toptional}{\eloc_0}{\svalue_0}}{\vstore_0}{\bstore_0} \nredTX \conf{\boundaryerror{\sblist_0}{\svalue_0}}{\vstore_0}{\bstore_0}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \lemmaref{AT-tagmatch}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{7}{\case{$\conf{\eapp{\stype_0}{\eloc_0}{\svalue_0}}{\vstore_0}{\bstore_0} \nredTX \conf{\echecktwo{\stype_0}{\esubst{\sexpr_2}{\svar_0}{\svalue_0}}{\eloc_0}}{\vstore_0}{\fmapupdate{\bstore_0}{\svalue_0}{\frev{\fmapref{\bstore_0}{\eloc_0}}}}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \lemmaref{AT-value-subst}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{8}{\case{$\conf{\eapp{\tdyn}{\eloc_0}{\svalue_0}}{\vstore_0}{\bstore_0} \nredTX \conf{\esubst{\sexpr_2}{\svar_0}{\svalue_0}}{\vstore_0}{\bstore_0}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          similar to previous case
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{9}{\case{$\conf{\eapp{\tdyn}{\svalue_0}{\svalue_1}}{\vstore_0}{\bstore_0}
+  \nredTX \conf{\tagerrorD}{\vstore_0}{\bstore_0}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \lemmaref{AT-tagmatch}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{10}{\case{$\conf{\edynb{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\svalue_0}}{\vstore_0}{\bstore_0} \nredTX \conf{\svalue_0}{\vstore_0}{\fmapupdate{\bstore_0}{\svalue_0}{\eset{\obnd{\sowner_0}{\stype_0}{\sowner_1}}}}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \lemmaref{AT-tagmatch}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{11}{\case{$\conf{\edynb{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\svalue_0}}{\vstore_0}{\bstore_0} \nredTX \conf{\boundaryerror{\sblist_0}{\svalue_0}}{\vstore_0}{\bstore_0}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \lemmaref{AT-tagmatch}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{12}{\case{$\conf{\estab{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\svalue_0}}{\vstore_0}{\bstore_0} \nredTX \conf{\svalue_0}{\vstore_0}{\fmapupdate{\bstore_0}{\svalue_0}{\eset{\obnd{\sowner_0}{\stype_0}{\sowner_1}}}}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by inversion $\satrexpr$ and \lemmaref{AT-addtrace} and \lemmaref{AT-addmon}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{13}{\case{$\conf{\echecktwo{\tdyn}{\svalue_0}{\eloc_0}}{\vstore_0}{\bstore_0} \nredTX \conf{\svalue_0}{\vstore_0}{\bstore_0}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by inversion $\satrexpr$
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{14}{\case{$\conf{\echecktwo{\stype_0}{\svalue_0}{\eloc_0}}{\vstore_0}{\bstore_0} \nredTX \conf{\svalue_0}{\vstore_0}{\fmapupdate{\bstore_0}{\svalue_0}{\fmapref{\bstore_0}{\eloc_0}}}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \lemmaref{AT-tagmatch}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{17}{\case{$\conf{\echecktwo{\stype_0}{\svalue_0}{\eloc_0}}{\vstore_0}{\bstore_0} \nredTX \conf{\boundaryerror{\sblist_0}{\svalue_0}}{\vstore_0}{\bstore_0}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \lemmaref{AT-tagmatch}
+        \end{pfproof}
+    \end{pfproof}
+
+\end{lamportproof}
+
+\begin{lemma}\label{AT-A-value}
+  If\/ $\atrexpr{\svalue_0}{\sexpr_0}{\vstore_0}{\bstore_0}$
+  then\/ $\conf{\sexpr_0}{\vstore_0}{\bstore_0} \rredT \conf{\svalue_1}{\vstore_1}{\bstore_1}$
+  and\/ $\atrexpr{\svalue_0}{\svalue_1}{\vstore_1}{\bstore_1}$
+\end{lemma}
+\begin{lamportproof}
+  \step{0}{\case{$\sexpr_0 \in \svalue$}}
+    \begin{pfproof}
+      \qedstep
+    \end{pfproof}
+
+  \step{1}{\case{$\sexpr_0 \in \sprevalue$}}
+    \begin{pfproof}
+      \step{1.0}{$\conf{\sexpr_0}{\vstore_0}{\bstore_0} \rredT \conf{\eloc_0}{\fcons{\vrecord{\eloc_0}{\sexpr_0}}{\vstore_0}}{\fcons{\brecord{\eloc_0}{\semptymap}}{\bstore_0}}$}
+      \qedstep
+        \begin{pfproof}
+          by $\atrexpr{\svalue_0}{\sexpr_0}{\vstore_0}{\bstore_0}$ and \lemmaref{AT-store-weakening}
+        \end{pfproof}
+    \end{pfproof}
+\end{lamportproof}
+
+\begin{lemma}\label{AT-T-value}
+  If\/ $\atrexpr{\sexpr_0}{\svalue_0}{\vstore_0}{\bstore_0}$
+  then\/ $\sexpr_0 \rredA \svalue_1$
+  and\/ $\atrexpr{\svalue_1}{\svalue_0}{\vstore_0}{\bstore_0}$
+\end{lemma}
+\begin{lamportproof}
+
+  \step{0}{\case{$\sexpr_0 \in \svalue$}}
+    \begin{pfproof}
+      \qedstep
+    \end{pfproof}
+
+  \step{1}{\case{$\sexpr_0 \eeq \esuffix{\sblist_0}{\svalue_1}$}}
+    \begin{pfproof}
+      \step{1.0}{$\sexpr_0 \rredA \faddtrace{\sblist_0}{\svalue_1}$}
+      \qedstep
+        \begin{pfproof}
+          by \lemmaref{AT-addtrace}
+        \end{pfproof}
+    \end{pfproof}
+\end{lamportproof}
+
+\begin{lemma}\label{AT-addtrace}
+  If\/ $\atrexpr{\svalue_0}{\svalue_1}{\vstore_0}{\bstore_0}$
+  and\/ $\stypeenv_0 \sWTA \svalue_0 : \tdyn$
+  then\/ $\atrexpr{\faddtrace{\sblist_0}{\svalue_0}}{\svalue_1}{\vstore_0}{\bstore_0}$
+\end{lemma}
+\begin{lamportproof}
+  By case analysis of $\atrexpr{\svalue_0}{\svalue_1}{\vstore_0}{\bstore_0}$
+
+  \step{0}{\case{$\faddtrace{\sblist_0}{\svalue_0} \eeq \svalue_0$}}
+    \begin{pfproof}
+      \qedstep
+    \end{pfproof}
+
+  \step{1}{\case{$\faddtrace{\sblist_0}{\svalue_0} \eeq \ehist{\sblist_1}{\svalue_2}$}}
+    \begin{pfproof}
+      \step{1.0}{\scase{$\svalue_0 \eeq \ehopt{\sblist_2}{\sint_0}$}}
+        \begin{pfproof}
+          \qedstep
+        \end{pfproof}
+      \step{1.1}{\scase{$\svalue_0 \eeq \ehopt{\sblist_2}{\epair{\svalue_2}{\svalue_3}}$}}
+        \begin{pfproof}
+          \qedstep
+        \end{pfproof}
+      \step{1.2}{\scase{$\svalue_0 \eeq \ehopt{\sblist_2}{(\emon{\sbnd_0}{\epair{\svalue_2}{\svalue_3}})}$}}
+        \begin{pfproof}
+          \qedstep
+        \end{pfproof}
+      \step{1.3}{\scase{$\svalue_0 \eeq \ehopt{\sblist_2}{(\emon{\sbnd_0}{(\ehopt{\sblist_3}{(\emon{\sbnd_1}{\epair{\svalue_2}{\svalue_3}})})})}$}}
+        \begin{pfproof}
+          \absurdstep
+            \begin{pfproof}
+              by \lemmaref{A-D-mon-limit}
+            \end{pfproof}
+        \end{pfproof}
+      \step{1.4}{\scase{$\svalue_0 \eeq \ehopt{\sblist_2}{(\efun{\svar_0}{\sexpr_0})}$}}
+        \begin{pfproof}
+          \qedstep
+        \end{pfproof}
+      \step{1.5}{\scase{$\svalue_0 \eeq \ehopt{\sblist_2}{(\emon{\sbnd_0}{(\efun{\svar_0}{\sexpr_0})})}$}}
+        \begin{pfproof}
+          \absurdstep
+            \begin{pfproof}
+              by $\stypeenv_0 \sWLA \svalue_0 : \tdyn$
+            \end{pfproof}
+        \end{pfproof}
+      \step{1.6}{\scase{$\svalue_0 \eeq \ehopt{\sblist_2}{(\efun{\tann{\svar_0}{\stype_0}}{\sexpr_0})}$}}
+        \begin{pfproof}
+          \absurdstep
+            \begin{pfproof}
+              by $\stypeenv_0 \sWLA \svalue_0 : \tdyn$
+            \end{pfproof}
+        \end{pfproof}
+      \step{1.7}{\scase{$\svalue_0 \eeq \ehopt{\sblist_2}{(\emon{\sbnd_0}{(\efun{\tann{\svar_0}{\stype_0}}{\sexpr_0})})}$}}
+        \begin{pfproof}
+          \qedstep
+        \end{pfproof}
+      \step{1.8}{\scase{$\svalue_0 \eeq \ehopt{\sblist_2}{(\emon{\sbnd_0}{(\ehopt{\sblist_3}{(\emon{\sbnd_1}{(\efun{\tann{\svar_0}{\stype_0}}{\sexpr_0})})})})}$}}
+        \begin{pfproof}
+          \absurdstep
+            \begin{pfproof}
+              by \lemmaref{A-D-mon-limit}
+            \end{pfproof}
+        \end{pfproof}
+    \end{pfproof}
+\end{lamportproof}
+
+\begin{lemma}\label{AT-addmon}
+  If\/ $\atrexpr{\svalue_0}{\svalue_1}{\vstore_0}{\bstore_0}$
+  and\/ $\svalue_0 \in (\efun{\tann{\svar}{\stype}}{\sexpr}) \cup \epair{\svalue}{\svalue}$
+  then\/ $\atrexpr{\emon{\sbnd_0}{\svalue_0}}{\svalue_1}{\vstore_0}{\bstore_0}$
+\end{lemma}
+\begin{lamportproof}
+  Immediate from the definition of $\satrexpr$.
+\end{lamportproof}
+
+\begin{lemma}\label{AT-unop}
+  If\/ $\atrexpr{\eunopt{\stoptional}{\svalue_0}}{\eunopt{\stoptional}{\svalue_1}}{\vstore_0}{\bstore_0}$
+  and\/ $\svalue_0 \not\in \emon{\sbnd}{\svalue}$
+  then\/ $\sdelta(\sunop, \svalue_0)$ is defined iff\/ $\sdelta(\sunop, \svalue_1)$
+  is defined.
+  Furthermore, if both are defined, then\/ $\atrexpr{\sdelta(\sunop, \svalue_0)}{\sdelta(\sunop, \svalue_1)}{\vstore_0}{\bstore_0}$
+\end{lemma}
+\begin{lamportproof}
+  \step{0}{$\svalue_0 \in \ehopt{\sblist}{\epair{\svalue}{\svalue}}$ iff $\svalue_1 \in \epair{\svalue}{\svalue}$}
+    \begin{pfproof}
+      by definition $\satrexpr$
+    \end{pfproof}
+  \qedstep
+    \begin{pfproof}
+      by definition $\sdelta$
+    \end{pfproof}
+\end{lamportproof}
+
+\begin{lemma}\label{AT-binop}
+  If\/ $\atrexpr{\ebinopt{\stoptional}{\svalue_0}{\svalue_1}}{\ebinopt{\stoptional}{\svalue_2}{\svalue_3}}{\vstore_0}{\bstore_0}$
+  then\/ $\sdelta(\sbinop, \svalue_0, \svalue_1)$ is defined iff\/ $\sdelta(\sbinop, \svalue_2, \svalue_3)$
+  is defined.
+  Furthermore, if both are defined, then\/ $\atrexpr{\sdelta(\sbinop, \svalue_0, \svalue_1)}{\sdelta(\sbinop, \svalue_2, \svalue_3)}{\vstore_0}{\bstore_0}$
+\end{lemma}
+\begin{lamportproof}
+  \step{0}{$\svalue_0 \in \sint$ iff $\svalue_2 \in \sint$
+           \\
+           and $\svalue_1 \in \sint$ iff $\svalue_3 \in \sint$}
+    \begin{pfproof}
+      by definition $\satrexpr$
+    \end{pfproof}
+
+  \qedstep
+    \begin{pfproof}
+      by definition $\sdelta$
+    \end{pfproof}
+\end{lamportproof}
+
+\begin{lemma}\label{AT-tagmatch}
+  If\/ $\atrexpr{\svalue_0}{\svalue_1}{\vstore_0}{\bstore_0}$
+  then\/ $\fshallow{\tagof{\stype_0}}{\svalue_0}$
+  iff\/ $\fshallow{\tagof{\stype_1}}{\svalue_1}$
+\end{lemma}
+\begin{lamportproof}
+  By case analysis of $\atrexpr{\svalue_0}{\svalue_1}$ and $\sshallow$
+
+  \step{0}{\case{$\atrexpr{\ehopt{\sblist_0}{\sint_0}}{\sint_0}{\vstore_0}{\bstore_0}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by the definition of $\sshallow$
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{1}{\case{$\atrexpr{\ehopt{\sblist_0}{\epair{\svalue_2}{\svalue_3}}}{\eloc_0}{\vstore_0}{\bstore_0}$
+                 \\ and $\fmapref{\vstore_0}{\eloc_0} \eeq \epair{\svalue_4}{\svalue_5}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by $\sshallow$
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{2}{\case{$\atrexpr{\ehopt{\sblist_0}{(\emon{\sbnd_0}{\epair{\svalue_2}{\svalue_3}})}}{\eloc_0}{\vstore_0}{\bstore_0}$
+                 \\ and $\fmapref{\vstore_0}{\eloc_0} \eeq \epair{\svalue_4}{\svalue_5}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by $\sshallow$
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{3}{\case{$\atrexpr{\emon{\sbnd_0}{(\ehopt{\sblist_0}{(\emon{\sbnd_1}{\epair{\svalue_2}{\svalue_3}})})}}{\eloc_0}{\vstore_0}{\bstore_0}$
+                 \\ and $\fmapref{\vstore_0}{\eloc_0} \eeq \epair{\svalue_4}{\svalue_5}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by $\sshallow$
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{4}{\case{$\atrexpr{\ehopt{\sblist_0}{(\efun{\svar_0}{\sexpr_0})}}{\eloc_0}{\vstore_0}{\bstore_0}$
+                 \\ and $\fmapref{\vstore_0}{\eloc_0} \eeq \efun{\svar_0}{\sexpr_1}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by $\sshallow$
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{5}{\case{$\atrexpr{\ehopt{\sblist_0}{(\emon{\sbnd_0}{(\efun{\svar_0}{\sexpr_0})})}}{\eloc_0}{\vstore_0}{\bstore_0}$
+                 \\ and $\fmapref{\vstore_0}{\eloc_0} \eeq \efun{\svar_0}{\sexpr_1}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by $\sshallow$
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{6}{\case{$\atrexpr{\ehopt{\sblist_0}{(\efun{\tann{\svar_0}{\stype_0}}{\sexpr_0})}}{\eloc_0}{\vstore_0}{\bstore_0}$
+                 \\ and $\fmapref{\vstore_0}{\eloc_0} \eeq \efun{\tann{\svar_0}{\stype_0}}{\sexpr_1}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by $\sshallow$
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{7}{\case{$\atrexpr{\ehopt{\sblist_0}{(\emon{\sbnd_0}{(\efun{\tann{\svar_0}{\stype_0}}{\sexpr_0})})}}{\eloc_0}{\vstore_0}{\bstore_0}$
+                 \\ and $\fmapref{\vstore_0}{\eloc_0} \eeq \efun{\tann{\svar_0}{\stype_0}}{\sexpr_1}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by $\sshallow$
+        \end{pfproof}
+    \end{pfproof}
+
+\end{lamportproof}
+
+\begin{lemma}\label{AT-value-subst}
+  If\/ $\atrexpr{\sexpr_0}{\sexpr_1}{\vstore_0}{\bstore_0}$
+  and\/ $\atrexpr{\svalue_0}{\svalue_1}{\vstore_0}{\bstore_0}$
+  then\/ $\atrexpr{\esubst{\sexpr_0}{\svar_0}{\svalue_0}}{\esubst{\sexpr_1}{\svar_0}{\svalue_1}}{\vstore_0}{\bstore_0}$
+\end{lemma}
+\begin{lamportproof}
+  By case analysis of $\atrexpr{\sexpr_0}{\sexpr_1}{\vstore_0}{\bstore_0}$
+  and induction on the structure of $\sexpr_0$ and $\sexpr_1$
+\end{lamportproof}
+
+\begin{lemma}\label{AT-store-weakening}
+  If\/ $\atrexpr{\sexpr_0}{\sexpr_1}{\vstore_0}{\bstore_0}$
+  and\/ $\vstore_1$ adds bindings to\/ $\vstore_0$
+  and\/ $\bstore_1$ adds bindings and blame information to\/ $\bstore_0$
+  then\/ $\atrexpr{\sexpr_0}{\sexpr_1}{\vstore_1}{\bstore_1}$
+\end{lemma}
+\begin{lamportproof}
+  By induction on the derivation of $\atrexpr{\sexpr_0}{\sexpr_1}{\vstore_0}{\bstore_0}$
+\end{lamportproof}

@@ -1,0 +1,65 @@
+
+A type soundness theorem relates the type $\stype_0$ of a well-formed
+ expression $\sexpr_0$ to the possible outcomes of evaluation.\footnote{The
+  definition considers closed $\sexpr_0$ without loss of generality;
+  to study an open expression, wrap it in a closing context or lambda.
+  By contrast, prior works that employ an ``open-world'' soundness theorem
+  restrict the syntax of mixed-typed programs~\cite{tf-dls-2006, vss-popl-2017}.}
+In particular, if the evaluation of $\sexpr_0$ results in
+ a value $\svalue_0$, then the surface type $\stype_0$ predicts some properties
+ of $\svalue_0$ in the evaluation language.
+For each combination of surface typing~($\sWT$) and evaluation typing
+  ($\sWT_X$ for $\scriptstyle X \in \eset{\nsym, \tsym, \asym}$) judgments,
+  the predictive aspect of a type soundness theorem may be expressed as a
+  function $\sXproj$ on types.
+
+% TODO
+% - transient needs the heap to establish the type of the value
+\begin{definition}[type soundness]
+  Let $\sXproj$ be a function from surface types to evaluation types.
+  % NOTE: F maybe has type `\vdash -> \vdash_X`
+  A reduction relation $\rredX$ satisfies $\propts{\sWTX}{\sXproj}$ iff for all
+  $\fwellformed{\sexpr_0}{\stype_0}$ one of the following holds:
+  \begin{itemize}
+    \itemsep0.5ex
+    \item \label{clause:F}
+      $\sexpr_0 \rredX \svalue_0$
+      and $\sWTX \svalue_0 : \sXproj(\stype_0)$
+    \item
+      $\sexpr_0 \rredX \sexpr_1$
+      and $\sexpr_1 \in \eset{\tagerrorD{}, \divisionbyzeroerror} \cup \boundaryerror{\sbset}{\svalue}$
+    \item
+      $\fdiverge{\sexpr_0}{\rredX}$
+  \end{itemize}
+\end{definition}
+
+By implication, type soundness states evaluation does not reach certain
+ ``wrong'' states~\cite{m-jcss-1978}: static tag errors ($\tagerrorS{}$)
+ and irreducible expressions.
+
+To formulate the type soundness theorem for the three semantics, we
+require two functions on types.
+The first, $\stagproj$ from \figref{fig:evaluation-metafunctions}, maps a surface type
+to its constructor.
+The second, $\sidproj$, is the identity function on types.
+
+\begin{theorem}[type soundness]\label{thm:type-soundness}
+ \leavevmode
+  \begin{enumerate}
+    \itemsep0.5ex
+    \item $\rredN$ satisfies $\propts{\sWTA}{\sidproj}$
+    \item $\rredT$ satisfies $\propts{\sWTT}{\stagproj}$
+    \item $\rredA$ satisfies $\propts{\sWTA}{\sidproj}$
+  \end{enumerate}
+\end{theorem}
+\begin{proofsketch}
+  By three lemmas per semantics: progress, preservation, and that surface
+  typing implies evaluation typing.  The key for the first bullet is that
+  the evaluation syntax of \Aname{} extends the one of \Nname{} and the
+  type judgment $\sWTA$ extends $\sWTN$; hence the proof can verify the
+  theorem for the {\em same\/} type judgment.  See the
+  \techreport{} for full proofs.
+\end{proofsketch}
+
+% \subsection{Type soundness fails to account for meaningful distinctions}
+

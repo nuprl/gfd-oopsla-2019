@@ -1,0 +1,91 @@
+% TODO Greenberg SNAPL ?
+
+Our work introduces new criteria for analyzing a gradual/migratory typing
+ system, its semantics, and its promises. Hence we first compare our
+ work here to other criteria for gradual typing.
+
+The standard metatheory for gradual typing includes a type soundness theorem
+ and a blame theorem~\cite{tf-dls-2006,wf-esop-2009,w-snapl-2015}.
+The latter property says that all blame errors are manifest by
+ a dynamic value flowing into a static context.
+\citet{svcb-snapl-2015} introduce criteria for the meaning of types in a
+ grammar that includes a dynamic type.  None of these criteria distinguish a
+ system that fully enforces types (such as \Nname{}) from one that does not
+ (such as \Aname{} and \Tname{}).
+
+Three recent pieces of work go beyond the standard metatheory.
+ \citet{clzv-ecoop-2018} compare different gradual typing systems as
+ different translations from one surface language to one core language;
+ they do not use theorems to characterize the difference in type soundness.
+ \citet{gf-icfp-2018} interpret one gradual typing systems as several
+ different semantics for a common surface language; their theorems
+ establish distinct type soundness properties.  \citet{nla-popl-2019}
+ present an axiomatic theory of gradual typing and prove that only the
+ \Nname{} semantics satisfies all the axioms. Other semantics can be understood
+ based on how they fail to satisfy the axioms.  The axioms do not specify
+ the blame behavior of gradual typing systems.
+
+Our search for additional criteria started from the work on {\em
+ complete monitoring\/}~\cite{dtf-esop-2012} and a fundamental insight from
+ the research on higher-order contracts:
+%
+\textbf{\emph{specifications can be wrong}}.
+% 
+This point was driven home dramatically when Racket programmers complained
+ about failures of the original contract system~\cite{ff-icfp-2002}
+ concerning dependent contracts. On some occasions, these contracts failed to
+ catch a problem; on others, the blame assignment pointed in the
+ wrong direction. Several researchers also noted problems
+ with the original semantics, but their proposed alternatives did not
+ resolve the practical problems either~\cite{bm-jfp-2006,hjl-flops-2006,gpw-jfp-2012}.
+
+With complete monitoring, it was possible to pinpoint the faulty assumption
+behind the original contract work thanks to the crucial technical tool of
+\emph{ownership semantics}\/~\cite{dfff-popl-2011}, which was in turn
+inspired by a syntactic techique for proving type abstraction~\cite{gmz-toplas-2000}.
+Complete monitoring led to a new implementation of contracts that
+eliminated the observed problems and helped research teams validate later work
+on:
+ first-class classes~\cite{tsdtf-oopsla-2012},
+ delimited continuations~\cite{tst-esop-2013},
+ and authorization contracts~\cite{mdffc-oopsla-2016}.
+
+Ownership semantics also served to validate the design of Whip, a contract
+system that may be partially deployed in a distributed
+application~\cite{wcd-icfp-2017}.
+Although Whip does not satisfy complete monitoring, it does satisfy a weakened
+blame correctness theorem.
+Our paper articulates the generalization with blame soundness and
+blame completeness; Whip is blame-sound relative to a heap-based notion of
+ownership (\secref{sec:tradeoff}) and blame-incomplete.  On a similar note, we
+conjecture that the $\sWLA$ relation for \Aname{} answers a
+question raised by \citet{sst-jfp-2018} about how to adapt complete monitoring
+for ``best-effort'' contracts; such contracts do not satisfy complete monitoring,
+but may aim for blame soundness and completeness.
+
+As for the various {\em semantics\/} to be considered, there are several we
+ did not analyze here.
+\citeN{cl-icfp-2017} present a semantics that resembles \Aname{} without blame.
+% it's more Forgetful than Amnesic --- checks the wrapper type not the context
+The monotonic semantics for references enforces an increasingly-precise
+type for every heap location~\cite{svctg-esop-2015}; a monotonic variant of \Nname{}
+would store functions on a heap and add a monitor directly to a heap
+value $\fmapref{\vstore}{\eloc}$ when the address $\eloc$ crosses a boundary.
+Pyret (\shorturl{https://www.}{pyret.org}) implements a combination of the
+ \Nname{} and \Tname{} semantics without blame; the language eagerly checks
+ fixed-size data and performs first-order checks for recursive types
+ (e.g. lists) and higher-order types.\footnote{Personal communication with Benjamin Lerner and Shriram
+ Krishnamurthi.}  In terms of our framework, Pyret establishes
+ \Nname{}-like boundaries for fixed-size data and permissive ones for
+ everthing else. 
+
+Semantics of mixed-typed languages other than the above
+ fall outside the scope of this paper.  An \emph{erasure\/}, or optional,
+ semantics uses types for static analysis and ignores them at runtime.
+ Erasure type soundness, $\propts{\cdot}{\sdynproj}$, is independent of the
+ surface-language
+ type~\cite{bat-ecoop-2014,mmi-dls-2015,bdt-esop-2016,cvgrl-oopsla-2017}.
+ A \emph{concrete\/} semantics requires a runtime type for every value, and
+ therefore prohibits untyped code from creating new values that flow to
+ typed regions~\cite{wnlov-popl-2010, rsfbv-popl-2015, mt-oopsla-2017,
+ rzv-ecoop-2015, rat-oopsla-2017}.

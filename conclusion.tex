@@ -1,0 +1,33 @@
+\citeN{gf-icfp-2018} demonstrated that Typed Racket and Transient
+Reticulated Python satisfy different type soundness theorems. This paper
+shows that these languages also differ in how they protect
+untyped code from faulty type specifications. To explain this difference,
+we adapt the notion of complete monitoring from contracts to gradual
+typing.
+
+The adaptation of complete monitoring also provides a tool for explaining
+the differences in blame between the semantics. While the \Nname{} semantics
+points to a single boundary between typed and untyped code, \Tname{} delivers a
+set of boundaries that may point to irrelevant ones and may miss crucial ones,
+relative to a standard path-based notion of ownership.
+
+The creation of \Aname{} illustrates the use of complete monitoring as
+a design tool. The \Aname{} semantics satisfies the same type soundness
+as \Nname{} and performs the same first-order checks
+as \Tname{}. \Aname{} does not satisfy complete monitoring, but its
+blame-assignment policy satisfies both soundness and completeness.
+Although we do not consider \Aname{} ready for
+implementation, its very existence validates the power of complete
+monitoring as a design guideline.
+
+In sum, we demonstrate that complete monitoring is an effective tool for
+researchers working on mixed-typed languages. It helps with both the
+analysis and design of the semantics of typing systems. Adding complete
+monitoring to the researchers' tool box will greatly improve future
+explorations of this area. 
+
+
+\section*{Technical Report}
+
+The \techreport{} is available from the Northeastern University Library Digital
+Repository Service (\href{"http://hdl.handle.net/2047/D20202641"}{DRS})~\cite{gfd-tr-2019}.

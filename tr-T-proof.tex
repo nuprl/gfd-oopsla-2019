@@ -1,0 +1,388 @@
+\subsection{\Tname{}\ Theorems}
+
+\begin{theorem}[incomplete monitoring]\label{T-incomplete-monitoring}
+  There exists\/ $\fwellformedO{\sexpr_0}{\stoptional}$
+  such that\/ $\conf{\sexpr_0}{\semptymap}{\semptymap} \rredTanns \conf{\sexpr_1}{\vstore_1}{\bstore_1}$
+  and for all\/ $\lstore_1$
+  such that\/ $\lstore_1 \sWSOT \vstore_1$,
+  we have\/ $\lstore_1; \cdot; \sowner \not \sWSOT \sexpr_1$.
+\end{theorem}
+\begin{lamportproof}
+{\newcommand{\thetype}{(\tfun{\tint}{\tint})}
+ \newcommand{\thefun}{\efun{\svar_0}{(\esum{\svar_0}{1})}}
+ \newcommand{\theargval}{\efun{\svar_1}{0}}
+ \newcommand{\theexprA}{\estab{\obnd{\sowner_0}{\thetype}{\sowner_1}}{\obars{\edynb{\obnd{\sowner_1}{\thetype}{\sowner_2}}{\obars{\thefun}{\sowner_2}}}{\sowner_1}}}
+  \newcommand{\theexprB}{\obars{\eapp{\tdyn}{\sexpr_0}{(\thefun)}}{\sowner_0}}
+
+  Let\/
+
+  $\begin{array}{lll}
+   \sexpr_f & \eeq & \theexprA\\
+    \sexpr_0 & \eeq & \theexprB \\
+    \svalue_f & \eeq & {\obbars{\eloc_0}{\fconcat{\sowner_2}{\fconcat{\sowner_1}{\sowner_0}}}}\\
+    \sexpr_1 & \eeq &
+    \obars{\eapp{\tdyn}{\svalue_f}{(\theargval)}}{\sowner_0} 
+  \end{array}$
+  \smallskip
+
+  By the reduction rules:
+
+  \(\begin{array}[t]{l@{~}l}
+    \conf{\sexpr_0}{\semptymap}{\semptymap}
+    & \rredTanns  \conf{\sexpr_1}{\vstore_0}{\bstore_0}
+    \\
+    \zerowidth{\mbox{\it where\, $\vstore_0 \eeq \eset{\vrecord{\eloc_0}{\thefun}}$}}
+    \\
+    \zerowidth{\mbox{\it and\, $\bstore_0 \eeq \eset{\brecord{\eloc_0}{\eset{{\obnd{\sowner_0}{\thetype}{\sowner_1}},{\obnd{\sowner_1}{\thetype}{\sowner_2}}}}}$}}
+  \end{array}\)
+
+  In the result, $\sWSOT$ fails because $\svalue_f$ has multiple owners.
+  }
+\end{lamportproof}
+
+\begin{theorem}[unsound blame]\label{T-unsound-blame}
+  There exists\/ $\fwellformedO{\sexpr_0}{\stoptional}$
+   such that\/
+      \(\conf{\sexpr_0}{\semptymap}{\semptymap}
+      \rredTanns
+      \conf{\boundaryerror{\obnd{\sowner_0}{\stype_1}{\sowner_1}}{\svalue_1}}{\vstore_1}{\bstore_1}\)
+         and $\fblistsenders{\sblist_1} \not \subseteq
+         \fvalueowners{\svalue_1}$.
+\end{theorem}
+\begin{lamportproof}
+  {\newcommand{\theexampleint}{5}
+   \newcommand{\theexampletype}{(\tfun{\tint}{\tint})}
+
+  Consider the following example $\sexpr_0$ where the $\slet$-expressions are sugar
+  for untyped function applications:
+  $ \begin{array}[t]{lll}
+  \sexpr_0
+    &=&
+ (\eletdecl{f_0}{(\efun{\svar_0}{\epair{\svar_0}{\svar_0}})}
+    \\ &&
+      ~\eletdecl{f_1}{(\estab{\obnd{\sowner_0}{\theexampletype}{\sowner_1}}{\obars{\edynb{\obnd{\sowner_1}{\theexampletype}{\sowner_0}}{\obars{f_0}{\sowner_0}}}{\sowner_1}})}
+    \\ &&
+     {\estab{\obnd{\sowner_0}{\tint}{\sowner_2}}{\obars{\eapp{\tint}{(\edynb{\obnd{\sowner_2}{\theexampletype}{\sowner_0}}{\obars{f_0}{\sowner_0}})}{\theexampleint}}{\sowner_2}})^{\sowner_0}}
+  \end{array}$
+ \smallskip
+
+  By the reduction rules:
+
+  \(
+    \begin{array}[t]{l}
+      \conf{\sexpr_0}{\semptymap}{\semptymap}
+      \\
+    \rredTanns
+      \conf{\obars{\estab{\obnd{\sowner_0}{\tint}{\sowner_2}}{\obars{\eapp{\tint}{\obbars{\eloc_0}{\fconcat{\sowner_0}{\sowner_2}}}{\theexampleint}}{\sowner_2}}}{\sowner_0}}{\vstore_0}{\bstore_0}
+    \\
+     \rredTanns
+      \conf{\obars{\estab{\obnd{\sowner_0}{\tint}{\sowner_2}}{\obars{\echecktwo{\tint}{\obbars{\eloc_1}{\fconcat{\sowner_0}{\sowner_2}}}{\eloc_0}}{\sowner_2}}}{\sowner_0}}{\vstore_1}{\bstore_1}
+    \\
+    \rredTanns
+      \conf{\boundaryerror{\fmapref{\bstore_0}{\eloc_1} \cup \fmapref{\bstore_0}{\eloc_0}}{\obbars{\eloc_1}{\fconcat{\sowner_0}{\sowner_2}}}}{\vstore_1}{\bstore_0}
+    \\
+      \mbox{\it where\, $\vstore_1 = \eset{\vrecord{\eloc_0}{\efun{\svar_0}{\epair{\svar_0}{\svar_0}}}, \vrecord{\eloc_1}{\epair{\theexampleint}{\theexampleint}}}$}
+    \\\mbox{\it and\, $\bstore_1 = \eset{\brecord{\eloc_0}{\obnd{\sowner_1}{\theexampletype}{\sowner_0}, \obnd{\sowner_0}{\theexampletype}{\sowner_1}, \obnd{\sowner_2}{\theexampletype}{\sowner_0}}, \brecord{\eloc_1}{\semptymap}}$}
+
+  \end{array}\)
+  \smallskip
+
+  \noindent
+  Thus $\fbsetsenders{\fmapref{\bstore_0}{\eloc_1} \cup
+  \fmapref{\bstore_0}{\eloc_0}} \eeq \eset{\sowner_0, \sowner_1}
+  \not\subseteq \eset{\sowner_0, \sowner_2} \eeq
+  \fvalueowners{\obbars{\eloc_1}{\fconcat{\sowner_0}{\sowner_2}}}$.}
+\end{lamportproof}
+
+\begin{theorem}[incomplete blame]\label{T-incomplete-blame}
+  There exists\/ $\fwellformedO{\sexpr_0}{\stoptional}$
+  such that\/
+      \(\conf{\sexpr_0}{\semptymap}{\semptymap}
+      \rredTanns
+      \conf{\boundaryerror{\obnd{\sowner_0}{\stype_1}{\sowner_1}}{\svalue_1}}{\vstore_1}{\bstore_1}\)
+         and $\fblistsenders{\sblist_1} \not \supseteq
+         \fvalueowners{\svalue_1}$.
+\end{theorem}
+\begin{lamportproof}
+
+   Consider the following example $\sexpr_0$ where the $\slet$-expressions are sugar
+  for untyped function applications:
+{
+  \newcommand{\raisedsowner}{\raisebox{0.8ex}{$\scriptstyle\sowner_0$}} % hack for proof terms
+  \newcommand{\theexamplefun}{\efun{\svar_0}{\svar_0}}
+  \newcommand{\typea}{(\tfun{\tint}{\tint})}
+  \newcommand{\typeb}{(\tfun{\tint}{\tpair{\tint}{\tint}})}
+  \newcommand{\typeatxt}{\stype_0}
+  \newcommand{\typebtxt}{\stype_1}
+  \newcommand{\deepfowners}{\fconcat{\sowner_2}{\fconcat{\sowner_1}{\fconcat{\sowner_0}{\fconcat{\sowner_3}{\fconcat{\sowner_4}{\fconcat{\sowner_3}{\fconcat{\sowner_0}{\sowner_5}}}}}}}}
+
+  \(
+  \begin{array}[t]{l}
+    (\eletdecl{f_0}{\estab{\obnd{\sowner_0}{\typeatxt}{\sowner_1}}{(\edynb{\obnd{\sowner_1}{\typeatxt}{\sowner_2}}{(\theexamplefun)})}}
+    \\[0.7ex]
+    ~\eletdecl{f_1}{\estab{\obnd{\sowner_0}{(\tfun{\typeatxt}{\typebtxt})}{\sowner_3}}{(\edynb{\obnd{\sowner_3}{(\tfun{\typeatxt}{\typebtxt})}{\sowner_4}}{(\efun{\svar_1}{\svar_1})})}}
+    \\[0.7ex]
+    ~\estab{\obnd{\sowner_0}{(\tpair{\tint}{\tint})}{\sowner_5}}{}
+    \\\qquad\conf{\zeroheight{\obars{\eapp{\tpair{\tint}{\tint}}{(\edynb{\obnd{\sowner_5}{\typebtxt}{\sowner_0}}{\obars{\eapp{\tdyn}{f_1}{f_0}}{\sowner_0}})}{42}}{\sowner_5})^{\raisedsowner}}}{\semptymap}{\semptymap}
+    \\[1.4ex]
+    \rredTanns
+    (\estab{\obnd{\sowner_0}{(\tpair{\tint}{\tint})}{\sowner_5}}{}
+    \\\qquad\qquad\conf{\zeroheight{\obars{\eapp{\tpair{\tint}{\tint}}{(\edynb{\obnd{\sowner_5}{\typebtxt}{\sowner_0}}{\obars{\eapp{\tdyn}{\obbars{\eloc_1}{\fconcat{\sowner_4}{\fconcat{\sowner_3}{\sowner_0}}}}{\obbars{\eloc_0}{\fconcat{\sowner_2}{\fconcat{\sowner_1}{\sowner_0}}}}}{\sowner_0}})}{42}}{\sowner_5})^{\raisebox{1.5ex}{$\scriptstyle\sowner_0$}}}}{\vstore_0}{\bstore_0}
+    \\[0.6ex]
+    \rredTanns
+      \conf{\obars{\estab{\obnd{\sowner_0}{(\tpair{\tint}{\tint})}{\sowner_5}}{\obars{\eapp{\tpair{\tint}{\tint}}{\obbars{\eloc_0}{\sownerlist_0}}{42}}{\sowner_5}}}{\sowner_0}}{\vstore_1}{\bstore_1}
+    \\[0.6ex]
+    \rredTanns
+      \conf{\obars{\estab{\obnd{\sowner_0}{(\tpair{\tint}{\tint})}{\sowner_5}}{\obars{\echecktwo{(\tpair{\tint}{\tint})}{\obbars{42}{\sownerlist_1}}{\eloc_0}}{\sowner_5}}}{\sowner_0}}{\vstore_2}{\bstore_2}
+    \\[1.2ex]
+    \rredTanns
+      \conf{\boundaryerror{\fmapref{\bstore_2}{\eloc_0}}{\obbars{42}{\sownerlist_1}}}{\vstore_2}{\bstore_2}
+    \\[1.2ex]
+      \mbox{\quad where $\typeatxt = \typea$}
+    \\[0.3ex]
+      \mbox{\quad and $\typebtxt = \typeb$}
+    \\[0.5ex]
+      \mbox{\quad and $\sownerlist_0 = \deepfowners$}
+    \\[0.5ex]
+      \mbox{\quad and $\sownerlist_1 = \fconcat{\fconcat{\sowner_5}{\sownerlist_0}}{(\frev{\sownerlist_0})}$}
+    \\[0.5ex]
+      \mbox{\quad and $\vstore_2 = \eset{(\vrecord{\eloc_0}{\theexamplefun}), (\vrecord{\eloc_1}{\efun{\svar_1}{\svar_1}})}$}
+    \\[0.5ex]
+      \mbox{\quad and $\bstore_2 = \{(\vrecord{\eloc_0}{\eset{\obnd{\sowner_0}{\typeatxt}{\sowner_1}, \obnd{\sowner_1}{\typeatxt}{\sowner_2}, \obnd{\sowner_5}{\typebtxt}{\sowner_0}}}),$}
+    \\[0.2ex]
+      \mbox{\quad \hphantom{and $\bstore_2 = \{$}$(\vrecord{\eloc_1}{\eset{\obnd{\sowner_0}{(\tfun{\typeatxt}{\typebtxt})}{\sowner_3}, \obnd{\sowner_3}{(\tfun{\typeatxt}{\typebtxt})}{\sowner_4}}})\}$}
+  \end{array}\)\smallskip
+}
+
+
+  Hence,
+$\fbsetsenders{\fmapref{\bstore_2}{\eloc_0}}
+  \eeq
+  \eset{\sowner_0, \sowner_1, \sowner_2}
+  \not\supseteq
+  \eset{\sowner_0, \sowner_1, \sowner_2, \sowner_3, \sowner_4, \sowner_5} 
+  \eeq \fvalueowners{\obbars{42}{\sownerlist_1}}
+$.
+  The crucial labels $\sowner_3$ and $\sowner_4$ are nowhere to be found.
+\end{lamportproof}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%% All-path 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\newcommand{\Tdyn}{$\sexpr_0 
+                      \rredTanns
+                      \oconf{\ctx_0[\edynb{\obnd{\sowner_1}{\stype_1}{\sowner_2}}{\svalue_1}]}
+                      {\vstore_0}{\bstore_0}{\lstore_0}
+                      \nredTXanns
+                      \oconf{\boundaryerror{\obnd{\sowner_1}{\stype_1}{\sowner_2}}{\svalue_1}}
+                      {\vstore_1}{\bstore_1}{\lstore_1}$}
+\newcommand{\Tdynitems}{%
+  \begin{enumerate}
+      \item
+      \(\fhasbnd{\sexpr_0}{\obnd{\sowner_1}{\stype_1}{\sowner_2}}\)
+      \item
+        \( \svalue_1 = \obbars{\svalue}{\sowner_n...\sowner_2}\)
+        \end{enumerate}}
+
+
+\newcommand{\Tapp}{$\sexpr_0 
+                      \rredTanns
+                      \oconf{\ctx_0[{\eapp{\stoptional}
+                        {\svalue_0}
+                        {\svalue_1}}]}
+                      {\vstore_0}{\bstore_0}{\lstore_0}
+                      \nredTXanns
+                      \oconf{\boundaryerror{\sblist_1}{\svalue_1}}
+                      {\vstore_1}{\bstore_1}{\lstore_1}$}
+\newcommand{\Tappitems}{%
+ \begin{enumerate}
+        \item
+      \(\forall\,\sbnd_1 \in \sblist_1\),  either \(\fhasbnd{\sexpr_0}{\sbnd_1}\) or \(\fhasbnd{\sexpr_0}{\fflip{\sbnd_1}}\)
+    \item
+         $\svalue_1 = \obbars{\eloc_1}{\sownerlist_0}$, $
+         \exists\,\sownerlist_1~.~\rbstoresimbasic{\sownerlist_1}{\sblist_1}$
+         and $\sownerlist_0 \cup {\lstore_1(\eloc_1)} \subseteq \sownerlist_1$.
+  \end{enumerate}}
+
+\newcommand{\Tchecka}{$\sexpr_0
+                      \rredTanns
+                      \oconf{\ctx_0[{\echeck{\sdirection}{\stype_0}{\svalue_0}
+                                        {\eloc_1}}]}{\vstore_0}{\bstore_0}{\lstore_0}
+                      \nredTXanns
+                      \oconf{\boundaryerror{\sblist_1}{\svalue_0}}{\vstore_0}{\bstore_0}{\lstore_0}$}
+\newcommand{\Tcheckitemsa}{%
+  \begin{enumerate}
+        \item
+      \(\forall\,\sbnd_1 \in \sblist_1\),  either \(\fhasbnd{\sexpr_0}{\sbnd_1}\) or \(\fhasbnd{\sexpr_0}{\fflip{\sbnd_1}}\)
+    \item
+         $\svalue_0 = \obbars{\svalue_1}{\sownerlist_0}$,
+         $\exists\,\sownerlist_1~.~\rbstoresimbasic{\sownerlist_1}{\sblist_1}$,
+         and $\sownerlist_0 \cup \lstore_1(\svalue_1) \cup \lstore_1(\eloc_1) \subseteq  \fbsetsenders{\sblist_1}$.
+  \end{enumerate}}
+
+\begin{theorem}[all-path sound blame]\label{T-all-path-blame-soundness}
+  If\/ $\fwellformedO{\sexpr_0}{\stoptional}$:
+  \begin{itemize}
+    \item \Tdyn{} then \Tdynitems
+    \item \Tapp{} then \Tappitems
+    \item \Tchecka{} then \Tcheckitemsa
+  \end{itemize}
+\end{theorem}
+\begin{proofsketch}
+  The proof relies on a straight-forward subject reduction
+  argument showing that the evaluation trace of any well-formed term $\sexpr_0$ satisfies two
+  invariants:
+  \begin{itemize}
+  \item
+  for all
+  $\edynb{\obnd{\sowner_1}{\stype_1}{\sowner_2}}{\svalue_1}$
+  that occur in all configurations $\oconf{\sexpr}{\vstore}{\bstore}{\lstore}$ in the trace, 
+      \(\fhasbnd{\sexpr_0}{\obnd{\sowner_1}{\stype_1}{\sowner_2}}\)
+      and
+        \( \svalue_1 = \obbars{\svalue}{\sowner_n...\sowner_2}\);
+   \item
+   for all configurations 
+  $\oconf{\sexpr}{\vstore}{\bstore}{\lstore}$ in the trace, (i) 
+  if $\sexpr\neq\boundaryerror{\sblist}{\svalue}$ then
+  for all 
+  $\eloc$ in the domain of $\lstore$,
+  $\lstore(\eloc) \subseteq \sowner^*$
+  where $\rbstoresimbasic{\sowner^*}{\bstore(\eloc_0)}$ and (ii) 
+\(\forall\,\sbnd_1 \in \bstore(\eloc_0)\),  either 
+  \(\fhasbnd{\sexpr_0}{\sbnd_1}\) or
+  \(\fhasbnd{\sexpr_0}{\fflip{\sbnd_1}}\).
+  \end{itemize}
+    We employ the first invariant to establish the first case of the
+    theorem and the second for the others.
+\end{proofsketch}
+
+
+\newcommand{\Tcheckitemsanot}{%
+  \begin{enumerate}
+        \item
+      \(\forall\,\sbnd_1 \in \sblist_1\),  either \(\fhasbnd{\sexpr_0}{\sbnd_1}\) or \(\fhasbnd{\sexpr_0}{\fflip{\sbnd_1}}\)
+    \item
+         $\svalue_0 = \obbars{\svalue_1}{\sowner^*}$, $\svalue
+         \neq \eloc$, $ \rbstoresimbasic{\sowner_1 ... \sowner_n}{\sblist_1}$ 
+         and $\sowner_1 ... \sowner_n \not \supseteq \lstore_1(\eloc_1) \cup
+         \sowner^*$.
+  \end{enumerate}}
+
+\begin{theorem}[all-path incomplete blame]\label{T-allpath-incomplete-blame}
+  There exists\/ $\sexpr_0$
+  such that\/ $\cdot; \sownertop \sWL \sexpr_0$,
+  \begin{itemize}
+  \item
+  \Tchecka and \Tcheckitemsanot{}
+   \end{itemize}
+\end{theorem}
+\begin{lamportproof}
+  {
+  \newcommand{\theexamplefun}{\efun{\svar_0}{\svar_0}}
+  \newcommand{\typea}{(\tfun{\tint}{\tint})}
+  \newcommand{\typeb}{(\tfun{\tint}{\tpair{\tint}{\tint}})}
+  \newcommand{\typeatxt}{\stype_0}
+  \newcommand{\typebtxt}{\stype_1}
+  \newcommand{\deepfowners}{\fconcat{\sowner_2}{\fconcat{\sowner_1}{\fconcat{\sowner_0}{\fconcat{\sowner_3}{\fconcat{\sowner_4}{\fconcat{\sowner_3}{\fconcat{\sowner_0}{\sowner_5}}}}}}}}
+
+   Consider the following example $\sexpr_0$ where the $\slet$-expressions are sugar
+  for untyped function applications:
+  $\begin{array}[t]{lll}
+    \sexpr_0
+    &=&
+    (\eletdecl{f_0}{\estab{\obnd{\sowner_0}{\typeatxt}{\sowner_1}}{(\edynb{\obnd{\sowner_1}{\typeatxt}{\sowner_2}}{(\theexamplefun)})}}
+    \\&&
+    ~\eletdecl{f_1}{\estab{\obnd{\sowner_0}{(\tfun{\typeatxt}{\typebtxt})}{\sowner_3}}{(\edynb{\obnd{\sowner_3}{(\tfun{\typeatxt}{\typebtxt})}{\sowner_4}}{(\efun{\svar_1}{\svar_1})})}}
+    \\&&
+    ~\estab{\obnd{\sowner_0}{(\tpair{\tint}{\tint})}{\sowner_5}}{}
+    \\&&\obars{\eapp{\tpair{\tint}{\tint}}{(\edynb{\obnd{\sowner_5}{\typebtxt}{\sowner_0}}{\obars{\eapp{\tdyn}{f_1}{f_0}}{\sowner_0}})}{42}}{\sowner_5})^{\sowner_0}
+  \end{array}$
+ \smallskip
+
+   With a straight-forward application of the reduction rules we obtain:
+
+  \(
+  \begin{array}[t]{l}
+    \oconf{\sexpr_0}{\semptymap}{\semptymap}{\semptymap}
+
+    \\
+    \rredT
+    ~\estab{\obnd{\sowner_0}{(\tpair{\tint}{\tint})}{\sowner_5}}{}
+    \\\qquad\qquad\oconf{\obars{\eapp{\tpair{\tint}{\tint}}{(\edynb{\obnd{\sowner_5}{\typebtxt}{\sowner_0}}{\obars{\eapp{\tdyn}{\obbars{\eloc_1}{\fconcat{\sowner_4}{\fconcat{\sowner_3}{\sowner_0}}}}{\obbars{\eloc_0}{\fconcat{\sowner_2}{\fconcat{\sowner_1}{\sowner_0}}}}}{\sowner_0}})}{42}}{\sowner_5})^{\sowner_0}}{\vstore_0}{\bstore_0}{\lstore_0}
+    \\
+    \rredT
+      \oconf{\obars{\estab{\obnd{\sowner_0}{\tpair{\tint}{\tint}}{\sowner_5}}{\obars{\eapp{\tpair{\tint}{\tint}}{\obbars{\eloc_0}{\sownerlist_0}}{42}}{\sowner_5}}}{\sowner_0}}{\vstore_1}{\bstore_1}{\lstore_1}
+    \\
+   \rredT
+      \oconf{\obars{\estab{\obnd{\sowner_0}{\tpair{\tint}{\tint}}{\sowner_5}}{\obars{\echecktwo{\tpair{\tint}{\tint}}{\obbars{42}{\sownerlist_1}}{\eloc_0}}{\sowner_5}}}{\sowner_0}}{\vstore_2}{\bstore_2}{\lstore_2}
+    \\
+    \nredTX
+      \oconf{\boundaryerror{\fmapref{\bstore_2}{\eloc_0}}{\obbars{42}{\sownerlist_1}}}{\vstore_2}{\bstore_2}{\lstore_2}
+    \\
+      \mbox{\it where $\typeatxt = \typea$ and $\typebtxt = \typeb$}
+    \\\mbox{\it and $\sownerlist_0 = \deepfowners$ and $\sownerlist_1 = \fconcat{\fconcat{\sowner_5}{\sownerlist_0}}{(\frev{\sownerlist_0})}$}
+    \\\mbox{\it and $\vstore_2 = \eset{(\vrecord{\eloc_0}{\theexamplefun}), (\vrecord{\eloc_1}{\efun{\svar_1}{\svar_1}})}$}
+    \\\mbox{\it and $\bstore_2 = \{(\vrecord{\eloc_0}{\eset{\obnd{\sowner_0}{\typeatxt}{\sowner_1}, \obnd{\sowner_1}{\typeatxt}{\sowner_2}, \obnd{\sowner_5}{\typebtxt}{\sowner_0}}}),$}
+    \\\mbox{\it \hphantom{and $\bstore_2 =
+    \{$}$(\vrecord{\eloc_1}{\eset{\obnd{\sowner_0}{(\tfun{\typeatxt}{\typebtxt})}{\sowner_3},
+    \obnd{\sowner_3}{(\tfun{\typeatxt}{\typebtxt})}{\sowner_4}}})\}$}
+  \end{array}\)\smallskip
+  }
+
+  \noindent
+  Thus $\rbstoresimbasic{\eset{\sowner_0,\sowner_1,
+  \sowner_2, \sowner_5}}{\fmapref{\bstore_2}{\eloc_0}}$
+  and  $\eset{\sowner_0,
+  \sowner_1, \sowner_2, \sowner_5} \not\supseteq
+  \fmapref{\lstore_2}{\eloc_0} \cup \eset{\sowner_0, \sowner_1,
+  \sowner_2, \sowner_3, \sowner_4, \sowner_5}$ 
+  independently of the details of
+  $\lstore_2$.
+\end{lamportproof}
+
+
+
+
+%\begin{lemma}[All-path/path consistency]\label{T-all-path-path}
+%  If\/ $\sexpr_0$ is a surface expression and $\sexpr_0 \rredT
+%  \oconf{\sexpr_1}{\vstore_0}{\bstore_0}{\lstore_0}$ where
+%  $\sexpr_1\neq\boundaryerror{\sblist}{\svalue}$,
+%  then for all $\obbars{\eloc_0}{\sowner_1...\sowner_n}$ that appear in
+%  $\sexpr_1$, ${\sowner_1...\sowner_n \subseteq \lstore_0(\eloc_0)}$.
+%\end{lemma}
+%\begin{proofsketch}
+%  By straight-forward induction on the length of $\sexpr_0 \rredT
+%  \oconf{\sexpr_1}{\vstore_0}{\bstore_0}{\lstore_0}$. For the inductive step
+%  we proceed with the obvious case analysis on
+%  $\oconf{\sexpr_i}{\vstore_i}{\bstore_i}{\lstore_i} \rrTX
+%  \oconf{\sexpr_{i+1}}{\vstore_{i+1}}{\bstore_{i+1}}{\lstore_{i+1}}$.
+%\end{proofsketch}
+
+\begin{theorem}[type soundness]\label{T-S-type-soundness}
+  If\/ $\fwellformed{\sexpr_0}{\stoptional}$
+  then one of the following holds:
+  \begin{itemize}
+    \item $\conf{\sexpr_0}{\semptymap}{\semptymap} \rredT
+      \conf{\svalue_0}{\vstore_0}{\bstore_0}$
+      and\/ $\exists\,\vstoretype_0~.~\vstoretype_0; \snil \sWTT \svalue_0 : \tagof{\stoptional}$
+    \item $\conf{\sexpr_0}{\semptymap}{\semptymap}$ diverges
+    \item $\conf{\sexpr_0}{\semptymap}{\semptymap} \rredT
+      \conf{\ctx_0[\edynb{\sbnd_1}{\ctx[\sexpr_1]}]}{\vstore_0}{\bstore_0}$
+      and\/ $\conf{\sexpr_1}{\vstore_0}{\bstore_0} \nredTX \conf{\tagerrorD}{\vstore_1}{\bstore_1}$
+    \item $\conf{\sexpr_0}{\semptymap}{\semptymap} \rredT \conf{\divisionbyzeroerror}{\vstore_0}{\bstore_0}$
+    \item $\conf{\sexpr_0}{\semptymap}{\semptymap} \rredT \conf{\boundaryerror{\sblist_1}{\svalue_1}}{\vstore_0}{\bstore_0}$
+  \end{itemize}
+\end{theorem}
+\begin{proofsketch}
+  By progress and preservation lemmas; preservation constructs a heap typing ($\vstoretype$) at each step.
+\end{proofsketch}
+

@@ -1,0 +1,72 @@
+\def\fourty{\mbox{\tt "42"}}
+
+In a mixed-typed language,\footnote{A mixed-typed language combines static and
+ dynamic typing. \Secref{sec:surface} explains the relation to gradual typing.}
+type soundness guarantees that the runtime system
+protects typed code from bad interactions with untyped code.
+Different languages realize this protection in different ways.
+Some use higher-order contract wrappers~\cite{tf-popl-2008}.
+Others employ first-order checks in typed
+code~\cite{vss-popl-2017,v-thesis-2019,rmhn-ecoop-2019}.
+In both cases, the runtime protections discover when typed code has to deal
+with untyped values that do not match certain type specifications, and with
+varying degrees of accuracy, the runtime system can assign blame to the broken
+components.
+
+The question is what protects untyped code from mistakes in types in this
+setting. After all, a mixed-typed language allows, and indeed encourages,
+programmers to write untyped code that relies on type specifications describing
+other untyped libraries.
+For example, when designers build a statically-typed extension of a dynamically
+typed language, they often supply a type assignment for the (untyped) base
+environment by wrapping thin layers around existing untyped code, just as
+originally proposed~\cite{tf-dls-2006}.
+New untyped code may rely on these types; but, unsurprisingly,
+these type assignments come with mistakes~\cite{incorrect-ts, sta-nt-base-types}.
+Programmers may wish to have some assurance that these mistakes are discovered
+before they affect the result of a computation.
+
+Consider an untyped library {\tt UT} that exports the function $g(x) =
+\fourty$. The library {\tt TforUT} imports {\tt UT} and exports $g$ at type
+$\tfun{\tint}{\tint}$. Now imagine a developer who prototypes a new
+module~{\tt M} in the untyped fragment of the language and relies on
+{\tt TforUT}'s type specification for $g$.
+The untyped code may apply $g$ in a context
+that expects an integer ($g(42) + 42$)
+or one that uses a tag check ($\mathsf{if}~\emph{is-zero}(g(42))\,\mathsf{then}\,{\tt \_}\,\mathsf{else}\,{\tt \_})$.
+What happens next is up to the semantics of the underlying
+language: it may discover the faulty type specification; it may trigger a
+runtime check that blames the untyped code; or it may silently
+compute a flawed result.
+
+In general, the wrapper and the first-order checking approach implement
+different guarantees, even though both satisfy type soundness
+theorems.
+A wrapper approach protects untyped code from incorrect types, and a
+first-order approach does not.
+While \citeN{gf-icfp-2018} point out this difference with examples,
+they do not characterize it.
+This paper offers an explanation in terms of complete
+monitoring~\cite{dtf-esop-2012}.
+Our adaptation of this property to a
+mixed-typed language demands two qualities beyond soundness.  First, a
+language must enforce types with runtime checks for {\em
+every\/} channel of communication between typed and untyped code fragments.
+Second, these checks must enforce the behaviors allowed by the types.
+The implementation of complete monitoring
+demands a mechanism for tracking types, something that is occasionally
+impossible~\cite{vss-popl-2017} and always expensive~\cite{aft-dls-2013,
+tfdfftf-ecoop-2015, gt-dead-ben}.  Studying typed-untyped interaction from the
+perspective of complete monitoring, though, suggests weaker properties and a compromise.
+
+The paper makes three contributions.
+First, it adapts the notion of {\em complete monitoring\/} to wrapper-based
+ and first-order mixed-typed languages.
+Second, it uses the technical framework to {\em assess the quality of blame
+assignments\/} in systems that fail to satisfy complete monitoring.
+Third, it presents an approach to runtime checking,
+dubbed \emph{Amnesic}, that satisfies the same type soundness as
+the wrapper approach and discovers the same errors as the first-order approach.
+This compromise semantics fails complete monitoring but satisfies our blame
+requirements, and thus demonstrates how this investigation opens a new way of
+exploring the design space of mixed-typed guarantees.

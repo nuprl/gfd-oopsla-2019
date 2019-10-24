@@ -1,0 +1,361 @@
+\newcommand{\codett}[1]{{\small\tt #1}}
+
+Our work focuses on the theories underlying two practical gradual/migratory
+typing systems: Typed Racket~\cite{tf-popl-2008, tfffgksst-snapl-2017} and
+Transient Reticulated Python~\cite{vss-popl-2017,v-thesis-2019}.
+Each adds a type system to an existing untyped language, satisfies a
+non-trivial type soundness theorem, and satisfies
+graduality~\cite{svcb-snapl-2015,na-icfp-2018} for simply-typed programs.
+
+Figure~\ref{fig:tr-example} displays a Typed Racket program that consists
+of three modules.
+The module on the left represents an untyped library.
+The module in the middle is a typed adapter module; it imports identifiers from
+the library, specifies their types, and immediately re-exports them.
+Adapters make libraries accessible to typed code, but untyped clients such as
+the module on the right can also use them.
+The creators of such modules are likely to rely on the type specifications;
+the types in this adaptor, however, are faulty.
+The purpose of this example is to illustrate how Typed Racket protects untyped
+code from incorrect type annotations (\sectionref{sec:protects}).
+
+\Figureref{fig:retic-example} is a three-module Reticulated program that
+uses types in the same manner as the example in \figureref{fig:tr-example}.
+The purpose of this example is to show how a type-sound first-order approach to runtime
+checking can yield misleading error messages even when the types are correct
+(\sectionref{sub:blame}).
+
+Complete monitoring explains the difference between the two approaches.
+Based on this insight, \sectionref{sub:results}
+surveys our contributions and
+\sectionref{sub:semantics-preview} motivates the Amnesic semantics.
+
+%% -----------------------------------------------------------------------------
+\subsection{What Protects the Untyped Code} \label{sec:protects}
+
+\Figref{fig:tr-example} represents a highly simplified real-world
+scenario. The module on the left, \codett{net/url}, is an excerpt from an
+untyped library that has been part of Racket for two
+decades.
+The typed module in the middle defines type annotations for the untyped library.
+Lastly, the module on the right represents the untyped prototype of a \codett{client}
+application. It imports the typed library, possibly because the developer
+% prefers type specifications over informal documentation or
+intends to switch to Typed Racket eventually.
+
+%% -----------------------------------------------------------------------------
+\def\fname#1#2{$\underline{\hbox to #2in{#1}}$\\[-2ex]}
+
+\begin{figure}[htb]\footnotesize
+  \vspace{-1mm}
+
+\begin{minipage}[t]{1.90in}
+\begin{alltt}\fname{net/url}{1.8}
+#lang racket 
+
+_ _ _ 600 lines of code _ _ _
+_ _ _ plus dependencies _ _ _
+
+(define (call/input-url url c h)
+  ;; connect to the url via c
+  ;; process the data via h
+  _ _ _)
+
+
+\end{alltt}
+\end{minipage}\begin{minipage}[t]{1.90in}
+\begin{alltt}\fname{typed/net/url}{1.7}
+#lang typed/racket
+ 
+(define-type URL _ _ _)
+
+(require/typed/provide
+ ;; from this library
+ net/url
+ ;; import the following:
+
+ [string->url 
+  (-> String URL)]
+
+ [call/input-url 
+  (\(\forall\) (A)
+   (-> URL 
+       (-> String Input-Port)
+       (-> Input-Port A)
+       A))])
+\end{alltt}\end{minipage}\begin{minipage}[t]{1.65in}
+\begin{alltt}\fname{client}{1.65}
+#lang racket
+
+(require html typed/net/url)
+
+;; connect to url, read html
+(define (main)
+  (call/input-url 
+   URL
+   (\(\lambda\) (str) _ _ _)
+   read-html))
+
+;; constants: 
+(define URL-str
+  "https://sr.ht")
+
+(define URL
+  (string->url URL-str))
+\end{alltt}\end{minipage}
+
+  \Description[Three Typed Racket code snippets.]{Three code snippets: an untyped library, a typed API, and an
+    untyped client. The client supplies a function to the API according to the
+    types, but the types are incorrect. The question is what happens at run
+    time.}
+  \caption{Using Typed Racket to define an API} \label{fig:tr-example}
+
+  \vspace{-1mm}
+\end{figure}
+%% -----------------------------------------------------------------------------
+
+The \codett{main} function on the right calls the typed function to open a
+network connection and read HTML. Semantically, the function
+\codett{call/input-url} flows from \codett{net/url} to the typed module and then to
+\codett{client}; the call itself sends \codett{main}'s arguments to the untyped
+library code via the typed module. The application of \codett{call/input-url} clearly
+relies on the type specification from \codett{typed/net/url}: the first
+argument is a URL structure, the second a function that accepts a string,
+and the third a function that maps an input port to an HTML
+representation. The type declaration in \figref{fig:tr-example} is buggy,
+however; the first callback of \codett{call/input-url} demands a URL, not a string.
+
+Fortunately for the developer, Typed Racket compiles types to contracts and
+thereby catches the mismatch. Here, the compilation of
+\codett{typed/net/url} generates a higher-order function contract for
+\codett{call/input-url}.  The generated contract ensures that the untyped client
+provides three type-matching argument values and that the library applies
+the callback to a string. When the \codett{net/url} library eventually applies
+the callback function to a URL structure, the function contract for the
+callback discovers the mismatch and blames the boundary between \codett{client}
+and \codett{typed/net/url}. The blame message says that \codett{net/url} broke the
+contract on the back-channel from it to \codett{client}, but warns the
+developer on the last line with ``assuming the contract is correct.''
+A quick look confirms that the contract---that is, the type
+from which the contract is derived---is wrong. Typed Racket is unusual in this regard;
+other mixed-typed languages assume that ``well-typed programs can't be
+blamed''~\cite{wf-esop-2009}.
+
+One such language is Transient Reticulated.
+Its compiler inserts runtime checks to protect typed code against ill-shaped
+values from untyped code.
+Technically, these checks compare the constructor of a value to the constructor
+of the expected type at every typed elimination form.
+Although this strategy guarantees that typed operations always receive inputs
+within their domains, it may not discover when untyped code and type
+annotations clash.
+
+%% -----------------------------------------------------------------------------
+\subsection{How Precise Can Blame Be When Gradual Typing Fails to Monitor All Channels} 
+\label{sub:blame}
+
+% - ability to run code with un-checked types is key to GT usefulness,
+%   but when something goes wrong need to audit these assumptions
+% - TR code, bug here, error later, error points to boundary. Good.
+% - Retic code, bug here, error much different does not report boundary,
+%   again no better after adding types
+% - turning blame on does not actually help but in principle would report
+%   all paths ... no filter for spurious paths
+
+Figure~\ref{fig:retic-example} presents an arrangement of three Transient
+Reticulated modules, similar to the code in figure~\ref{fig:tr-example}.
+The module on the left exports a function that retrieves data from a URL; this
+function accepts several optional and keyword arguments.  The typed adapter
+module in the middle formulates types for one valid use of the function; a
+client may supply a URL as a string and a timeout as a pair of floats.
+% pair = (connect timeout, read timeout)
+These types are correct.
+The rest of this subsection explains via the code on the right what happens
+when a client module supplies a tuple that contains an integer and a string. 
+
+\begin{figure}[htb]\footnotesize
+  \vspace{-1mm}
+
+\begin{minipage}[t]{1.8in}
+\begin{alltt}\fname{requests}{1.7}
+_ _ _ +2,000 lines of code _ _
+
+def get(url, *args, **kwargs):
+  # Sends a GET request.
+  _ _ _
+\end{alltt}
+\end{minipage}\begin{minipage}[t]{1.8in}
+\begin{alltt}\fname{typed_requests}{1.7}
+import requests as r
+
+def get(url:Str, 
+       to:Tuple(float, float)):
+  return r.get(url, to)
+\end{alltt}\end{minipage}\begin{minipage}[t]{1.8in}
+\begin{alltt}\fname{client}{1.7}
+from typed_requests import get
+
+wait_times = (2, "zero")
+get("https://sr.ht",
+    wait_times)
+\end{alltt}\end{minipage}
+
+  \Description[Three Reticulated code snippets.]{Three code snippets: an untyped library, a typed API, and an
+    untyped client. This time the types are correct, but the untyped client sends
+    an incorrect value across. Type soundness does not require the typed API to
+    detect the problem, but if the types do not find the bug, what will?}
+  \caption{Using Reticulated to define an API} \label{fig:retic-example}
+  \vspace{-1mm}
+\end{figure}
+
+Reticulated's runtime checks ensure that the typed \codett{get} receives a
+string and a tuple, but do {\em not\/} validate the tuple's contents.  Next,
+these same arguments pass to the untyped \codett{get} function in the
+\codett{requests} module. When the untyped \codett{get} eventually uses the string
+\codett{"zero"} as a float, Python's runtime system raises an exception that
+originates from the \codett{requests} module.
+
+In this example, the programmer is lucky. The call to the typed version of
+\codett{get} is still visible in the stack trace because Python fails to
+implement tail calls properly. The presence of typed \codett{get} provides a hint
+that it might be at fault. If the maintainers of Python ever changed their mind
+about tail calls, this hint would disappear. Even worse, if the code implemented the
+channel from \codett{client} to \codett{requests} via \codett{typed\_requests} with OO
+callbacks instead of pairs, the intermediate typed call may not be on the
+stack no matter how the compiler handles tail calls.
+
+In sum, types in Transient Reticulated
+do not monitor all channels of communication among modules.
+Consequently, errors within one module might be due to false type assumptions.
+Reticulated attempts to address this problem with a global map
+from heap addresses to type obligations.
+Based on the complete-monitor analysis framework, the technical part of the
+paper demonstrates, however, that even this map may provide misleading blame
+assignments.
+
+%% -----------------------------------------------------------------------------
+\subsection{Informal Overview of Results} \label{sub:results}
+
+Our {\bf first contribution} is the introduction of {\em complete monitors for
+gradual types\/}. The starting point is the notion of complete monitoring for
+contract systems. Roughly speaking, a contract system is complete if (1) it is
+possible to attach a contract to every channel of communication between
+program components and (2) the discovery of a contract violation points to a
+mismatch between the obligations on a channel between components and a value
+that passes through this channel. A mixed-typed language satisfies complete
+monitoring if the translation of types into runtime checks monitors
+every channel of communication between components.
+
+The first-order approach of Transient Reticulated fails to protect all
+channels. As the example in the preceding section illustrates, it does not
+protect channels of communication through a pair.
+
+A precise statement of complete monitoring depends on a notion of
+\emph{ownership\/} of a value by a component.
+The notion of ownership in this paper is standard~\cite{dfff-popl-2011,dtf-esop-2012}.
+Technically, a semantics (of a mixed-typed language) satisfies complete monitoring
+if every reduction step yields a \emph{consistent}\/ ownership assignment in
+which every expression has a unique owner.
+When a value traverses
+a communication channel, the obligations are checked. If all of them can be
+checked off, ownership is transferred; otherwise the receiving component must
+share ownership with the sending one.
+Only a wrapping semantics, such as Typed Racket's, implements
+the ownership consistency requirement of complete monitoring.
+
+Our {\bf second contribution} is a technique to assess the quality of blame
+assignments in systems that fail complete monitoring.
+If a value may have multiple owners and a blame assignment may
+point to multiple components, there are two possibilities: 
+\begin{itemize}
+
+\item A mixed-typed language's blame system is {\em sound\/} if all
+ reported blame labels are a {\em subset\/} of the ownership labels of
+ the witness value.
+
+\item It is {\em complete\/} if all reported blame labels are a {\em superset\/}
+ of the ownership labels of this value.
+
+\end{itemize}
+
+Our {\bf third contribution} is a semantics that satisfies
+the same type soundness property as Typed Racket but checks the same first-order
+properties as Transient.
+This proof-of-concept semantics is dubbed \Aname{}; it is inspired by
+forgetful and heedful contracts~\cite{g-popl-2015}.
+
+In sum, our formal results justify the entries in \tableref{tbl:informal-results}. The
+rows align with the four identified
+properties: type soundness, complete monitoring, blame soundness, and blame
+completeness.
+\begin{wraptable}{r}{1.7in}\footnotesize
+  \vspace{-10pt}
+  \caption{\footnotesize Informal summary} \label{tbl:informal-results}
+  \vspace{-10pt}
+  {\newcommand{\Y}{\bigcheckmark}
+   \newcommand{\N}{\scalebox{0.8}{\bigxmark}}
+  \begin{tabular}{l@{ }|@{\hspace{1.5mm}}c@{\hspace{1.5mm}}c@{\hspace{1.5mm}}c@{\hspace{3mm}}c}
+                       &  $\hsfsym$ &   $\tsfsym$ &  $\asfsym$ &   $\esfsym$ \\\hline
+    type sound         & $\sidproj$ & $\stagproj$ & $\sidproj$ & $\sdynproj$ \\
+    complete monitor   &         \Y &          \N &         \N &          \N \\
+    sound blame        &         \Y &          \N &         \Y &          \N \\
+    complete blame     &         \Y &          \N &         \Y &          \N \\
+  \end{tabular}}
+  \vspace{-10pt}
+\end{wraptable}%
+The columns represent four semantics:
+$\hsfsym$\/ (\Nname{}) for the Typed Racket approach;
+$\tsfsym$\/ for Transient Reticulated;
+$\asfsym$\/ for Amnesic; and 
+$\esfsym$\/ for Erasure, the semantics of optional type systems. 
+As the first row shows, \Nname{} and \Aname{} satisfy the {\em same\/} type
+soundness property, while the properties for \Tname{} and Erasure differ
+from those and each other. (The notation is explained in
+\secref{sec:soundness}; suffice it to say that $\sidproj$ promises the
+strongest guarantees for types and $\sdynproj$ the weakest.) 
+Otherwise, only Typed Racket satisfies all properties while Amnesic is
+blame-sound and blame-complete.
+
+%% -----------------------------------------------------------------------------
+\subsection{Informal Overview of the \Aname{} Semantics} \label{sub:semantics-preview}
+
+Our three semantics are based on different strategies for mixing typed and
+ untyped program components at runtime.
+% Their differences arise from the
+% constraints that strong guarantees place on an implementation.
+The \Nname{} semantics strictly enforces the boundaries between typed and
+ untyped code. A value may cross a boundary if all properties can be checked.
+If not, a \emph{monitor wrapper}\/ provides controlled access to the value.
+A client may send input to the monitor, which: checks the input,
+ forwards input to the value, and checks the result before returning to the client.
+This well-known
+ wrapping strategy thus guarantees the required ownership consistency guarantee. 
+
+The \Tname{} semantics enforces the outermost constructor of types with
+ shallow \emph{tag}\/ checks in statically-typed code.  These checks guard every
+ untyped-to-typed boundary and every typed elimination form (function
+ application, pair projection).  If a check succeeds, \Tname{} records the
+ fact in a global blame map from heap addresses to sets of boundaries.  If a
+ later check fails, the map provides some information about what may have
+ caused the failure.
+
+The contrast between \Nname{} and \Tname{} is striking. While the former may
+wrap a value in an unbounded number of proxy layers,\footnote{Proxies may be
+ encoded to save space~\cite{stw-pldi-2015,htf-hosc-2010,g-popl-2015}.}
+the latter uses no
+wrappers and still protects typed code. The only significant drawback to
+\Tname{} appears to be the imprecise blame map.
+
+The \Aname{} semantics is a compromise between these two extremes.  \Aname{}
+performs the same tag checks as \Tname{}. Instead of a global map, though, it
+attaches blame metadata to values. In our model, a \emph{trace} wrapper records
+the boundaries that a value has previously crossed.
+If an untyped function enters a typed component, \Aname{} wraps the
+function in a monitor.  If the function travels back to untyped code, \Aname{} replaces the
+monitor with a trace wrapper that records two boundaries.
+Future round-trips extend the trace.
+Conversely, a typed function that flows to untyped code and back $N{+}1$ times gets
+three wrappers: an outer monitor to protect its
+current typed client, a middle trace to record its last $N$ trips, and an
+inner monitor to protect its body.
+Thus \Aname{} limits the depth of wrappers and tracks relevant blame information.

@@ -1,0 +1,160 @@
+A semantics is a complete monitor if it enforces every boundary between two
+components with a%
+\makebox[0pt][r]{\raisebox{3.5ex}[0pt][0pt]{\emph{``Well-monitored types cannot lie''}}}
+suitable runtime check~\cite{dtf-esop-2012}.
+Ownership and ownership consistency ($\,\sWSOP$, \figref{fig:annotated-syntax})
+ are tools to translate this informal idea into a technical one.
+First, the ownership laws guarantee that a value loses a
+ label only by satisfying an appropriate boundary-type test.
+Second, the consistency relationship fails to hold for any program
+ execution during which a value acquires more than one owner.
+If a lifted semantics preserves the ownership consistency relation, it prevents 
+ unchecked values from crossing a boundary.
+
+\begin{definition}[complete monitor]
+  A reduction relation $\rredX$ satisfies $\propcm{}$ iff
+  for all well-formed expressions $\obars{\sexpr_0}{\sowner_0}$ and expressions
+  $\sexpr_1$, a reduction $\obars{\sexpr_0}{\sowner_0} \rredXanns \sexpr_1$
+  implies $\sowner_0 \sWSOP \sexpr_1$.
+\end{definition}
+
+\begin{theorem}\label{thm:complete-monitoring}\leavevmode
+  \begin{enumerate}
+    \itemsep0.8ex
+    \item $\rredN$ satisfies\/ $\propcm$
+    \item $\rredT$ does not satisfy\/ $\propcm$
+    \item $\rredA$ does not satisfy\/ $\propcm$
+  \end{enumerate}
+\end{theorem}
+
+Of our three semantics, only \Nname{} is a complete monitor.
+The proof follows from a preservation lemma for the ownership consistency
+relation.
+
+\begin{lemma}\label{lem:cm-N}
+  If\/ $\stypeenv_0 \sWTN \sexpr_0 : \toptional$
+  and\/ $\sownerenv_0; \sowner_0 \sWSOP \sexpr_0$
+  and\/ $\sexpr_0 \credNanns \sexpr_1$
+  then\/ $\sownerenv_0; \sowner_0 \sWSOP \sexpr_1$.
+\end{lemma}
+\begin{proofsketch}
+  For atomic and compound values, checks are complete and ownership
+  transfer is too. Higher-order values are wrapped with monitors and, by \lawref{ax:new},
+  the reduction propagates the context label to the monitor.
+In the higher-order $\ssta$ rule, for example, consistency guarantees that
+  the owners inside the boundary match the sender name ($\sownerlist_2 = \sowner_1\ldots\sowner_1$):
+
+  \(\begin{array}{l}
+  \obars{\estab{\obnd{\sowner_0}{(\tfun{\stype_0}{\stype_1})}{\sowner_1}}{\obbars{\svalue_0}{\sownerlist_2}}}{\sowner_3}
+  \nredNDanns
+  \obars{\emon{\obnd{\sowner_0}{(\tfun{\stype_0}{\stype_1})}{\sowner_1}}{\obbars{\svalue_0}{\sownerlist_2}}}{\sowner_3}
+  \\\mbox{\quad if $\fshallow{\ftagof{\tfun{\stype_0}{\stype_1}}}{\svalue_0}$}
+  \end{array}\)
+
+\noindent Since no other laws apply, the creation of this wrapper clearly
+preserves ownership consistency.  The \techreport{} contains a full proof.
+\end{proofsketch}
+
+\Tname{} and \Aname{} are not complete monitors because there exist
+ well-formed expressions that lead to violations of the ownership
+ consistency relation. One way to reach a violation is to send a typed,
+ higher-order value to an untyped client. To see why, let us examine the
+ implications of the label-propagation laws on a few higher-order $\ssta$
+ rules.
+
+Unlike \Nname{}, the \Tname{} $\ssta$ rule lets a higher-order value
+into untyped code without a monitor wrapper.  By
+\lawref{ax:cross}, the value must acquire another owner; no other
+laws apply:
+
+\(\begin{array}{l}
+  \conf{\obars{\estab{\obnd{\sowner_0}{(\tfun{\stype_0}{\stype_1})}{\sowner_1}}{\obbars{\svalue_0}{\sownerlist_2}}}{\sowner_3}}{\vstore_0}{\bstore_0}
+    \nredTXanns
+    \conf{\obbars{\svalue_0}{\fconcat{\sownerlist_2}{\sowner_3}}}{\vstore_0}{(\fmapupdate{\bstore_0}{\svalue_0}{\eset{\obnd{\sowner_0}{(\tfun{\stype_0}{\stype_1})}{\sowner_1}}})}
+    \\\mbox{\quad if $\fshallow{\ftagof{\tfun{\stype_0}{\stype_1}}}{\fmapref{\vstore_0}{\svalue_0}}$}
+\end{array}\)
+
+\noindent Unless $\sownerlist_2$ equals $\sowner_3$
+ (which, in a well-formed program, only happens when $\sowner_0 \eeq \sowner_1$),
+ this rule outputs a value with two owners.
+
+The \Aname{} semantics includes a $\ssta$ rule that replaces a monitor wrapper with a trace wrapper.
+In the lifted version, \lawref{ax:new} assigns the context label to the new
+ trace wrapper.
+\Lawref{ax:pos} propagates the monitor's labels onto $\svalue_0$
+ because this value flows out of the monitor:
+
+\(\begin{array}{l}
+  \obars{\estab{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\obbars{\emon{\sbnd_1}{\svalue_0}}{\sownerlist_2}}}{\sowner_3}
+      \nredADanns
+      \obars{\eprehist{\eset{\obnd{\sowner_0}{\stype_0}{\sowner_1}, \sbnd_1}}{\obbars{\svalue_0}{\sownerlist_2}}}{\sowner_3}
+      \\\mbox{\quad if $\fshallow{\tagof{\stype_0}}{(\emon{\sbnd_1}{\svalue_0})}$}
+\end{array}\)\medskip
+
+\noindent
+ The owners of a trace-wrapped value include the labels on both the wrapper
+ and the value because a trace represents metadata.
+ This rule may therefore create a value with an inconsistent ownership.
+ From here, we just need to develop this line of thought into a full example.
+
+{\newcommand{\thetype}{(\tfun{\tint}{\tint})}
+ \newcommand{\thethintype}{(\tfun{\tint\!}{\!\tint})}
+ \newcommand{\thefun}{\efun{\svar_0}{(\esum{\tdyn}{\svar_0}{1})}}
+ \newcommand{\theargval}{\efun{\svar_1}{0}}
+ \newcommand{\theexprA}{\estab{\obnd{\sowner_0}{\thethintype}{\sowner_1}}{\obars{\edynb{\obnd{\sowner_1}{\thethintype}{\sowner_2}}{\obars{\thefun}{\sowner_2}}}{\sowner_1}}}
+ \newcommand{\theexprB}{\obars{\eapp{\tdyn}{\sexpr_0}{(\theargval)}}{\sowner_0}}
+\begin{lemma}\label{lem:cm-TA}
+  Let\/ $\sexpr_0 \eeq \theexprA$\\
+  and\/ $\sexpr_1 \eeq \theexprB$.
+  Then $\fwellformedO{\sexpr_1}{\tdyn}$\/ and the following statements hold:\vphantom{${e^l}^l$}
+  \begin{itemize}
+    \item $\conf{\sexpr_1}{\semptymap}{\semptymap} \rredTanns \conf{\sexpr_2}{\vstore_0}{\bstore_0}$ and $\sowner_0 \not\sWSOP \sexpr_2$
+    \item $\sexpr_1 \rredAanns \sexpr_3$ and $\sowner_0 \not\sWSOP \sexpr_3$
+  \end{itemize}
+\end{lemma}
+\begin{proof}
+  The \Tname{} semantics allocates an address, which then crosses two boundaries.
+  By \lawref{ax:cross}, the address ends up with three owners:
+
+  \smallskip
+  \(\begin{array}[t]{l@{~}l}
+    \conf{\sexpr_1}{\semptymap}{\semptymap}
+    & \rredTanns \conf{\obars{\eapp{\tdyn}{\obbars{\eloc_0}{\fconcat{\sowner_2}{\fconcat{\sowner_1}{\sowner_0}}}}{(\theargval)}}{\sowner_0}}{\vstore_0}{\bstore_0}
+    \\[1.2ex]
+    \zerowidth{\mbox{\quad where\, $\vstore_0 \eeq \eset{\vrecord{\eloc_0}{\thefun}}$}}
+    \\[0.6ex]
+    \zerowidth{\mbox{\quad and\, $\bstore_0 \eeq \eset{\brecord{\eloc_0}{\eset{{\obnd{\sowner_0}{\thetype}{\sowner_1}},{\obnd{\sowner_1}{\thetype}{\sowner_2}}}}}$}}
+  \end{array}\)
+  \smallskip
+
+  \noindent
+  The \Aname{} semantics first reduces $\sexpr_0$ to a trace-wrapped value with three owners:
+
+  \smallskip
+  \(\begin{array}[t]{l@{~}l}
+    \obars{\sexpr_0}{\sowner_0}
+    & \rredAanns \obars{\estab{\obnd{\sowner_0}{\thetype}{\sowner_1}}{\obars{\emon{\obnd{\sowner_1}{\thetype}{\sowner_2}}{\obars{\thefun}{\sowner_2}}}{\sowner_1}}}{\sowner_0}
+    \\[0.6ex]
+    & \rredAanns \obars{\ehist{\eset{\obnd{\sowner_0}{\thetype}{\sowner_1}, \obnd{\sowner_1}{\thetype}{\sowner_2}}}{\obbars{\thefun}{\fconcat{\sowner_2}{\sowner_1}}}}{\sowner_0}
+    \\[0.6ex]
+    & \eeq \svalue_0
+  \end{array}\)\smallskip
+
+  \noindent
+  Therefore $\sexpr_1$ reduces to an application of the same value; this term
+   does not satisfy ownership consistency
+   because $\fvalueowners{\svalue_0} \feq \eset{\sowner_0,\sowner_1,\sowner_2}$:
+
+  \smallskip
+  \(\begin{array}[t]{l@{~}l}
+    \sexpr_1
+    & \rredAanns \obars{\eapp{\tdyn}{\svalue_0}{(\theargval)}}{\sowner_0}
+  \end{array}\) \qedhere
+ \end{proof}}
+
+The formal property of complete monitoring has concrete implications for a
+developer. Take the examples from the above proof.  Once we reduce the
+expression to canonical form in \Tname{} and \Aname{}, the
+result is a tag error (not a boundary error), meaning the developer receives no
+hint that the domain of the function type was not checked.
+

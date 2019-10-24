@@ -1,0 +1,2843 @@
+%% -----------------------------------------------------------------------------
+\subsection{\Nname{}\ Theorems}
+
+\begin{theorem}[type soundness]\label{H-S-type-soundness}
+  If\/ $\fwellformed{\sexpr_0}{\stype_0}$
+  then one of the following holds:
+  \begin{itemize}
+    \item $ \sexpr_0 \rredN \svalue_0$ and\/ $\snil \sWTN \svalue_0 : \stype_0$
+    \item $ \sexpr_0$ diverges
+    \item $ \sexpr_0 \rredN
+      \ctx_0[\edynb{\sbnd_1}{\ctx[\sexpr_1]}]$
+      and\/ $\sexpr_1 \nredND \tagerrorD$
+    \item $ \sexpr_0 \rredN \divisionbyzeroerror$
+    \item $ \sexpr_0 \rredN \boundaryerror{\sblist_1}{\svalue_1}$
+  \end{itemize}
+\end{theorem}
+\begin{lamportproof}
+  By progress and preservation lemmas (\lemmaref{H-type-progress} \& \lemmaref{H-type-preservation}).
+\end{lamportproof}
+
+\begin{theorem}[dynamic soundness]\label{H-D-type-soundness}
+  If\/ $\fwellformed{\sexpr_0}{\tdyn}$
+  then one of the following holds:
+  \begin{itemize}
+    \item $\sexpr_0 \rredN \svalue_0$ and\/ $\snil \sWTN \svalue_0 : \tdyn$
+    \item $\sexpr_0$ diverges
+    \item $\sexpr_0 \rredN \ctx_0[\sexpr_1]$
+      and\/ $\sexpr_1 \nredND \tagerrorD$
+    \item $\sexpr_0 \rredN \divisionbyzeroerror$
+    \item $\sexpr_0 \rredN \boundaryerror{\sblist_1}{\svalue_1}$
+  \end{itemize}
+\end{theorem}
+\begin{lamportproof}
+  By progress and preservation lemmas (\lemmaref{H-type-progress} \& \lemmaref{H-type-preservation}).
+\end{lamportproof}
+
+\begin{theorem}\label{H-sync}
+  If\/ $\fwellformedO{\sexpr_0}{\stoptional}$
+  then\/ $\fwellformed{\fforget{\sexpr_0}}{\stoptional}$
+  and\/ $\sexpr_0 \credNanns \sexpr_1$
+  iff\/ $\fforget{\sexpr_0} \credN \fforget{\sexpr_1}$
+\end{theorem}
+\begin{lamportproof}
+  By the definition of $\credNanns$.
+\end{lamportproof}
+
+\begin{theorem}[complete monitoring]\label{H-S-complete-monitoring}
+  If\/ $\fwellformedO{\sexpr_0}{\stoptional}$
+  and\/  $\sexpr_0 \rredNanns \sexpr_1$
+  then\/ $\cdot; \sowner \sWSOP \sexpr_1$.
+\end{theorem}
+\begin{lamportproof}
+  By \lemmaref{H-label-progress} and \lemmaref{H-label-preservation}.
+\end{lamportproof}
+
+\begin{theorem}[correct blame]\label{H-S-correct-blame}
+  If\/ $\fwellformedO{\sexpr_0}{\stoptional}$
+  and\/ $\sexpr_0 \rredNanns \boundaryerror{\sblist_0}{\svalue_0}$
+  then:\leavevmode
+  \begin{itemize}
+    \item
+      $\fblistsenders{\sblist_0} = \fvalueowners{\svalue_0}$
+    \item
+      $\sblist_0 = \obnd{\sowner_0}{\stype_0}{\sowner_1}$
+    \item
+      either $\fhasbnd{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\sexpr_0}$
+      or $\fhasbnd{\obnd{\sowner_1}{\stype_0}{\sowner_0}}{\sexpr_0}$
+  \end{itemize}
+\end{theorem}
+\begin{lamportproof}\leavevmode
+  \step{1}{Either\/ $\sexpr_0 \rredNanns \svalue_0$
+           where\/ $\fwellformedO{\svalue_0}{\stoptional}$
+           or\/ $\sexpr_0$ diverges,
+           or\/ $\sexpr_0 \rredNanns \eerr$}
+    \begin{pfproof}
+      by \lemmaref{H-label-progress} and \lemmaref{H-label-preservation}
+    \end{pfproof}
+  \step{2}{\assume{$\sexpr_0 \rredNanns \boundaryerror{\sblist_0}{\svalue_0}$}}
+    \begin{pfproof}
+      \step{2.0}{$\exists\,\sowner_0,\stype_0,\sowner_1\,. \sblist_0 = \obnd{\sowner_0}{\stype_0}{\sowner_1}$}
+        \begin{pfproof}
+          \qedstep
+            \begin{pfproof}
+              by definition of $\rredNanns$
+            \end{pfproof}
+        \end{pfproof}
+      \step{2.1}{$\fvalueowners{\svalue_0} = \sowner_1$}
+        \begin{pfproof}
+          \qedstep
+            \begin{pfproof}
+              by \lemmaref{H-label-preservation}
+            \end{pfproof}
+        \end{pfproof}
+      \step{2.2}{\(
+        \exists\,\svalue_1,\ctx_0
+      \) such that\/ \(
+        \sexpr_0 \rredNanns \ctx_0[{\edynb{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\svalue_1}}]
+      \)}
+        \begin{pfproof}
+          \pfby{\lemmaref{H-unwind}}
+        \end{pfproof}
+      \step{2.3}{\(
+        \obnd{\sowner_0}{\stype_0}{\sowner_1} \in \sexpr_0
+      \) or\/ \(
+        \obnd{\sowner_1}{\stype_0}{\sowner_0} \in \sexpr_0
+      \)}
+        \begin{pfproof}
+          \pfby{\lemmaref{H-source-boundary}}
+        \end{pfproof}
+    \end{pfproof}
+  \qedstep
+\end{lamportproof}
+
+% -----------------------------------------------------------------------------
+\subsection{\Nname{}\ Lemmas}
+
+\begin{lemma}[$\sWTN$ progress]\label{H-type-progress}
+  If\/ $\snil \sWTN \sexpr_0 : \toptional$
+  then one of the following holds:
+  \begin{itemize}
+    \item
+      $\sexpr_0 \in \svalue$
+    \item
+      $\sexpr_0 \in \eerr$
+    \item
+      $\exists\,\sexpr_1$
+      such that\/ $\sexpr_0 \credN \sexpr_1$
+  \end{itemize}
+\end{lemma}{
+  \newcommand{\shortpf}{By case analysis of $\sexpr_0$.}
+\begin{lamportproof*}
+  \shortpf
+\mainproof
+  \shortpf
+
+  By \lemmaref{H-decomposition} it suffices to consider the following cases.
+
+  \step{0}{\case{$\sexpr_0 \in \svalue$}}
+    \begin{pfproof}
+      \qedstep
+    \end{pfproof}
+
+  \step{1}{\case{$\sexpr_0 \eeq \ctx_0[\eerr]$}}
+    \begin{pfproof}
+      \qedstep
+    \end{pfproof}
+
+  \step{2}{\case{$\sexpr_0 \eeq \ctx_0[\eapp{{\stype_1}}{\svalue_0}{\svalue_1}]$}}
+    \begin{pfproof}
+      \step{2.0}{$\svalue_0 \in (\efun{\tann{\svar}{\stype}}{\sexpr}) \cup (\emon{\sbnd}{\svalue})$}
+        \begin{pfproof}
+          by inversion $\sWTN$
+        \end{pfproof}
+      \step{2.1}{\scase{$\svalue_0 \eeq \efun{\tann{\svar_2}{\stype_2}}{\sexpr_2}$}}
+        \begin{pfproof}
+          \qedstep
+            \begin{pfproof}
+              $\sexpr_0 \nredNS \ctx_0[\esubst{\sexpr_2}{\svar_2}{\svalue_1}]$
+            \end{pfproof}
+        \end{pfproof}
+      \step{2.2}{\scase{$\svalue_0 \eeq \emon{\obnd{\sowner_0}{(\tfun{\stype_1}{\stype_2})}{\sowner_1}}{\svalue_2}$}}
+        \begin{pfproof}
+          \qedstep
+            \begin{pfproof}
+              $\sexpr_0 \nredNS \ctx_0[\edynb{\obnd{\sowner_0}{\stype_2}{\sowner_1}}{(\eapp{\tdyn}{\svalue_2}{(\estab{\obnd{\sowner_1}{\stype_1}{\sowner_0}}{\svalue_1})})}]$
+            \end{pfproof}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{3}{\case{$\sexpr_0 \eeq \ctx_0[\eapp{{\tdyn}}{\svalue_0}{\svalue_1}]$}}
+    \begin{pfproof}
+      \step{3.0}{\scase{$\svalue_0 \eeq \efun{\svar_2}{\sexpr_2}$}}
+        \begin{pfproof}
+          \qedstep
+            \begin{pfproof}
+              $\sexpr_0 \nredND \ctx_0[\esubst{\sexpr_2}{\svar_2}{\svalue_1}]$
+            \end{pfproof}
+        \end{pfproof}
+      \step{3.1}{\scase{$\svalue_0 \eeq \emon{\obnd{\sowner_0}{(\tfun{\stype_1}{\stype_2})}{\sowner_1}}{\svalue_2}$}}
+        \begin{pfproof}
+          \qedstep
+            \begin{pfproof}
+              $\sexpr_0 \nredND \ctx_0[\estab{\obnd{\sowner_0}{\stype_2}{\sowner_1}}{(\eapp{\stype_2}{\svalue_2}{(\edynb{\obnd{\sowner_1}{\stype_1}{\sowner_0}}{\svalue_1})})}]$
+            \end{pfproof}
+        \end{pfproof}
+      \step{3.2}{\scase{$\svalue_0 \not\in (\efun{\tann{\svar}{\stype}}{\sexpr}) \cup (\emon{\sbnd}{\svalue})$}}
+        \begin{pfproof}
+          \qedstep
+            \begin{pfproof}
+              $\sexpr_0 \nredND \ctx_0[\tagerrorD]$
+            \end{pfproof}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{4}{\case{$\sexpr_0 \eeq \ctx_0[\eunopt{\stoptional}{\svalue_0}]$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \lemmaref{H-typed-hole} and \lemmaref{H-delta-type-progress}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{5}{\case{$\sexpr_0 \eeq \ctx_0[\ebinopt{\stoptional}{\svalue_0}{\svalue_1}]$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \lemmaref{H-typed-hole} and \lemmaref{H-delta-type-progress}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{6}{\case{$\sexpr_0 \eeq \ctx_0[{\edynb{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\svalue_0}}]$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \lemmaref{H-typed-hole} and \lemmaref{H-dyn-type-progress}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{7}{\case{$\sexpr_0 \eeq \ctx_0[{\estab{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\svalue_0}}]$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \lemmaref{H-typed-hole} and \lemmaref{H-sta-type-progress}
+        \end{pfproof}
+    \end{pfproof}
+
+\end{lamportproof*}}
+
+\begin{lemma}[$\sWTN$ static preservation]\label{H-type-preservation}
+  If\/ $\snil \sWTN \sexpr_0 : \stoptional$
+  and\/ $\sexpr_0 \credN \sexpr_1$
+  then\/ $\snil \sWTN \sexpr_1 : \stoptional$.
+\end{lemma}{
+  \newcommand{\shortpf}{By \lemmaref{H-S-rr-preservation} and \lemmaref{H-D-rr-preservation}.}
+\begin{lamportproof*}
+  \shortpf
+\mainproof
+  \shortpf
+\end{lamportproof*}}
+
+\begin{lemma}[$\nredNS$ preservation]\label{H-S-rr-preservation}
+  If\/ $\snil \sWTN \sexpr_0 : \stype_0$
+  and\/ $\sexpr_0 \nredNS \sexpr_1$
+  then\/ $\snil \sWTN \sexpr_1 : \stype_0$.
+\end{lemma}{
+  \newcommand{\shortpf}{By case analysis of $\nredNS$.}
+\begin{lamportproof*}
+  \shortpf
+\mainproof
+  \shortpf
+
+  \step{0}{\case{$\eunopt{\stype_0}{\svalue_0} \nredNS \sdeltaH(\sunop, \svalue_0)$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \lemmaref{H-delta-type-preservation}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{1}{\case{$\ebinopt{\stype_0}{\svalue_0}{\svalue_1} \nredNS \sdeltaH(\sbinop, \svalue_0, \svalue_1)$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \lemmaref{H-delta-type-preservation}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{2}{\case{$\eapp{{\stype_0}}{(\efun{\tann{\svar_1}{\stype_1}}{\sexpr_1})}{\svalue_2} \nredNS \esubst{\sexpr_1}{\svar_1}{\svalue_2}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \lemmaref{H-type-substitution}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{3}{\case{\(
+   \eapp{{\stype_0}}{(\emon{\obnd{\sowner_0}{(\tfun{\stype_1}{\stype_0})}{\sowner_1}}{\svalue_0})}{\svalue_1}
+    \\ \nredNS \edynb{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{(\eapp{\tdyn}{\svalue_0}{(\estab{\obnd{\sowner_1}{\stype_1}{\sowner_0}}{\svalue_1})})}
+  \)}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          \begin{mathpar}
+            \inferrule*{
+              \inferrule*{
+                \inferrule*{
+                  \mbox{by inversion $\sWTN$}
+                }{
+                  \snil \sWTN \svalue_0 : \tdyn
+                }
+                \\
+                \inferrule*{
+                  \inferrule*{
+                    \mbox{by inversion $\sWTN$}
+                  }{
+                    \snil \sWTN \svalue_1 : \stype_1
+                  }
+                }{
+                  \snil \sWTN \estab{\obnd{\sowner_1}{\stype_1}{\sowner_0}}{\svalue_1} : \tdyn
+                }
+              }{
+                \snil \sWTN \eapp{\tdyn}{\svalue_0}{(\estab{\obnd{\sowner_1}{\stype_1}{\sowner_0}}{\svalue_1})} : \tdyn
+              }
+            }{
+              \snil \sWTN \edynb{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{(\eapp{\tdyn}{\svalue_0}{(\estab{\obnd{\sowner_1}{\stype_1}{\sowner_0}}{\svalue_1})})} : \stype_0
+            }
+          \end{mathpar}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{4}{\case{\(\edynb{\sbnd_0}{\svalue_0} \nredNS \svalue_1\)}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \lemmaref{H-dyn-type-preservation}
+        \end{pfproof}
+    \end{pfproof}
+
+\end{lamportproof*}}
+
+\begin{lemma}[$\nredND$ preservation]\label{H-D-rr-preservation}
+  If\/ $\snil \sWTN \sexpr_0 : \tdyn$
+  and\/ $\sexpr_0 \nredND \sexpr_1$
+  then\/ $\snil \sWTN \sexpr_1 : \tdyn$.
+\end{lemma}{
+  \newcommand{\shortpf}{By case analysis of $\nredND$.}
+\begin{lamportproof*}
+  \shortpf
+\mainproof
+  \shortpf
+
+  \step{0}{\case{$\eunopt{\tdyn}{\svalue_0} \nredND \tagerrorD$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          $\snil \sWTN \tagerrorD : \tdyn$
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{1}{\case{$\sdeltaH(\sunop, \svalue_0)$ is defined and $\eunopt{\tdyn}{\svalue_0} \nredND \sdeltaH(\sunop, \svalue_0)$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \lemmaref{H-delta-type-preservation}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{2}{\case{$\ebinopt{\tdyn}{\svalue_0}{\svalue_1} \nredND \tagerrorD$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          $\snil \sWTN \tagerrorD : \tdyn$
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{3}{\case{$\sdeltaH(\sbinop, \svalue_0, \svalue_1)$ is defined and $\ebinopt{\tdyn}{\svalue_0}{\svalue_1} \nredND \sdeltaH(\sbinop, \svalue_0, \svalue_1)$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \lemmaref{H-delta-type-preservation}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{4}{\case{$\eapp{\tdyn}{(\efun{\svar_1}{\sexpr_1})}{\svalue_2} \nredND \esubst{\sexpr_1}{\svar_1}{\svalue_2}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \lemmaref{H-type-substitution}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{5}{\case{\(
+   \eapp{\tdyn}{(\emon{\obnd{\sowner_0}{(\tfun{\stype_1}{\stype_0})}{\sowner_1}}{\svalue_0})}{\svalue_1}
+    \\ \nredND \estab{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{(\eapp{{\stype_0}}{\svalue_0}{(\edynb{\obnd{\sowner_1}{\stype_1}{\sowner_0}}{\svalue_1})})}
+  \)}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          \begin{mathpar}
+            \inferrule*{
+              \inferrule*{
+                \inferrule*{
+                  \mbox{by inversion $\sWTN$}
+                }{
+                  \snil \sWTN \svalue_0 : \tfun{\stype_1}{\stype_0}
+                }
+                \\
+                \inferrule*{
+                  \inferrule*{
+                    \mbox{by inversion $\sWTN$}
+                  }{
+                    \snil \sWTN \svalue_1 : \tdyn
+                  }
+                }{
+                  \snil \sWTN \edynb{\obnd{\sowner_1}{\stype_1}{\sowner_0}}{\svalue_1} : \stype_1
+                }
+              }{
+                \snil \sWTN \eapp{{\stype_0}}{\svalue_0}{(\edynb{\obnd{\sowner_1}{\stype_1}{\sowner_0}}{\svalue_1})} : \stype_0
+              }
+            }{
+              \snil \sWTN \estab{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{(\eapp{{\stype_0}}{\svalue_0}{(\edynb{\obnd{\sowner_1}{\stype_1}{\sowner_0}}{\svalue_1})})} : \tdyn
+            }
+          \end{mathpar}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{4}{\case{\(\estab{\sbnd_0}{\svalue_0} \nredND \svalue_1\)}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \lemmaref{H-sta-type-preservation}
+        \end{pfproof}
+    \end{pfproof}
+
+\end{lamportproof*}}
+
+\begin{lemma}[unique decomposition]\label{H-decomposition}
+  If\/ $\snil \sWTN \sexpr_0 : \toptional$ then either:
+  \begin{itemize}
+    \item
+      $\sexpr_0 \in \svalue$
+    \item
+      $\sexpr_0 \eeq \ctx_0[\eapp{\toptional}{\svalue_0}{\svalue_1}]$
+    \item
+      $\sexpr_0 \eeq \ctx_0[\eunopt{\toptional}{\svalue_0}]$
+    \item
+      $\sexpr_0 \eeq \ctx_0[\ebinopt{\toptional}{\svalue_0}{\svalue_1}]$
+    \item
+      $\sexpr_0 \eeq \ctx_0[\edynb{\sbnd_1}{\svalue_1}]$
+    \item
+      $\sexpr_0 \eeq \ctx_0[\estab{\sbnd_1}{\svalue_1}]$
+    \item
+      $\sexpr_0 \eeq \ctx_0[\eerr]$
+  \end{itemize}
+\end{lemma}{
+  \newcommand{\shortproof}{By induction on the structure of $\sexpr_0$.}
+\begin{lamportproof*}
+  \shortproof
+\mainproof\leavevmode
+  \shortproof
+
+  \step{0}{\case{$\sexpr_0 \eeq \svar_0$}}
+    \begin{pfproof}
+      \absurdstep
+        \begin{pfproof}
+          $\snil \sWTN \sexpr_0 : \toptional$
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{1}{\case{$\sexpr_0 \eeq \svalue_0$}}
+    \begin{pfproof}
+      \qedstep
+    \end{pfproof}
+
+  \step{2}{\case{$\sexpr_0 \eeq \epair{\sexpr_1}{\sexpr_2}$}}
+    \begin{pfproof}
+      \step{2.0}{\scase{$\sexpr_1 \not\in \svalue$}}
+        \begin{pfproof}
+          \qedstep
+            \begin{pfproof}
+              by \pfih
+            \end{pfproof}
+        \end{pfproof}
+      \step{2.1}{\scase{$\sexpr_1 \in \svalue$ and $\sexpr_2 \not\in \svalue$}}
+        \begin{pfproof}
+          \qedstep
+            \begin{pfproof}
+              by \pfih
+            \end{pfproof}
+        \end{pfproof}
+      \step{2.2}{\scase{$\sexpr_1 \in \svalue$ and $\sexpr_2 \in \svalue$}}
+        \begin{pfproof}
+          \qedstep
+            \begin{pfproof}
+              $\sexpr_0 \in \svalue$
+            \end{pfproof}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{3}{\case{$\sexpr_0 \eeq \eapp{\toptional}{\sexpr_1}{\sexpr_2}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{4}{\case{$\sexpr_0 \eeq \eunopt{\toptional}{\sexpr_1}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{5}{\case{$\sexpr_0 \eeq \ebinopt{\toptional}{\sexpr_1}{\sexpr_2}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{6}{\case{$\sexpr_0 \eeq \edynb{\sbnd_1}{\sexpr_1}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{7}{\case{$\sexpr_0 \eeq \estab{\sbnd_1}{\sexpr_1}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{8}{\case{$\sexpr_0 \in \eerr$}}
+    \begin{pfproof}
+      \qedstep
+    \end{pfproof}
+
+\end{lamportproof*}}
+
+\begin{lemma}\label{H-typed-hole}\leavevmode
+  If\/ $\snil \sWTN \ctx_0[\sexpr_0] : \toptional$
+  then one of the following holds:
+  \begin{itemize}
+    \item $\snil \sWTN \sexpr_0 : \tdyn$
+    \item $\exists\,\stype_0~.~\snil \sWTN \sexpr_0 : \stype_0$
+  \end{itemize}
+\end{lemma}{
+\newcommand{\shortproof}{By induction on the structure of $\ctx_0$ and case analysis of $\sWTN$.}
+\begin{lamportproof*}
+  \shortproof
+\mainproof
+  \shortproof
+
+  \step{0}{\case{$\ctx_0 \eeq \ctxhole$}}
+    \begin{pfproof}
+      \qedstep
+    \end{pfproof}
+
+  \step{1}{\case{$\ctx_0 \eeq \epair{\ctx_1}{\sexpr_2}$}}
+    \begin{pfproof}
+      \step{1.0}{$\snil \sWTN \ctx_1[\sexpr_0] : \toptional$}
+        \begin{pfproof}
+          by inversion $\sWTN$
+        \end{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{2}{\case{$\ctx_0 \eeq \epair{\svalue_1}{\ctx_2}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{3}{\case{$\ctx_0 \eeq \eapp{\toptional}{\ctx_1}{\sexpr_2}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{4}{\case{$\ctx_0 \eeq \eapp{\toptional}{\svalue_1}{\ctx_2}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{5}{\case{$\ctx_0 \eeq \eunopt{\stoptional}{\ctx_1}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{6}{\case{$\ctx_0 \eeq \ebinopt{\stoptional}{\ctx_1}{\sexpr_2}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{7}{\case{$\ctx_0 \eeq \ebinopt{\stoptional}{\svalue_1}{\ctx_2}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{8}{\case{$\ctx_0 \eeq \edynb{\sbnd_1}{\ctx_1}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{9}{\case{$\ctx_0 \eeq \estab{\sbnd_1}{\ctx_1}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+\end{lamportproof*}}
+
+\begin{lemma}[$\sWTN$ replacement]\label{H-type-replacement}\leavevmode
+  \begin{itemize}
+    \item
+      If\/ $\snil \sWTN \ctx_0[\sexpr_0] : \toptional$
+      and the derivation contains a proof of\/ $\snil \sWTN \sexpr_0 : \stype_0$
+      and\/ $\snil \sWTN \sexpr_1 : \stype_0$
+      then\/ $\snil \sWTN \ctx_0[\sexpr_1] : \toptional$.
+    \item
+      If\/ $\snil \sWTN \ctx_0[\sexpr_0] : \toptional$
+      and the derivation contains a proof of\/ $\snil \sWTN \sexpr_0 : \tdyn$
+      and\/ $\snil \sWTN \sexpr_1 : \tdyn$
+      then\/ $\snil \sWTN \ctx_0[\sexpr_1] : \toptional$.
+  \end{itemize}
+\end{lemma}{
+  \newcommand{\shortproof}{By induction on $\ctx_0$.}
+\begin{lamportproof*}
+  \shortproof
+\mainproof
+  \shortproof
+
+  \step{0}{\case{$\ctx_0 \eeq \ctxhole$}}
+    \begin{pfproof}
+      \qedstep
+    \end{pfproof}
+
+  \step{1}{\case{$\ctx_0 \eeq \epair{\ctx_1}{\sexpr_2}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{2}{\case{$\ctx_0 \eeq \epair{\svalue_1}{\ctx_2}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{3}{\case{$\ctx_0 \eeq \eapp{\toptional}{\ctx_1}{\sexpr_2}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{4}{\case{$\ctx_0 \eeq \eapp{\toptional}{\svalue_1}{\ctx_2}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{5}{\case{$\ctx_0 \eeq \eunopt{\stoptional}{\ctx_1}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{6}{\case{$\ctx_0 \eeq \ebinopt{\stoptional}{\ctx_1}{\sexpr_2}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{7}{\case{$\ctx_0 \eeq \ebinopt{\stoptional}{\svalue_1}{\ctx_2}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{8}{\case{$\ctx_0 \eeq \edynb{\sbnd_1}{\ctx_1}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{9}{\case{$\ctx_0 \eeq \estab{\sbnd_1}{\ctx_1}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+\end{lamportproof*}}
+
+\begin{lemma}[$\sdeltaH$ type progress]\label{H-delta-type-progress}\leavevmode
+  \begin{itemize}
+    \item
+      If\/ $\snil \sWTN \eunopt{\stype_1}{\svalue_0} : \stype_0$
+      then\/ $\sdeltaH(\sunop, \svalue_0)$ is defined.
+    \item
+      if\/ $\snil \sWTN \ebinopt{\stype_1}{\svalue_0}{\svalue_1} : \stype_0$
+      then\/ $\sdeltaH(\sbinop, \svalue_0, \svalue_1)$ is defined.
+    \item
+      If\/ $\snil \sWTN \eunopt{\tdyn}{\svalue_0} : \tdyn$
+      then\/ $\eunopt{\tdyn}{\svalue_0} \nredND \sexpr_1$.
+    \item
+      if\/ $\snil \sWTN \ebinopt{\tdyn}{\svalue_0}{\svalue_1} : \tdyn$
+      then\/ $\ebinopt{\tdyn}{\svalue_0}{\svalue_1} \nredND \sexpr_1$.
+  \end{itemize}
+\end{lemma}{
+  \newcommand{\shortpf}{By case analysis of $\sdeltaH$, $\sWTN$, and $\nredND$.}
+\begin{lamportproof*}
+  \shortpf
+\mainproof
+  \shortpf
+
+  \step{0}{\case{$\snil \sWTN \efst{\stype_1}{\svalue_0} : \stype_0$}}
+    \begin{pfproof}
+      \step{0.0}{$\svalue_0 \eeq \epair{\svalue_1}{\svalue_2}$}
+        \begin{pfproof}
+          by $\sWTN$ canonical forms
+        \end{pfproof}
+      \qedstep
+        \begin{pfproof}
+          $\sdeltaH(\sunop, \svalue_0) \eeq \svalue_1$
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{1}{\case{$\snil \sWTN \esnd{\stype_1}{\svalue_0} : \stype_0$}}
+    \begin{pfproof}
+      \step{1.0}{$\svalue_0 \eeq \epair{\svalue_1}{\svalue_2}$}
+        \begin{pfproof}
+          by $\sWTN$ canonical forms
+        \end{pfproof}
+      \qedstep
+        \begin{pfproof}
+          $\sdeltaH(\sunop, \svalue_0) \eeq \svalue_2$
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{2}{\case{$\snil \sWTN \esum{\stype_1}{\svalue_0}{\svalue_1} : \stype_0$}}
+    \begin{pfproof}
+      \step{2.0}{$\svalue_0 \in \sint$ and $\svalue_1 \in \sint$}
+        \begin{pfproof}
+          by $\sWTN$ canonical forms
+        \end{pfproof}
+      \qedstep
+        \begin{pfproof}
+          $\sdeltaH(\sunop, \svalue_0, \svalue_1) \in \sint$
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{3}{\case{$\snil \sWTN \equotient{\stype_1}{\svalue_0}{\svalue_1} : \stype_0$}}
+    \begin{pfproof}
+      \step{3.0}{$\svalue_0 \in \sint$ and $\svalue_1 \in \sint$}
+        \begin{pfproof}
+          by $\sWTN$ canonical forms
+        \end{pfproof}
+      \qedstep
+        \begin{pfproof}
+          $\sdeltaH(\sunop, \svalue_0, \svalue_1) \in \sint \cup \divisionbyzeroerror$
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{4}{\case{$\snil \sWTN \eunopt{\tdyn}{\svalue_0} : \tdyn$}}
+    \begin{pfproof}
+      \step{4.0}{\scase{$\sdeltaH(\sunop, \svalue_0)$ is defined}}
+        \begin{pfproof}
+          \qedstep
+            \begin{pfproof}
+              $\eunopt{\tdyn}{\svalue_0} \nredND \sdeltaH(\sunop, \svalue_0)$
+            \end{pfproof}
+        \end{pfproof}
+      \step{4.1}{\scase{$\sdeltaH(\sunop, \svalue_0)$ is not defined}}
+        \begin{pfproof}
+          \qedstep
+            \begin{pfproof}
+              $\eunopt{\tdyn}{\svalue_0} \nredND \tagerrorD$
+            \end{pfproof}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{5}{\case{$\snil \sWTN \ebinopt{\tdyn}{\svalue_0}{\svalue_1} : \tdyn$}}
+    \begin{pfproof}
+      \step{5.0}{\scase{$\sdeltaH(\sbinop, \svalue_0, \svalue_1)$ is defined}}
+        \begin{pfproof}
+          \qedstep
+            \begin{pfproof}
+              $\ebinopt{\tdyn}{\svalue_0}{\svalue_1} \nredND \sdeltaH(\sbinop, \svalue_0, \svalue_1)$
+            \end{pfproof}
+        \end{pfproof}
+      \step{5.1}{\scase{$\sdeltaH(\sbinop, \svalue_0, \svalue_1)$ is not defined}}
+        \begin{pfproof}
+          \qedstep
+            \begin{pfproof}
+              $\ebinopt{\tdyn}{\svalue_0}{\svalue_1} \nredND \tagerrorD$
+            \end{pfproof}
+        \end{pfproof}
+    \end{pfproof}
+
+\end{lamportproof*}}
+
+\begin{lemma}[$\sdeltaH$ type preservation]\label{H-delta-type-preservation}\leavevmode
+  \begin{itemize}
+    \item
+      If\/ $\snil \sWTN \eunopt{\stype_1}{\svalue_0} : \stype_0$
+      then\/ $\snil \sWTN \sdeltaH(\sunop, \svalue_0) : \stype_0$.
+    \item
+      If\/ $\snil \sWTN \ebinopt{\stype_1}{\svalue_0}{\svalue_1} : \stype_0$
+      then\/ $\snil \sWTN \sdeltaH(\sbinop, \svalue_0, \svalue_1) : \stype_0$.
+    \item
+      If\/ $\snil \sWTN \eunopt{\tdyn}{\svalue_0} : \tdyn$
+      and\/ $\sdeltaH(\sunop, \svalue_0)$ is defined
+      then\/ $\snil \sWTN \sdeltaH(\sunop, \svalue_0) : \tdyn$.
+    \item
+      If\/ $\snil \sWTN \ebinopt{\tdyn}{\svalue_0}{\svalue_1} : \tdyn$
+      and\/ $\sdeltaH(\sbinop, \svalue_0, \svalue_1)$ is defined
+      then\/ $\snil \sWTN \sdeltaH(\sbinop, \svalue_0, \svalue_1) : \tdyn$.
+  \end{itemize}
+\end{lemma}{
+  \newcommand{\shortpf}{By case analysis of $\sdeltaH$ and $\sWTN$.}
+\begin{lamportproof*}
+  \shortpf
+\mainproof
+  \shortpf
+
+  \step{0}{\case{$\snil \sWTN \efst{\stype_0}{\svalue_0} : \stype_0$}}
+    \begin{pfproof}
+      \step{0.0}{$ \svalue_0 \eeq \epair{\svalue_1}{\svalue_2}$ and $ \snil \sWTN \svalue_1 : \stype_0$}
+        \begin{pfproof}
+          by inversion $\sWTN$
+        \end{pfproof}
+      \qedstep
+    \end{pfproof}
+
+  \step{1}{\case{$\snil \sWTN \esnd{\stype_0}{\svalue_0} : \stype_0$}}
+    \begin{pfproof}
+      \step{0.0}{$ \svalue_0 \eeq \epair{\svalue_1}{\svalue_2}$ and $ \snil \sWTN \svalue_2 : \stype_0$}
+        \begin{pfproof}
+          by $\sWTN$ canonical forms and $\sWTN$ inversion
+        \end{pfproof}
+      \qedstep
+    \end{pfproof}
+
+  \step{2}{\case{$\snil \sWTN \esum{\stype_1}{\svalue_0}{\svalue_1} : \stype_0$}}
+    \begin{pfproof}
+      \step{0.0}{$\stype_0 \in \tint \cup \tnat$}
+        \begin{pfproof}
+          by inversion $\sWTN$
+        \end{pfproof}
+      \step{0.1}{\scase{$\stype_0 \eeq \tint$}}
+        \begin{pfproof}
+          \step{0.1.0}{$\snil \sWTN \svalue_0 : \tint$ and $\snil \sWTN \svalue_1 : \tint$}
+            \begin{pfproof}
+              by inversion $\sWTN$
+            \end{pfproof}
+          \step{0.1.1}{$ \svalue_0 \in \sint$ and $\svalue_1 \in \sint$}
+            \begin{pfproof}
+              by $\sWTN$ canonical forms
+            \end{pfproof}
+          \qedstep
+            \begin{pfproof}
+              $\sdeltaH(\sbinop, \svalue_0, \svalue_1) \in \sint$
+            \end{pfproof}
+        \end{pfproof}
+      \step{0.2}{\scase{$\stype_0 \eeq \tnat$}}
+        \begin{pfproof}
+          \step{0.1.0}{$\snil \sWTN \svalue_0 : \tnat$ and $\snil \sWTN \svalue_1 : \tnat$}
+            \begin{pfproof}
+              by inversion $\sWTN$
+            \end{pfproof}
+          \step{0.1.1}{$ \svalue_0 \in \snat$ and $\svalue_1 \in \snat$}
+            \begin{pfproof}
+              by $\sWTN$ canonical forms
+            \end{pfproof}
+          \qedstep
+            \begin{pfproof}
+              $\sdeltaH(\sbinop, \svalue_0, \svalue_1) \in \snat$
+            \end{pfproof}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{3}{\case{$\snil \sWTN \equotient{\stype_1}{\svalue_0}{\svalue_1} : \stype_0$}}
+    \begin{pfproof}
+      \step{0.0}{$\stype_0 \in \tint \cup \tnat$}
+        \begin{pfproof}
+          by inversion $\sWTN$
+        \end{pfproof}
+      \step{0.1}{\scase{$\stype_0 \eeq \tint$}}
+        \begin{pfproof}
+          \step{0.1.0}{$\snil \sWTN \svalue_0 : \tint$ and $\snil \sWTN \svalue_1 : \tint$}
+            \begin{pfproof}
+              by inversion $\sWTN$
+            \end{pfproof}
+          \step{0.1.1}{$ \svalue_0 \in \sint$ and $\svalue_1 \in \sint$}
+            \begin{pfproof}
+              by $\sWTN$ canonical forms
+            \end{pfproof}
+          \qedstep
+            \begin{pfproof}
+              $\sdeltaH(\sbinop, \svalue_0, \svalue_1) \in \sint \cup \divisionbyzeroerror$
+            \end{pfproof}
+        \end{pfproof}
+      \step{0.2}{\scase{$\stype_0 \eeq \tnat$}}
+        \begin{pfproof}
+          \step{0.1.0}{$\snil \sWTN \svalue_0 : \tnat$ and $\snil \sWTN \svalue_1 : \tnat$}
+            \begin{pfproof}
+              by inversion $\sWTN$
+            \end{pfproof}
+          \step{0.1.1}{$ \svalue_0 \in \snat$ and $\svalue_1 \in \snat$}
+            \begin{pfproof}
+              by $\sWTN$ canonical forms
+            \end{pfproof}
+          \qedstep
+            \begin{pfproof}
+              $\sdeltaH(\sbinop, \svalue_0, \svalue_1) \in \snat \cup \divisionbyzeroerror$
+            \end{pfproof}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{4}{\case{$\snil \sWTN \efst{\tdyn}{\svalue_0} : \tdyn$}}
+    \begin{pfproof}
+      \step{4.0}{$\svalue_0 \eeq \epair{\svalue_1}{\svalue_2}$}
+        \begin{pfproof}
+          because $\sdeltaH(\sunop, \svalue_0)$ is defined
+        \end{pfproof}
+      \step{4.1}{$\snil \sWTN \svalue_1 : \tdyn$}
+        \begin{pfproof}
+          by inversion $\sWTN$
+        \end{pfproof}
+      \qedstep
+        \begin{pfproof}
+          $\sdeltaH(\sunop, \svalue_0) \eeq \svalue_1$
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{5}{\case{$\snil \sWTN \esnd{\tdyn}{\svalue_0} : \tdyn$}}
+    \begin{pfproof}
+      \step{5.0}{$\svalue_0 \eeq \epair{\svalue_1}{\svalue_2}$}
+        \begin{pfproof}
+          because $\sdeltaH(\sunop, \svalue_0)$ is defined
+        \end{pfproof}
+      \step{5.1}{$\snil \sWTN \svalue_2 : \tdyn$}
+        \begin{pfproof}
+          by inversion $\sWTN$
+        \end{pfproof}
+      \qedstep
+        \begin{pfproof}
+          $\sdeltaH(\sunop, \svalue_0) \eeq \svalue_2$
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{6}{\case{$\snil \sWTN \esum{\tdyn}{\svalue_0}{\svalue_1} : \tdyn$}}
+    \begin{pfproof}
+      \step{6.0}{$\sdeltaH(\sbinop, \svalue_0, \svalue_1) \in \sint$}
+        \begin{pfproof}
+          by definition $\sdeltaH$
+        \end{pfproof}
+      \qedstep
+        \begin{pfproof}
+          $\snil \sWTN \sdeltaH(\sbinop, \svalue_0, \svalue_1) : \tdyn$
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{7}{\case{$\snil \sWTN \equotient{\tdyn}{\svalue_0}{\svalue_1} : \tdyn$}}
+    \begin{pfproof}
+      \step{7.0}{$\sdeltaH(\sbinop, \svalue_0, \svalue_1) \in \sint \cup \divisionbyzeroerror$}
+        \begin{pfproof}
+          by definition $\sdeltaH$
+        \end{pfproof}
+      \qedstep
+        \begin{pfproof}
+          $\snil \sWTN \sdeltaH(\sbinop, \svalue_0, \svalue_1) : \tdyn$
+        \end{pfproof}
+    \end{pfproof}
+
+\end{lamportproof*}}
+
+\begin{lemma}\label{H-dyn-type-progress}
+  If\/ $\snil \sWTN \edynb{\sbnd_0}{\svalue_0} : \stype_0$
+  and\/ $\sbnd_0 \eeq \obnd{\sowner_0}{\stype_0}{\sowner_1}$
+  then\/ $\exists\,\sexpr_1$
+  such that\/ $\edynb{\sbnd_0}{\svalue_0} \nredNS \sexpr_1$.
+\end{lemma}{
+  \newcommand{\shortproof}{By case analysis of $\fshallow{\tagof{\stype_0}}{\svalue_0}$.}
+\begin{lamportproof*}
+  \shortproof
+\mainproof
+  \shortproof
+
+  \step{0}{\case{$\fshallow{\tagof{\stype_0}}{\efun{\svar_1}{\sexpr_1}}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          $\edynb{\sbnd_0}{\svalue_0} \nredNS \emon{\sbnd_0}{\svalue_0}$
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{1}{\case{$\fshallow{\tagof{\stype_0}}{\efun{\tann{\svar_1}{\stype_1}}{\sexpr_1}}$}}
+    \begin{pfproof}
+      \absurdstep
+        \begin{pfproof}
+          $\snil \sWTN \edynb{\sbnd_0}{\svalue_0} : \stype_0$
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{2}{\case{$\fshallow{\tagof{\stype_0}}{\emon{\sbnd_1}{\svalue_1}}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          $\edynb{\sbnd_0}{\svalue_0} \nredNS \emon{\sbnd_0}{\svalue_0}$
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{3}{\case{$\fshallow{\tagof{(\tpair{\stype_1}{\stype_2})}}{\epair{\svalue_1}{\svalue_2}}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          $\edynb{\sbnd_0}{\svalue_0} \nredNS \epair{\edynb{\obnd{\sowner_0}{\stype_1}{\sowner_1}}{\svalue_1}}{\edynb{\obnd{\sowner_0}{\stype_2}{\sowner_1}}{\svalue_2}}$
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{4}{\case{$\fshallow{\tagof{\tint}}{\svalue_0}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          $\edynb{\sbnd_0}{\svalue_0} \nredNS \svalue_0$
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{5}{\case{$\fshallow{\tagof{\tnat}}{\svalue_0}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          $\edynb{\sbnd_0}{\svalue_0} \nredNS \svalue_0$
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{6}{\case{$\neg\fshallow{\tagof{\stype_0}}{\svalue_0}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          $\edynb{\sbnd_0}{\svalue_0} \nredNS \boundaryerror{\sbnd_0}{\svalue_0}$
+        \end{pfproof}
+    \end{pfproof}
+
+\end{lamportproof*}}
+
+\begin{lemma}\label{H-sta-type-progress}
+  If\/ $\snil \sWTN \estab{\sbnd_0}{\svalue_0} : \tdyn$
+  and\/ $\sbnd_0 \eeq \obnd{\sowner_0}{\stype_0}{\sowner_1}$
+  then\/ $\exists\,\sexpr_1$
+  such that\/ $\estab{\sbnd_0}{\svalue_0} \nredND \sexpr_1$.
+\end{lemma}{
+  \newcommand{\shortproof}{By case analysis on $\svalue_0$.}
+\begin{lamportproof*}
+  \shortproof
+\mainproof
+  \shortproof
+
+  \step{0}{\case{$\svalue_0 \in \efun{\svar}{\sexpr}$}}
+    \begin{pfproof}
+      \absurdstep
+        \begin{pfproof}
+          $\snil \sWTN \estab{\sbnd_0}{\svalue_0} : \tdyn$
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{1}{\case{$\svalue_0 \in \efun{\tann{\svar}{\stype}}{\sexpr}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          $\estab{\sbnd_0}{\svalue_0} \nredND \emon{\sbnd_0}{\svalue_0}$
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{2}{\case{$\svalue_0 \in \emon{\sbnd}{\sexpr}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          $\estab{\sbnd_0}{\svalue_0} \nredND \emon{\sbnd_0}{\svalue_0}$
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{3}{\case{$\svalue_0 \eeq \epair{\svalue_1}{\svalue_2}$}}
+    \begin{pfproof}
+      \step{3.0}{$\stype_0 \eeq \tpair{\stype_1}{\stype_2}$}
+        \begin{pfproof}
+          by inversion $\sWTN$
+        \end{pfproof}
+      \qedstep
+        \begin{pfproof}
+          $\estab{\sbnd_0}{\svalue_0} \nredND \epair{\estab{\obnd{\sowner_0}{\stype_1}{\sowner_1}}{\svalue_1}}{\estab{\obnd{\sowner_0}{\stype_2}{\sowner_1}}{\svalue_2}}$
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{4}{\case{$\svalue_0 \in \sint$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          $\estab{\sbnd_0}{\svalue_0} \nredND \svalue_0$
+        \end{pfproof}
+    \end{pfproof}
+
+\end{lamportproof*}}
+
+\begin{lemma}[\hsym-$\sdyn$ preservation]\label{H-dyn-type-preservation}\leavevmode
+  If\/ $\snil \sWTN \edynb{\sbnd_0}{\svalue_0} : \stype_0$
+  and\/ $\sbnd_0 \eeq \obnd{\sowner_0}{\stype_0}{\sowner_1}$
+  and\/ $\edynb{\sbnd_0}{\svalue_0} \nredNS \sexpr_1$
+  then\/ $\snil \sWTN \sexpr_1 : \stype_0$.
+\end{lemma}{
+  \newcommand{\shortproof}{By case analysis of $\nredNS$.}
+\begin{lamportproof*}
+  \shortproof
+\mainproof
+  \shortproof
+
+  \step{0}{\case{\(
+    \edynb{\sbnd_0}{\svalue_0} \nredNS \emon{\sbnd_0}{\svalue_0}
+  \) \\ and \(
+    \svalue_0 \in (\efun{\svar}{\sexpr}) \cup (\emon{\sbnd}{\svalue})
+  \)}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          \begin{mathpar}
+            \inferrule*{
+              \inferrule*{
+                \mbox{by inversion $\sWTN$}
+              }{
+                \snil \sWTN \svalue_0 : \tdyn
+              }
+            }{
+              \snil \sWTN \emon{\sbnd_0}{\svalue_0} : \stype_0
+            }
+          \end{mathpar}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{1}{\case{\(
+    \stype_0 \eeq \tpair{\stype_1}{\stype_2}
+  \) \\ and \(
+    \edynb{\obnd{\sowner_0}{(\tpair{\stype_1}{\stype_2})}{\sowner_1}}{\epair{\svalue_1}{\svalue_2}} \nredNS \epair{\edynb{\obnd{\sowner_0}{\stype_1}{\sowner_1}}{\svalue_1}}{\edynb{\obnd{\sowner_0}{\stype_2}{\sowner_1}}{\svalue_2}}
+  \)}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          \begin{mathpar}
+            \inferrule*{
+              \inferrule*{
+                \inferrule*{
+                  \mbox{by inversion $\sWTN$}
+                }{
+                  \snil \sWTN \svalue_1 : \tdyn
+                }
+              }{
+                \snil \sWTN \edynb{\obnd{\sowner_0}{\stype_1}{\sowner_1}}{\svalue_1} : \stype_1
+              }
+              \\
+              \inferrule*{
+                \inferrule*{
+                  \mbox{by inversion $\sWTN$}
+                }{
+                  \snil \sWTN \svalue_2 : \tdyn
+                }
+              }{
+                \snil \sWTN \edynb{\obnd{\sowner_0}{\stype_2}{\sowner_1}}{\svalue_2} : \stype_2
+              }
+            }{
+              \snil \sWTN \epair{\edynb{\obnd{\sowner_0}{\stype_1}{\sowner_1}}{\svalue_1}}{\edynb{\obnd{\sowner_0}{\stype_2}{\sowner_1}}{\svalue_2}} : \tpair{\stype_1}{\stype_2}
+            }
+          \end{mathpar}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{2}{\case{\(
+    \edynb{\sbnd_0}{\sint_0} \nredNS \sint_0
+  \) \\ and \(
+    \fshallow{\tagof{\stype_0}}{\sint_0}
+  \)}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by case analysis of $\fshallow{\tagof{\stype_0}}{\sint_0}$
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{3}{\case{\(
+    \edynb{\sbnd_0}{\svalue_0} \nredNS \boundaryerror{\sbnd_0}{\svalue_0}
+  \)}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          $\snil \sWTN \boundaryerror{\sbnd_0}{\svalue_0} : \stype_0$
+        \end{pfproof}
+    \end{pfproof}
+
+\end{lamportproof*}}
+
+\begin{lemma}[\hsym-$\ssta$ preservation]\label{H-sta-type-preservation}
+  If\/ $\snil \sWTN \estab{\sbnd_0}{\svalue_0} : \tdyn$
+  and\/ $\sbnd_0 \eeq \obnd{\sowner_0}{\stype_0}{\sowner_1}$
+  and\/ $\estab{\sbnd_0}{\svalue_0} \nredND \sexpr_1$
+  then\/ $\snil \sWTN \sexpr_1$.
+\end{lemma}{
+  \newcommand{\shortproof}{By case analysis of $\nredND$.}
+\begin{lamportproof*}
+  \shortproof
+\mainproof
+  \shortproof
+
+  \step{0}{\case{\(
+    \svalue_0 \in (\efun{\tann{\svar}{\stype}}{\sexpr}) \cup (\emon{\sbnd}{\svalue})
+  \) \\ and \(
+    \estab{\sbnd_0}{\svalue_0} \nredND \emon{\sbnd_0}{\svalue_0}
+  \)}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          \begin{mathpar}
+            \inferrule*{
+              \inferrule*{
+                \mbox{by inversion $\sWTN$}
+              }{
+                \snil \sWTN \svalue_0 : \stype_0
+              }
+            }{
+              \snil \sWTN \emon{\sbnd_0}{\svalue_0} : \tdyn
+            }
+          \end{mathpar}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{1}{\case{\(
+    \stype_0 \eeq \tpair{\stype_1}{\stype_2}
+  \) \\and \(
+    \estab{\obnd{\sowner_0}{(\tpair{\stype_1}{\stype_2})}{\sowner_1}}{\epair{\svalue_1}{\svalue_2}} \nredND \epair{\estab{\obnd{\sowner_0}{\stype_1}{\sowner_1}}{\svalue_1}}{\estab{\obnd{\sowner_0}{\stype_2}{\sowner_1}}{\svalue_2}}
+  \)}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}\begin{mathpar}
+          \inferrule*{
+            \inferrule*{
+              \inferrule*{
+                \mbox{by inversion $\sWTN$}
+              }{
+                \snil \sWTN \svalue_1 : \stype_1
+              }
+            }{
+              \snil \sWTN \estab{\obnd{\sowner_0}{\stype_1}{\sowner_1}}{\svalue_1} : \tdyn
+            }
+            \\
+            \inferrule*{
+              \inferrule*{
+                \mbox{by inversion $\sWTN$}
+              }{
+                \snil \sWTN \svalue_2 : \stype_2
+              }
+            }{
+              \snil \sWTN \estab{\obnd{\sowner_0}{\stype_2}{\sowner_1}}{\svalue_2} : \tdyn
+            }
+          }{
+            \snil \sWTN \epair{\estab{\obnd{\sowner_0}{\stype_1}{\sowner_1}}{\svalue_1}}{\estab{\obnd{\sowner_0}{\stype_2}{\sowner_1}}{\svalue_2}} : \tdyn
+          }
+        \end{mathpar}\end{pfproof}
+    \end{pfproof}
+
+  \step{2}{\case{\(
+    \estab{\sbnd_0}{\sint_0} \nredND \sint_0
+  \)}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          $\snil \sWTN \sint_0 : \tdyn$
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{3}{\case{\(
+    \estab{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\svalue_0} \nredND \tagerrorS
+  \)}}
+    \begin{pfproof}
+      \absurdstep
+        \begin{pfproof}
+          $\snil \sWTN \svalue_0 : \stype_0$
+        \end{pfproof}
+    \end{pfproof}
+
+\end{lamportproof*}}
+
+\begin{lemma}\label{H-type-substitution}\leavevmode
+  \begin{itemize}
+    \item
+      If\/ $\fcons{\tann{\svar_0}{\stype_0}}{\stypeenv_0} \sWTN \sexpr_1 : \toptional$
+      and\/ $\snil \sWTN \svalue_0 : \stype_0$
+      then\/ $\stypeenv_0 \sWTN \esubst{\sexpr_1}{\svar_0}{\svalue_0} : \toptional$
+    \item
+      If\/ $\fcons{\tann{\svar_0}{\tdyn}}{\stypeenv_0} \sWTN \sexpr_1 : \toptional$
+      and\/ $\snil \sWTN \svalue_0 : \tdyn$
+      then\/ $\stypeenv_0 \sWTN \esubst{\sexpr_1}{\svar_0}{\svalue_0} : \toptional$
+  \end{itemize}
+\end{lemma}{
+  \newcommand{\shortpf}{By induction on $\sexpr_1$.}
+\begin{lamportproof*}
+  \shortpf
+\mainproof
+  \shortpf
+
+  \step{0}{\case{$\sexpr_1 \eeq \svar_2$}}
+    \begin{pfproof}
+      \step{0.0}{\scase{$\svar_0 \eeq \svar_2$}}
+        \begin{pfproof}
+          \qedstep
+            \begin{pfproof}
+              {$\esubst{\sexpr_1}{\svar_0}{\svalue_0} \eeq \svalue_0$}
+            \end{pfproof}
+        \end{pfproof}
+      \step{0.1}{\scase{$\svar_0 \neq \svar_2$}}
+        \begin{pfproof}
+          \qedstep
+            \begin{pfproof}
+              {$\esubst{\sexpr_1}{\svar_0}{\svalue_0} \eeq \sexpr_1$}
+            \end{pfproof}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{1}{\case{$\sexpr_1 \eeq \sint_0$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          {$\esubst{\sexpr_1}{\svar_0}{\svalue_0} \eeq \sexpr_1$}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{2}{\case{$\sexpr_1 \eeq \efun{\svar_2}{\sexpr_2}$}}
+    \begin{pfproof}
+      \step{2.0}{\scase{$ \svar_0 \eeq \svar_2$}}
+        \begin{pfproof}
+          \qedstep
+            \begin{pfproof}
+              by \pfih
+            \end{pfproof}
+        \end{pfproof}
+      \step{2.1}{\scase{$\svar_0 \neq \svar_2$}}
+        \begin{pfproof}
+          \qedstep
+            \begin{pfproof}
+              {$\esubst{\sexpr_1}{\svar_0}{\svalue_0} \eeq \sexpr_1$}
+            \end{pfproof}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{3}{\case{$\sexpr_1 \eeq \efun{\tann{\svar_2}{\stype_2}}{\sexpr_2}$}}
+    \begin{pfproof}
+      \step{3.0}{\scase{$ \svar_0 \eeq \svar_2$}}
+        \begin{pfproof}
+          \qedstep
+            \begin{pfproof}
+              by \pfih
+            \end{pfproof}
+        \end{pfproof}
+      \step{3.1}{\scase{$\svar_0 \neq \svar_2$}}
+        \begin{pfproof}
+          \qedstep
+            \begin{pfproof}
+              {$\esubst{\sexpr_1}{\svar_0}{\svalue_0} \eeq \sexpr_1$}
+            \end{pfproof}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{3}{\case{$\sexpr_1 \eeq \epair{\sexpr_2}{\sexpr_3}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{4}{\case{$\sexpr_1 \eeq \eapp{\toptional}{\sexpr_2}{\sexpr_3}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{5}{\case{$\sexpr_1 \eeq \eunopt{\stoptional}{\sexpr_2}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{6}{\case{$\sexpr_1 \eeq \ebinopt{\stoptional}{\sexpr_2}{\sexpr_3}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{7}{\case{$\sexpr_1 \eeq \edynb{\sbnd_2}{\sexpr_2}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{8}{\case{$\sexpr_1 \eeq \estab{\sbnd_2}{\sexpr_2}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+\end{lamportproof*}}
+
+%\begin{lemma}[inversion]\label{$\sWTN$ inversion}\leavevmode
+%  \begin{itemize}
+%    \item
+%      if\/ $\snil \sWTN \efst{\toptional}{\sexpr_0} : \stype_0$
+%      then $\snil \sWTN \sexpr_0 : \tpair{\stype_0}{\stype_1}$
+%    \item
+%      if\/ $\snil \sWTN \esnd{\toptional}{\sexpr_0} : \stype_1$
+%      then $\snil \sWTN \sexpr_0 : \tpair{\stype_0}{\stype_1}$
+%    \item
+%      if\/ $\snil \sWTN \eapp{\toptional}{\sexpr_0}{\sexpr_1} : \stype_0$
+%      then $\snil \sWTN \sexpr_0 : \tfun{\stype_1}{\stype_0}$
+%      and $\snil \sWTN \sexpr_1 : \stype_1$
+%    \item
+%      if\/ $\snil \sWTN \esum{\sexpr_0}{\sexpr_1} : \stype_0$
+%      then $\snil \sWTN \sexpr_0 : \stype_0$
+%      and $\snil \sWTN \sexpr_1 : \stype_0$
+%      and $\stype_0 \subteq \tint$
+%    \item
+%      if\/ $\snil \sWTN \equotient{\sexpr_0}{\sexpr_1} : \stype_0$
+%      then $\snil \sWTN \sexpr_0 : \stype_0$
+%      and $\snil \sWTN \sexpr_1 : \stype_0$
+%      and $\stype_0 \subteq \tint$
+%  \end{itemize}
+%\end{lemma}
+%\begin{lamportproof}
+%  By definition $\sWTN$.
+%\end{lamportproof}
+%
+%\begin{lemma}[canonical forms]\label{$\sWTN$ canonical-forms}\leavevmode
+%  \begin{itemize}
+%    \item
+%      if\/ $\snil \sWTN \svalue_0 : \tpair{\stype_0}{\stype_1}$
+%      then $\svalue_0 \eeq \epair{\svalue_1}{\svalue_2}$
+%    \item
+%      if\/ $\snil \sWTN \svalue_0 : \tfun{\stype_0}{\stype_1}$
+%      then $\svalue_0 \eeq \efun{\tann{\svar_0}{\stype_2}}{\sexpr_0}$ where $\stype_0 \subteq \stype_2$
+%      or $\svalue_0 \eeq \emon{\obnd{\sowner_0}{\stype_2}{\sowner_1}}{\svalue_0}$
+%      where $\stype_2 \subteq \tfun{\stype_0}{\stype_1}$
+%  \end{itemize}
+%\end{lemma}
+%\begin{lamportproof}
+%  By definition $\sWTN$.
+%\end{lamportproof}
+%\begin{lemma}[$\sWSOP$~inversion]\label{Vdash-inversion}\leavevmode
+%  \begin{itemize}
+%    \item
+%      if\/ $\sownerenv_0; \sowner_0 \sWSOP \boundaryerror{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\svalue_0}$ then $\sowner_0; \sowner_1 \sWSOP \stype_0$
+%  \end{itemize}
+%\end{lemma}
+
+
+\begin{lemma}[$\sWSOP$-progress]\label{H-label-progress}
+  If\/ $\fwellformedO{\obars{\sexpr_0}{\sowner_0}}{\stoptional}$
+  and\/ $\snil; \sowner_0 \sWSOP \sexpr_0$
+  then one of the following holds:
+  \begin{itemize}
+    \item
+      $\sexpr_0 \in \obbars{\svalue}{\sowner}$
+    \item
+      $\sexpr_0 \in \ctx\ctxbars{\eerr}{\sowner}$
+    \item
+      $\exists\,\sexpr_1$ such that\/ $\sexpr_0 \credNanns \sexpr_1$
+  \end{itemize}
+\end{lemma}{
+  \newcommand{\shortpf}{By case analysis of $\sexpr_0$.}
+\begin{lamportproof*}
+  \shortpf
+\mainproof
+  \shortpf
+
+  By \lemmaref{H-label-decomposition}, it suffices to consider the following cases.
+
+  \step{0}{\case{$\sexpr_0 \in \obbars{\svalue}{\sowner}$}}
+    \begin{pfproof}
+      \qedstep
+    \end{pfproof}
+
+  \step{1}{\case{$\sexpr_0 \in \ctx\ctxbars{\eerr}{\sowner}$}}
+    \begin{pfproof}
+      \qedstep
+    \end{pfproof}
+
+  \step{2}{\case{$\sexpr_0 \eeq \ctx\ctxbars{\eapp{{\stype_1}}{\obbars{\svalue_0}{\sowner_0}}{\obbars{\svalue_1}{\sowner_0}}}{\sowner_0}$}}
+    \begin{pfproof}
+      \step{2.0}{$\svalue_0 \in (\efun{\tann{\svar}{\stype}}{\sexpr}) \cup (\emon{\sbnd}{\svalue})$}
+        \begin{pfproof}
+          by $\sWTN$ canonical forms and $\sWTN$ inversion
+        \end{pfproof}
+      \step{2.1}{\scase{\(
+        \svalue_0 \eeq \efun{\tann{\svar_2}{\stype_2}}{\sexpr_2}
+      \)}}
+        \begin{pfproof}
+          \qedstep
+            \begin{pfproof}
+              $\sexpr_0 \nredNSanns \ctx\ctxbars{\esubst{\sexpr_2}{\svar_2}{\obars{\svalue_1}{\fconcat{\sowner_0}{\fconcat{\sowner_0}{\sowner_0}}}}}{\sowner_0}$
+            \end{pfproof}
+        \end{pfproof}
+      \step{2.2}{\scase{\(
+        \svalue_0 \eeq \emon{\obnd{\sowner_0}{(\tfun{\stype_2}{\stype_3})}{\sowner_1}}{\svalue_2}
+      \)}}
+        \begin{pfproof}
+          \step{2.2.0}{\pflet{\(
+            \sbnd_3 \sassign \obnd{\sowner_0}{\stype_3}{\sowner_1}
+          \) \\ and \(
+            \sbnd_4 \sassign \obnd{\sowner_1}{\stype_2}{\sowner_0}
+          \)}}
+          \qedstep
+            \begin{pfproof}
+              \(\sexpr_0 \nredNSanns \ctx\ctxbars{\edynb{\sbnd_3}{\obars{\eapp{\tdyn}{\svalue_2}{(\estab{\sbnd_4}{\obbars{\svalue_1}{\fconcat{\sowner_0}{\fconcat{\sowner_0}{\sowner_0}}}})}}{\sowner_2}}}{\sowner_0}\)
+            \end{pfproof}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{3}{\case{$\sexpr_0 \eeq \ctx\ctxbars{\eapp{\tdyn}{\obbars{\svalue_0}{\sowner_0}}{\obbars{\svalue_1}{\sowner_0}}}{\sowner_0}$}}
+    \begin{pfproof}
+      \step{3.0}{\scase{$\svalue_0 \eeq \efun{\svar_2}{\sexpr_2}$}}
+        \begin{pfproof}
+          \qedstep
+            \begin{pfproof}
+              \(\sexpr_0 \nredNDanns \ctx\ctxbars{\esubst{\sexpr_2}{\svar_2}{\obars{\svalue_0}{\fconcat{\sowner_0}{\fconcat{\sowner_0}{\sowner_0}}}}}{\sowner_0}\)
+            \end{pfproof}
+        \end{pfproof}
+      \step{3.1}{\scase{$\svalue_0 \eeq \emon{\obnd{\sowner_0}{(\tfun{\stype_2}{\stype_3})}{\sowner_1}}{\svalue_2}$}}
+        \begin{pfproof}
+          \step{3.1.0}{\pflet{\(
+            \sbnd_3 \sassign \obnd{\sowner_0}{\stype_3}{\sowner_1}
+          \) \\and \(
+            \sbnd_4 \sassign \obnd{\sowner_1}{\stype_2}{\sowner_0}
+          \) \\and \(
+            {\stype_4} \sassign \fforget{\stype_3}
+          \)}}
+          \qedstep
+            \begin{pfproof}
+              \(\sexpr_0 \nredNDanns
+                \ctx\ctxbars{\estab{\sbnd_3}{\obars{\eapp{{\stype_4}}{\svalue_2}{(\edynb{\sbnd_4}{\obbars{\svalue_1}{\fconcat{\sowner_0}{\fconcat{\sowner_0}{\sowner_0}}}})}}{\sowner_2}}}{\sowner_0}
+              \)
+            \end{pfproof}
+        \end{pfproof}
+      \step{3.2}{\scase{$\svalue_0 \not\in (\efun{\svar}{\sexpr}) \cup (\emon{\sbnd}{\svalue})$}}
+        \begin{pfproof}
+          \qedstep
+            \begin{pfproof}
+              $\sexpr_0 \nredNDanns \ctx\ctxbars{\tagerrorD}{\sowner_0}$
+            \end{pfproof}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{4}{\case{$\sexpr_0 \eeq \ctx\ctxbars{\eunopt{\stoptional}{\obbars{\svalue_0}{\sowner_0}}}{\sowner_0}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \lemmaref{H-typed-hole} and \lemmaref{H-delta-label-progress}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{5}{\case{$\sexpr_0 \eeq \ctx\ctxbars{\ebinopt{\stoptional}{\obbars{\svalue_0}{\sowner_0}}{\obbars{\svalue_1}{\sowner_0}}}{\sowner_0}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \lemmaref{H-typed-hole} and \lemmaref{H-delta-label-progress}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{6}{\case{$\sexpr_0 \eeq \ctx\ctxbars{\edynb{\sbnd_1}{\obbars{\svalue_1}{\sowner_0}}}{\sowner_0}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \lemmaref{H-typed-hole} and \lemmaref{H-dyn-label-progress}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{7}{\case{$\sexpr_0 \eeq \ctx\ctxbars{\estab{\sbnd_1}{\obbars{\svalue_1}{\sowner_0}}}{\sowner_0}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \lemmaref{H-typed-hole} and \lemmaref{H-sta-label-progress}
+        \end{pfproof}
+    \end{pfproof}
+
+\end{lamportproof*}}
+
+\begin{lemma}[$\sWSOP$-preservation]\label{H-label-preservation}
+  If\/ $\fwellformedO{\obars{\sexpr_0}{\sowner_0}}{\toptional}$
+  and\/ $\sexpr_0 \credNanns \sexpr_1$
+  then\/ $\snil; \sowner_0 \sWSOP \sexpr_1$
+\end{lemma}{
+  \newcommand{\shortpf}{By \lemmaref{H-S-label-preservation} and \lemmaref{H-D-label-preservation}.}
+\begin{lamportproof*}
+  \shortpf
+\mainproof
+  \shortpf
+\end{lamportproof*}}
+
+\begin{lemma}\label{H-S-label-preservation}
+  If\/ $\fwellformedO{\obars{\sexpr_0}{\sowner_0}}{\stype_0}$
+  and\/ $\sexpr_0 \nredNSanns \sexpr_1$
+  then\/ $\snil; \sowner_0 \sWSOP \sexpr_1$
+\end{lemma}{
+  \newcommand{\shortpf}{By case analysis of $\nredNSanns$.}
+\begin{lamportproof*}
+  \shortpf
+  \mainproof
+  \shortpf
+
+  \step{0}{\case{\(
+    \sdeltaH(\sunop, {\obbars{\svalue_0}{\sowner_0}}) \mbox{ is defined}
+  \)\\and \(
+    \obars{\eunopt{\stoptional}{\obbars{\svalue_0}{\sowner_0}}}{\sowner_0}
+    \nredNSanns
+    \obars{\sdeltaH(\sunop, {\obbars{\svalue_0}{\sowner_0}})}{\sowner_0}
+  \)}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \lemmaref{H-delta-label-preservation}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{1}{\case{\(
+    \sdeltaH(\sbinop, {\obbars{\svalue_0}{\sowner_0}}, {\obbars{\svalue_1}{\sowner_0}}) \mbox{ is defined}
+  \)\\and \(
+    \obars{\ebinopt{\stoptional}{\obbars{\svalue_0}{\sowner_0}}{\obbars{\svalue_1}{\sowner_0}}}{\sowner_0}
+    \nredNSanns
+    \obars{\sdeltaH(\sbinop, {\obbars{\svalue_0}{\sowner_0}}, {\obbars{\svalue_1}{\sowner_0}})}{\sowner_0}
+  \)}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \lemmaref{H-delta-label-preservation}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{2}{\case{\(
+    \obars{\eapp{{\stype_0}}{\obbars{\efun{\tann{\svar_0}{{\stype_1}}}{\sexpr_0}}{\sowner_0}}{\obbars{\svalue_1}{\sowner_0}}}{\sowner_0}
+    \nredNSanns
+    \obars{\esubst{\sexpr_0}{\svar_0}{\obbars{\svalue_1}{\fconcat{\sowner_0}{\fconcat{\sowner_0}{\sowner_0}}}}}{\sowner_0}
+  \)}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \lemmaref{H-label-substitution}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{3}{\case{\(
+    \obars{\eapp{{\stype_0}}{\obbars{\emon{\obnd{\sowner_0}{\obars{\tfun{\stype_1}{\stype_2}}{\sowner_1}}{\sowner_1}}{\obars{\svalue_0}{\sowner_2}}}{\sowner_0}}{\obbars{\svalue_1}{\sowner_0}}}{\sowner_0}
+    \\\nredNSanns
+    \obars{\edynb{\obnd{\sowner_0}{\stype_2}{\sowner_1}}{\obars{\eapp{\tdyn}{\svalue_0}{(\estab{\obnd{\sowner_1}{\stype_1}{\sowner_0}}{\obbars{\svalue_1}{\fconcat{\sowner_0}{\fconcat{\sowner_0}{\sowner_0}}}})}}{\sowner_2}}}{\sowner_0}
+  \)}}
+    \begin{pfproof}
+        \begin{pfproof}
+          \step{3.0}{$\sowner_1 \eeq \sowner_2$}
+            \begin{pfproof}
+              by inversion $\sWSOP$
+            \end{pfproof}
+          \qedstep
+            \begin{pfproof}
+              \begin{mathpar}
+                \inferrule*{
+                  \inferrule*{
+                    \inferrule*{
+                      \inferrule*{
+                        \inferrule*{
+                          \mbox{by inversion $\sWSOP$}
+                        }{
+                          \snil; \sowner_1 \sWSOP \svalue_0
+                        }
+                        \\
+                        \inferrule*{
+                          \inferrule*{
+                            \inferrule*{
+                              \mbox{by inversion $\sWSOP$}
+                            }{
+                              \snil; \sowner_0 \sWSOP \svalue_1
+                            }
+                          }{
+                            \snil; \sowner_0 \sWSOP \obbars{\svalue_1}{\fconcat{\sowner_0}{\fconcat{\sowner_0}{\sowner_0}}}
+                          }
+                        }{
+                          \snil; \sowner_1 \sWSOP \estab{\obnd{\sowner_1}{\stype_1}{\sowner_0}}{\obbars{\svalue_1}{\fconcat{\sowner_0}{\fconcat{\sowner_0}{\sowner_0}}}}
+                        }
+                      }{
+                        \snil; \sowner_1 \sWSOP \eapp{\tdyn}{\svalue_0}{(\estab{\obnd{\sowner_1}{\stype_1}{\sowner_0}}{\obbars{\svalue_1}{\fconcat{\sowner_0}{\fconcat{\sowner_0}{\sowner_0}}}})}
+                      }
+                    }{
+                      \snil; \sowner_1 \sWSOP \obars{\eapp{\tdyn}{\svalue_0}{(\estab{\obnd{\sowner_1}{\stype_1}{\sowner_0}}{\obbars{\svalue_1}{\fconcat{\sowner_0}{\fconcat{\sowner_0}{\sowner_0}}}})}}{\sowner_2}
+                    }
+                  }{
+                    \snil; \sowner_0 \sWSOP \edynb{\obnd{\sowner_0}{\stype_2}{\sowner_1}}{\obars{\eapp{\tdyn}{\svalue_0}{(\estab{\obnd{\sowner_1}{\stype_1}{\sowner_0}}{\obbars{\svalue_1}{\fconcat{\sowner_0}{\fconcat{\sowner_0}{\sowner_0}}}})}}{\sowner_2}}
+                  }
+                }{
+                  \snil; \sowner_0 \sWSOP \obars{\edynb{\obnd{\sowner_0}{\stype_2}{\sowner_1}}{\obars{\eapp{\tdyn}{\svalue_0}{(\estab{\obnd{\sowner_1}{\stype_1}{\sowner_0}}{\obbars{\svalue_1}{\fconcat{\sowner_0}{\fconcat{\sowner_0}{\sowner_0}}}})}}{\sowner_2}}}{\sowner_0}
+                }
+              \end{mathpar}
+            \end{pfproof}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{4}{\case{\(
+    \obars{\edynb{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\obbars{\svalue_0}{\sowner_2}}}{\sowner_0}
+    \nredNSanns
+    \sexpr_2
+  \)}}
+    \begin{pfproof}
+      by \lemmaref{H-dyn-label-preservation}
+    \end{pfproof}
+
+\end{lamportproof*}}
+
+\begin{lemma}\label{H-D-label-preservation}
+  If\/ $\fwellformedO{\obars{\sexpr_0}{\sowner_0}}{\tdyn}$
+  and\/ $\sexpr_0 \nredNDanns \sexpr_1$
+  then\/ $\snil; \sowner_0 \sWSOP \sexpr_1$
+\end{lemma}{
+  \newcommand{\shortpf}{By case analysis of $\nredNDanns$.}
+\begin{lamportproof*}
+  \shortpf
+  \mainproof
+  \shortpf
+
+  \step{0}{\case{\(
+    \sdeltaH(\sunop, {\obbars{\svalue_0}{\sowner_0}}) \mbox{ is not defined}
+  \)\\and \(
+    \obars{\eunopt{\stoptional}{\obbars{\svalue_0}{\sowner_0}}}{\sowner_0}
+    \nredNDanns
+    \obars{\tagerrorD}{\sowner_0}
+  \)}}
+    \begin{pfproof}
+      \qedstep
+    \end{pfproof}
+
+  \step{1}{\case{\(
+    \sdeltaH(\sunop, {\obbars{\svalue_0}{\sowner_0}}) \mbox{ is defined}
+  \)\\and \(
+    \obars{\eunopt{\stoptional}{\obbars{\svalue_0}{\sowner_0}}}{\sowner_0}
+    \nredNDanns
+    \obars{\sdeltaH(\sunop, {\obbars{\svalue_0}{\sowner_0}})}{\sowner_0}
+  \)}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \lemmaref{H-delta-label-preservation}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{2}{\case{\(
+    \sdeltaH(\sbinop, {\obbars{\svalue_0}{\sowner_0}}, {\obbars{\svalue_1}{\sowner_0}}) \mbox{ is not defined}
+  \)\\and \(
+    \obars{\ebinopt{\stoptional}{\obbars{\svalue_0}{\sowner_0}}{\obbars{\svalue_1}{\sowner_0}}}{\sowner_0}
+    \nredNDanns
+    \obars{\tagerrorD}{\sowner_0}
+  \)}}
+    \begin{pfproof}
+      \qedstep
+    \end{pfproof}
+
+  \step{3}{\case{\(
+    \sdeltaH(\sbinop, {\obbars{\svalue_0}{\sowner_0}}, {\obbars{\svalue_1}{\sowner_0}}) \mbox{ is defined}
+  \)\\and \(
+    \obars{\ebinopt{\stoptional}{\obbars{\svalue_0}{\sowner_0}}{\obbars{\svalue_1}{\sowner_0}}}{\sowner_0}
+    \nredNDanns
+    \obars{\sdeltaH(\sbinop, {\obbars{\svalue_0}{\sowner_0}}, {\obbars{\svalue_1}{\sowner_0}})}{\sowner_0}
+  \)}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \lemmaref{H-delta-label-preservation}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{4}{\case{\(
+    \obars{\eapp{\tdyn}{\obbars{\efun{\svar_0}{\sexpr_0}}{\sowner_0}}{\obbars{\svalue_1}{\sowner_0}}}{\sowner_0}
+    \nredNDanns
+    \obars{\esubst{\sexpr_0}{\svar_0}{\obbars{\svalue_1}{\fconcat{\sowner_0}{\fconcat{\sowner_0}{\sowner_0}}}}}{\sowner_0}
+  \)}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \lemmaref{H-label-substitution}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{5}{\case{\(
+    \obars{\eapp{\tdyn}{\obbars{\emon{\obnd{\sowner_0}{\obars{\tfun{\stype_0}{\stype_1}}{\sowner_1}}{\sowner_1}}{\obars{\svalue_0}{\sowner_2}}}{\sowner_0}}{\obbars{\svalue_1}{\sowner_0}}}{\sowner_0}
+    \nredNDanns
+  \)\\\(
+    \obars{\estab{\obnd{\sowner_0}{\stype_1}{\sowner_1}}{\obars{\eapp{\fforget{\stype_1}}{\svalue_0}{(\edynb{\obnd{\sowner_1}{\stype_0}{\sowner_0}}{\obbars{\svalue_1}{\fconcat{\sowner_0}{\fconcat{\sowner_0}{\sowner_0}}}})}}{\sowner_2}}}{\sowner_0}
+  \)}}
+    \begin{pfproof}
+      \step{5.0}{$\sowner_1 \eeq \sowner_2$}
+        \begin{pfproof}
+          by inversion $\sWSOP$
+        \end{pfproof}
+      \qedstep
+        \begin{pfproof}
+          \begin{mathpar}
+            \inferrule*{
+              \inferrule*{
+                \inferrule*{
+                  \inferrule*{
+                    \inferrule*{
+                      \mbox{by inversion $\sWSOP$}
+                    }{
+                      \snil; \sowner_0 \sWSOP \svalue_0
+                    }
+                    \\
+                    \inferrule*{
+                      \inferrule*{
+                        \inferrule*{
+                          \mbox{by inversion $\sWSOP$}
+                        }{
+                          \snil; \sowner_0 \sWSOP \svalue_1
+                        }
+                      }{
+                        \snil; \sowner_0 \sWSOP \obbars{\svalue_1}{\fconcat{\sowner_0}{\fconcat{\sowner_0}{\sowner_0}}}
+                      }
+                    }{
+                      \snil; \sowner_0 \sWSOP \edynb{\obnd{\sowner_1}{\stype_0}{\sowner_0}}{\obbars{\svalue_1}{\fconcat{\sowner_0}{\fconcat{\sowner_0}{\sowner_0}}}}
+                    }
+                  }{
+                    \snil; \sowner_0 \sWSOP \eapp{\fforget{\stype_1}}{\svalue_0}{(\edynb{\obnd{\sowner_1}{\stype_0}{\sowner_0}}{\obbars{\svalue_1}{\fconcat{\sowner_0}{\fconcat{\sowner_0}{\sowner_0}}}})}
+                  }
+                }{
+                  \snil; \sowner_0 \sWSOP \obars{\eapp{\fforget{\stype_1}}{\svalue_0}{(\edynb{\obnd{\sowner_1}{\stype_0}{\sowner_0}}{\obbars{\svalue_1}{\fconcat{\sowner_0}{\fconcat{\sowner_0}{\sowner_0}}}})}}{\sowner_2}
+                }
+              }{
+                \snil; \sowner_0 \sWSOP \estab{\obnd{\sowner_0}{\stype_1}{\sowner_1}}{\obars{\eapp{\fforget{\stype_1}}{\svalue_0}{(\edynb{\obnd{\sowner_1}{\stype_0}{\sowner_0}}{\obbars{\svalue_1}{\fconcat{\sowner_0}{\fconcat{\sowner_0}{\sowner_0}}}})}}{\sowner_2}}
+              }
+            }{
+              \snil; \sowner_0 \sWSOP \obars{\estab{\obnd{\sowner_0}{\stype_1}{\sowner_1}}{\obars{\eapp{\fforget{\stype_1}}{\svalue_0}{(\edynb{\obnd{\sowner_1}{\stype_0}{\sowner_0}}{\obbars{\svalue_1}{\fconcat{\sowner_0}{\fconcat{\sowner_0}{\sowner_0}}}})}}{\sowner_2}}}{\sowner_0}
+            }
+          \end{mathpar}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{6}{\case{\(
+    \obars{\estab{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\obbars{\svalue_0}{\sowner_2}}}{\sowner_0}
+    \nredNDanns
+    \sexpr_2
+  \)}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \lemmaref{H-sta-label-preservation}
+        \end{pfproof}
+    \end{pfproof}
+
+\end{lamportproof*}}
+
+\begin{lemma}[unwind boundary error]\label{H-unwind}
+  If\/ $\snil \sWTN \sexpr_0 : \toptional$
+  and\/ $\sexpr_0 \rredN \boundaryerror{\sbnd_0}{\svalue_1}$
+  then\/ $\exists\,\svalue_1,\ctx$
+  such that\/ $\sexpr_0 \rredN \ctx_0[\edynb{\sbnd_0}{\svalue_1}] \credN \ctx_0[\boundaryerror{\sbnd_0}{\svalue_1}]$
+\end{lemma}
+\begin{lamportproof}
+  By the definitions of $\nredNS$ and $\nredND$, only $\sdyn$ expression can step to a boundary error.
+\end{lamportproof}
+
+\begin{lemma}\label{H-label-decomposition}
+  If\/ $\snil \sWTN \sexpr_0 : \toptional$
+  and\/ $\snil; \sowner_0 \sWSOP \sexpr_0$
+  then either:
+  \begin{itemize}
+    \item
+      $\sexpr_0 \in \obbars{\svalue}{\sowner}$
+    \item
+      $\sexpr_0 \eeq \ctx_0\ctxbars{\eapp{\toptional}{\obbars{\svalue_0}{\sowner_0}}{\obbars{\svalue_1}{\sowner_0}}}{\sowner_0}$
+    \item
+      $\sexpr_0 \eeq \ctx_0\ctxbars{\eunopt{\stoptional}{\obbars{\svalue_0}{\sowner_0}}}{\sowner_0}$
+    \item
+      $\sexpr_0 \eeq \ctx_0\ctxbars{\ebinopt{\stoptional}{\obbars{\svalue_0}{\sowner_0}}{\obbars{\svalue_1}{\sowner_0}}}{\sowner_0}$
+    \item
+      $\sexpr_0 \eeq \ctx_0\ctxbars{\edynb{\sbnd_1}{\obbars{\svalue_1}{\sowner_0}}}{\sowner_0}$
+    \item
+      $\sexpr_0 \eeq \ctx_0\ctxbars{\estab{\sbnd_1}{\obbars{\svalue_1}{\sowner_0}}}{\sowner_0}$
+    \item
+      $\sexpr_0 \eeq \ctx_0\ctxbars{\eerr}{\sowner_0}$
+  \end{itemize}
+\end{lemma}{
+  \newcommand{\shortproof}{By induction on the structure of $\sexpr_0$.}
+\begin{lamportproof*}
+  \shortproof
+\mainproof\leavevmode
+  \shortproof
+
+  \step{0}{\case{$\sexpr_0 \eeq \obbars{\svar_0}{\sowner_0}$}}
+    \begin{pfproof}
+      \absurdstep
+        \begin{pfproof}
+          $\snil; \sowner_0 \sWSOP \sexpr_0$
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{1}{\case{$\sexpr_0 \in \obbars{\svalue}{\sowner_0}$}}
+    \begin{pfproof}
+      \qedstep
+    \end{pfproof}
+
+  \step{2}{\case{$\sexpr_0 \eeq \obbars{\epair{\sexpr_1}{\sexpr_2}}{\sowner_0}$}}
+    \begin{pfproof}
+      \step{2.0}{$\snil \sWTN \sexpr_1 : \toptional$ and $\snil \sWTN \sexpr_2 : \toptional$}
+        \begin{pfproof}
+          by inversion $\sWTN$
+        \end{pfproof}
+      \step{2.1}{$\snil; \sowner_0 \sWSOP \sexpr_1$ and $\snil; \sowner_0 \sWSOP \sexpr_2$}
+        \begin{pfproof}
+          by inversion $\sWSOP$
+        \end{pfproof}
+      \step{2.2}{\scase{$\sexpr_1 \not\in \obbars{\svalue}{\sownerlist}$}}
+        \begin{pfproof}
+          \qedstep
+            \begin{pfproof}
+              by \pfih
+            \end{pfproof}
+        \end{pfproof}
+      \step{2.3}{\scase{$\sexpr_1 \in \obbars{\svalue}{\sownerlist}$ and $\sexpr_2 \not\in \obbars{\svalue}{\sownerlist}$}}
+        \begin{pfproof}
+          \qedstep
+            \begin{pfproof}
+              by \pfih
+            \end{pfproof}
+        \end{pfproof}
+      \step{2.4}{\scase{$\sexpr_1 \in \obbars{\svalue}{\sownerlist}$ and $\sexpr_2 \in \obbars{\svalue}{\sownerlist}$}}
+        \begin{pfproof}
+          \qedstep
+            \begin{pfproof}
+              $\sexpr_0 \in \obbars{\svalue}{\sownerlist}$
+            \end{pfproof}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{3}{\case{$\sexpr_0 \eeq \eapp{\toptional}{\sexpr_1}{\sexpr_2}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{4}{\case{$\sexpr_0 \eeq \eunopt{\stoptional}{\sexpr_1}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{5}{\case{$\sexpr_0 \eeq \ebinopt{\stoptional}{\sexpr_1}{\sexpr_2}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{6}{\case{$\sexpr_0 \eeq \edynb{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\obars{\sexpr_1}{\sowner_1}}$}}
+    \begin{pfproof}
+      \step{6.0}{$\snil; \sowner_1 \sWSOP \sexpr_1$}
+        \begin{pfproof}
+          by inversion $\sWSOP$
+        \end{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{7}{\case{$\sexpr_0 \eeq \estab{\sbnd_1}{\sexpr_1}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+\end{lamportproof*}}
+
+\begin{lemma}\label{H-labeled-hole}
+  If\/ $\snil; \sowner_0 \sWSOP \ctx_0[\sexpr_0]$
+  then\/ $\exists\,\sowner_1$
+  such that\/ $\snil; \sowner_1 \sWSOP \sexpr_0$
+\end{lemma}{
+\newcommand{\shortproof}{By induction on the structure of $\ctx_0$.}
+\begin{lamportproof*}
+  \shortproof
+\mainproof
+  \shortproof
+
+  \step{0}{$\ctx_0 \eeq \ctxhole$}
+    \begin{pfproof}
+      \qedstep
+    \end{pfproof}
+
+  \step{1}{$\ctx_0 \eeq \epair{\ctx_1}{\sexpr_2}$}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{2}{$\ctx_0 \eeq \epair{\sexpr_1}{\ctx_2}$}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{3}{$\ctx_0 \eeq \eunopt{\stoptional}{\ctx_1}$}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{4}{$\ctx_0 \eeq \ebinopt{\stoptional}{\ctx_1}{\sexpr_2}$}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{5}{$\ctx_0 \eeq \ebinopt{\stoptional}{\sexpr_1}{\ctx_2}$}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{6}{$\ctx_0 \eeq \edynb{\obnd{\sowner_0}{\stype_0}{\sowner_2}}{\obars{\ctx_1}{\sowner_3}}$}
+    \begin{pfproof}
+      \step{6.0}{$\snil; \sowner_2 \sWSOP \ctx_1[\sexpr_0]$}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{7}{$\ctx_0 \eeq \estab{\obnd{\sowner_0}{\stype_0}{\sowner_2}}{\obars{\ctx_1}{\sowner_3}}$}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{8}{$\ctx_0 \eeq \obars{\ctx_1}{\sowner_0}$}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+\end{lamportproof*}}
+
+\begin{lemma}[$\sWSOP$ replacement]\label{H-label-replacement}
+  If\/ $\snil; \sowner_0 \sWSOP \ctx_0[\sexpr_0]$
+  and the derivation contains a proof of\/ $\snil; \sowner_1 \sWSOP \sexpr_0$
+  and\/ $\snil; \sowner_1 \sWSOP \sexpr_1$
+  then\/ $\sownerenv_0; \sowner_0 \sWSOP \ctx_0[\sexpr_1]$
+\end{lemma}{
+\newcommand{\shortproof}{By induction on the structure of $\ctx_0$.}
+\begin{lamportproof*}
+  \shortproof
+\mainproof
+  \shortproof
+
+  \step{0}{$\ctx_0 \eeq \ctxhole$}
+    \begin{pfproof}
+      \qedstep
+    \end{pfproof}
+
+  \step{1}{$\ctx_0 \eeq \epair{\ctx_1}{\sexpr_2}$}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{2}{$\ctx_0 \eeq \epair{\sexpr_1}{\ctx_2}$}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{3}{$\ctx_0 \eeq \eunopt{\stoptional}{\ctx_1}$}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{4}{$\ctx_0 \eeq \ebinopt{\stoptional}{\ctx_1}{\sexpr_2}$}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{5}{$\ctx_0 \eeq \ebinopt{\stoptional}{\sexpr_1}{\ctx_2}$}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{6}{$\ctx_0 \eeq \edynb{\obnd{\sowner_0}{\stype_0}{\sowner_2}}{\obars{\ctx_1}{\sowner_3}}$}
+    \begin{pfproof}
+      \step{6.0}{$\snil; \sowner_2 \sWSOP \ctx_1[\sexpr_0]$}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{7}{$\ctx_0 \eeq \estab{\obnd{\sowner_0}{\stype_0}{\sowner_2}}{\obars{\ctx_1}{\sowner_3}}$}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{8}{$\ctx_0 \eeq \obars{\ctx_1}{\sowner_0}$}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+\end{lamportproof*}}
+
+\begin{lemma}[$\sdeltaH$ label progress]\label{H-delta-label-progress}\leavevmode
+  \begin{itemize}
+    \item
+      If\/ $\snil \sWTN \eunopt{\stype_1}{\svalue_0} : \stype_0$
+      and\/ $\snil; \sowner_0 \sWSOP \eunopt{\stype_1}{\svalue_0}$
+      then\/ $\sdeltaH(\sunop, \svalue_0)$ is defined
+      and\/ $\eunopt{\stype_1}{\svalue_0} \nredNSanns \sdeltaH(\sunop, \svalue_0)$.
+    \item
+      if\/ $\snil \sWTN \ebinopt{\stype_1}{\svalue_0}{\svalue_1} : \stype_0$
+      and\/ $\snil; \sowner_0 \sWSOP \ebinopt{\stype_1}{\svalue_0}{\svalue_1}$
+      then\/ $\sdeltaH(\sbinop, \svalue_0, \svalue_1)$ is defined
+      and\/ $\ebinopt{\stype_1}{\svalue_0}{\svalue_1} \nredNSanns \sdeltaH(\sbinop, \svalue_0, \svalue_1)$.
+    \item
+      If\/ $\snil \sWTN \eunopt{\tdyn}{\svalue_0} : \tdyn$
+      and\/ $\snil; \sowner_0 \sWSOP \eunopt{\tdyn}{\svalue_0}$
+      then\/ $\eunopt{\tdyn}{\svalue_0} \nredNDanns \sexpr_1$.
+    \item
+      if\/ $\snil \sWTN \ebinopt{\tdyn}{\svalue_0}{\svalue_1} : \tdyn$
+      and\/ $\snil; \sowner_0 \sWSOP \ebinopt{\tdyn}{\svalue_0}{\svalue_1}$
+      then\/ $\ebinopt{\tdyn}{\svalue_0}{\svalue_1} \nredNDanns \sexpr_1$.
+  \end{itemize}
+\end{lemma}{
+  \newcommand{\shortpf}{By case analysis of $\sdeltaH$, $\sWTN$, $\sWSOP$, and $\nredNDanns$.}
+\begin{lamportproof*}
+  \shortpf
+\mainproof
+  \shortpf
+
+  \step{0}{\case{$\snil \sWTN \eunopt{\stype_1}{\svalue_0} : \stype_0$}}
+    \begin{pfproof}
+      \step{0.0}{$\svalue_0 \eeq \obbars{\svalue_1}{\sowner_0}$}
+        \begin{pfproof}
+          by inversion $\sWSOP$
+        \end{pfproof}
+      \step{0.1}{$\svalue_1 \eeq \epair{\svalue_2}{\svalue_3}$}
+        \begin{pfproof}
+          by inversion $\sWTN$
+        \end{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by definition $\sdeltaH$
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{1}{\case{$\snil \sWTN \ebinopt{\stype_1}{\svalue_0}{\svalue_1} : \stype_0$}}
+    \begin{pfproof}
+      \step{1.0}{$\svalue_0 \eeq \obbars{\svalue_2}{\sowner_0}$ and $\svalue_1 \eeq \obbars{\svalue_3}{\sowner_0}$}
+        \begin{pfproof}
+          by inversion $\sWSOP$
+        \end{pfproof}
+      \step{1.1}{$\svalue_0 \in \sint$ and $\svalue_1 \in \sint$}
+        \begin{pfproof}
+          by inversion $\sWTN$
+        \end{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by definition $\sdeltaH$
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{2}{\case{$\snil \sWTN \eunopt{\tdyn}{\svalue_0} : \tdyn$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by inversion $\sWSOP$
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{3}{\case{$\snil \sWTN \ebinopt{\tdyn}{\svalue_0}{\svalue_1} : \tdyn$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by inversion $\sWSOP$
+        \end{pfproof}
+    \end{pfproof}
+
+\end{lamportproof*}}
+
+\begin{lemma}[$\sdeltaH$ label preservation]\label{H-delta-label-preservation}\leavevmode
+  \begin{itemize}
+    \item
+      If\/ $\snil; \sowner_0 \sWSOP \eunopt{\stoptional}{\svalue_0}$
+      and\/ $\obars{\eunopt{\stoptional}{\svalue_0}}{\sowner_0} \nredNXanns \obars{\sexpr_1}{\sowner_0}$
+      then\/ $\snil; \sowner_0 \sWSOP \sexpr_1$.
+    \item
+      If\/ $\snil; \sowner_0 \sWSOP \ebinopt{\stoptional}{\svalue_0}{\svalue_1}$
+      and\/ $\obars{\ebinopt{\stoptional}{\svalue_0}{\svalue_1}}{\sowner_0} \nredNXanns \obars{\sexpr_1}{\sowner_0}$
+      then\/ $\snil; \sowner_0 \sWSOP \sexpr_1$.
+  \end{itemize}
+\end{lemma}{
+\newcommand{\shortproof}{By case analysis of $\nredNXanns$.}
+\begin{lamportproof*}
+  \shortproof
+\mainproof
+  \shortproof
+
+  \step{0}{$\obars{\efst{\toptional}{\obbars{\epair{\svalue_1}{\svalue_2}}{\sowner_0}}}{\sowner_0} \nredNXanns \obbars{\svalue_1}{\sowner_0}$}
+    \begin{pfproof}
+      \step{0.0}{$\snil; \sowner_0 \sWSOP \svalue_1$}
+        \begin{pfproof}
+          by inversion $\sWSOP$
+        \end{pfproof}
+      \qedstep
+    \end{pfproof}
+
+  \step{1}{$\obars{\esnd{\toptional}{\obbars{\epair{\svalue_1}{\svalue_2}}{\sowner_0}}}{\sowner_0} \nredNXanns \obbars{\svalue_2}{\sowner_0}$}
+    \begin{pfproof}
+      \step{1.0}{$\snil; \sowner_0 \sWSOP \svalue_2$}
+        \begin{pfproof}
+          by inversion $\sWSOP$
+        \end{pfproof}
+      \qedstep
+    \end{pfproof}
+
+  \step{2}{$\obars{\esum{\stoptional}{\obbars{\sint_1}{\sowner_1}}{\obbars{\sint_2}{\sowner_2}}}{\sowner_0} \nredNXanns \obars{\sint_1 + \sint_2}{\sowner_0}$}
+    \begin{pfproof}
+      \qedstep
+    \end{pfproof}
+
+  \step{3}{$\obars{\equotient{\stoptional}{\obbars{\sint_1}{\sowner_1}}{\obbars{\sint_2}{\sowner_2}}}{\sowner_0} \nredNXanns \obars{\divisionbyzeroerror}{\sowner_0}$}
+    \begin{pfproof}
+      \qedstep
+    \end{pfproof}
+
+  \step{4}{$\obars{\equotient{\stoptional}{\obbars{\sint_1}{\sowner_1}}{\obbars{\sint_2}{\sowner_2}}}{\sowner_0} \nredNXanns \obars{\floorof{\sint_1 / \sint_2}}{\sowner_0}$}
+    \begin{pfproof}
+      \qedstep
+    \end{pfproof}
+
+\end{lamportproof*}}
+
+\begin{lemma}\label{H-dyn-label-progress}
+  If\/ $\snil \sWTN \edynb{\sbnd_0}{\svalue_0} : \stype_0$
+  and\/ $\snil; \sowner_0 \sWSOP \edynb{\sbnd_0}{\svalue_0}$
+  then\/ $\exists\,\sexpr_1$
+  such that\/ $\obars{\edynb{\sbnd_0}{\svalue_0}}{\sowner_0} \nredNSanns \obars{\sexpr_1}{\sowner_0}$.
+\end{lemma}{
+  \newcommand{\shortproof}{By inversion of $\sWSOP$ and case analysis of $\fshallow{\tagof{\stype_0}}{\svalue_0}$.}
+\begin{lamportproof*}
+  \shortproof
+\mainproof
+  \shortproof
+
+  \step{0}{\(
+    \sbnd_0 \eeq \obnd{\sowner_0}{\stype_0}{\sowner_1}
+  \)\\and \(
+    \snil; \sowner_1 \sWSOP \svalue_0
+  \)}
+    \begin{pfproof}
+      by inversion $\sWSOP$
+    \end{pfproof}
+
+  \step{1}{\(
+    \svalue_0 \eeq \obbars{\svalue_1}{\sowner_1}
+  \)}
+    \begin{pfproof}
+      by inversion $\sWSOP$
+    \end{pfproof}
+
+  \step{2}{\case{$\svalue_1 \eeq \efun{\svar_1}{\sexpr_1}$ and $\fshallow{\tagof{\stype_0}}{\svalue_1}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          $\obars{\edynb{\sbnd_0}{\svalue_0}}{\sowner_0} \nredNSanns \obars{\emon{\sbnd_0}{\svalue_0}}{\sowner_0}$
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{3}{\case{$\svalue_1 \eeq \efun{\tann{\svar_1}{\stype_1}}{\sexpr_1}$ and $\fshallow{\tagof{\stype_0}}{\svalue_1}$}}
+    \begin{pfproof}
+      \absurdstep
+        \begin{pfproof}
+          $\snil \sWTN \edynb{\sbnd_0}{\svalue_0} : \stype_0$
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{4}{\case{$\svalue_1 \eeq \emon{\sbnd_1}{\svalue_2}$ and $\fshallow{\tagof{\stype_0}}{\svalue_1}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          $\obars{\edynb{\sbnd_0}{\svalue_0}}{\sowner_0} \nredNSanns \obars{\emon{\sbnd_0}{\svalue_0}}{\sowner_0}$
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{5}{\case{$\svalue_1 \eeq \epair{\svalue_2}{\svalue_3}$ and $\fshallow{\tagof{\obars{\tpair{\stype_1}{\stype_2}}{\sowner_1}}}{\svalue_1}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          $\obars{\edynb{\sbnd_0}{\svalue_0}}{\sowner_0} \nredNSanns \obars{\epair{\edynb{\obnd{\sowner_0}{\stype_1}{\sowner_1}}{\svalue_2}}{\edynb{\obnd{\sowner_0}{\stype_2}{\sowner_1}}{\svalue_3}}}{\sowner_0}$
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{6}{\case{$\svalue_1 \in \sint$ and $\fshallow{\tagof{\tint}}{\svalue_1}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          $\obars{\edynb{\sbnd_0}{\svalue_0}}{\sowner_0} \nredNSanns \obars{\svalue_1}{\sowner_0}$
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{7}{\case{$\svalue_1 \in \snat$ and $\fshallow{\tagof{\tnat}}{\svalue_1}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          $\obars{\edynb{\sbnd_0}{\svalue_0}}{\sowner_0} \nredNSanns \obars{\svalue_1}{\sowner_0}$
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{8}{\case{$\neg\fshallow{\tagof{\stype_0}}{\svalue_1}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          $\obars{\edynb{\sbnd_0}{\svalue_0}}{\sowner_0} \nredNSanns \obars{\boundaryerror{\sbnd_0}{\svalue_0}}{\sowner_0}$
+        \end{pfproof}
+    \end{pfproof}
+
+\end{lamportproof*}}
+
+\begin{lemma}\label{H-sta-label-progress}
+  If\/ $\snil \sWTN \estab{\sbnd_0}{\svalue_0} : \tdyn$
+  and\/ $\snil; \sowner_0 \sWSOP \estab{\sbnd_0}{\svalue_0}$
+  then\/ $\exists\,\sexpr_1$
+  such that\/ $\obars{\estab{\sbnd_0}{\svalue_0}}{\sowner_0} \nredNDanns \obars{\sexpr_1}{\sowner_0}$.
+\end{lemma}{
+  \newcommand{\shortproof}{By case analysis on $\svalue_0$.}
+\begin{lamportproof*}
+  \shortproof
+\mainproof
+  \shortproof
+
+  \step{0}{\(
+    \sbnd_0 \eeq \obnd{\sowner_0}{\stype_0}{\sowner_1}
+  \)\\and \(
+    \snil; \sowner_1 \sWSOP \svalue_0
+  \)}
+    \begin{pfproof}
+      by inversion $\sWSOP$
+    \end{pfproof}
+
+  \step{1}{\(
+    \svalue_0 \eeq \obbars{\svalue_1}{\sowner_1}
+  \)}
+    \begin{pfproof}
+      by inversion $\sWSOP$
+    \end{pfproof}
+
+  \step{2}{\case{$\svalue_1 \in \efun{\svar}{\sexpr}$}}
+    \begin{pfproof}
+      \absurdstep
+        \begin{pfproof}
+          $\snil \sWTN \estab{\sbnd_0}{\svalue_0} : \tdyn$
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{3}{\case{$\svalue_1 \in \efun{\tann{\svar}{\stype}}{\sexpr}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          $\obars{\estab{\sbnd_0}{\svalue_0}}{\sowner_0} \nredNDanns \obars{\emon{\sbnd_0}{\svalue_0}}{\sowner_0}$
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{4}{\case{$\svalue_1 \in \emon{\sbnd}{\sexpr}$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          $\obars{\estab{\sbnd_0}{\svalue_0}}{\sowner_0} \nredNDanns \obars{\emon{\sbnd_0}{\svalue_0}}{\sowner_0}$
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{5}{\case{$\svalue_1 \eeq \epair{\svalue_2}{\svalue_3}$}}
+    \begin{pfproof}
+      \step{5.0}{$\stype_0 \eeq \obars{\tpair{\stype_1}{\stype_2}}{\sowner_1}$}
+        \begin{pfproof}
+          by inversion $\sWTN$
+        \end{pfproof}
+      \qedstep
+        \begin{pfproof}
+          $\obars{\estab{\sbnd_0}{\svalue_0}}{\sowner_0} \nredNDanns \obars{\epair{\estab{\obnd{\sowner_0}{\stype_1}{\sowner_1}}{\svalue_2}}{\estab{\obnd{\sowner_0}{\stype_2}{\sowner_1}}{\svalue_3}}}{\sowner_0}$
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{6}{\case{$\svalue_1 \in \sint$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          $\obars{\estab{\sbnd_0}{\svalue_0}}{\sowner_0} \nredNDanns \obars{\svalue_1}{\sowner_0}$
+        \end{pfproof}
+    \end{pfproof}
+
+\end{lamportproof*}}
+
+\begin{lemma}\label{H-dyn-label-preservation}\leavevmode
+  If\/ $\snil \sWTN \edynb{\sbnd_0}{\svalue_0} : \stype_0$
+  and\/ $\snil; \sowner_0 \sWSOP \edynb{\sbnd_0}{\svalue_0}$
+  and\/ $\obars{\edynb{\sbnd_0}{\svalue_0}}{\sowner_0} \nredNSanns \obars{\sexpr_1}{\sowner_0}$
+  then\/ $\snil; \sowner_0 \sWSOP \sexpr_1$.
+\end{lemma}{
+  \newcommand{\shortproof}{By case analysis of $\nredNSanns$.}
+\begin{lamportproof*}
+  \shortproof
+\mainproof
+  \shortproof
+
+  \step{0}{\(
+    \sbnd_0 \eeq \obnd{\sowner_0}{\stype_0}{\sowner_1}
+  \)\\and \(
+    \snil; \sowner_1 \sWSOP \svalue_0
+  \)}
+    \begin{pfproof}
+      by inversion $\sWSOP$
+    \end{pfproof}
+
+  \step{1}{$\svalue_0 \eeq \obbars{\svalue_1}{\sowner_1}$}
+    \begin{pfproof}
+      by inversion $\sWSOP$
+    \end{pfproof}
+
+  \step{2}{\case{\(
+    \svalue_1 \in {(\efun{\svar}{\sexpr})} \cup {(\emon{\sbnd}{\svalue})}
+  \)\\and \(
+    \obars{\edynb{\sbnd_0}{\svalue_0}}{\sowner_0} \nredNSanns \obars{\emon{\sbnd_0}{\svalue_0}}{\sowner_0}
+  \)}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          \begin{mathpar}
+            \inferrule*{
+              \inferrule*{
+                \mbox{by inversion $\sWSOP$}
+              }{
+                \snil; \sowner_1 \sWSOP \svalue_0
+              }
+            }{
+              \snil; \sowner_0 \sWSOP \emon{\sbnd_0}{\svalue_0}
+            }
+          \end{mathpar}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{3}{\case{\(
+    \svalue_1 \eeq \epair{\svalue_2}{\svalue_3}
+  \)\\and \(
+    \sbnd_0 \eeq \obnd{\sowner_0}{\obars{\tpair{\stype_2}{\stype_3}}{\sowner_1}}{\sowner_1}
+  \)\\and \(
+    \obars{\edynb{\sbnd_0}{\obbars{\epair{\svalue_0}{\svalue_1}}{\sowner_2}}}{\sowner_0}
+    \nredNSanns
+    \obars{\epair{\edynb{\sbnd_3}{\obbars{\svalue_2}{\sowner_1}}}{\edynb{\sbnd_4}{\obbars{\svalue_3}{\sowner_1}}}}{\sowner_0}
+  \)}}
+    \begin{pfproof}
+      \step{3.0}{\(
+        \sbnd_3 \eeq \obnd{\sowner_0}{\stype_2}{\sowner_1}
+      \)\\and \(
+        \sbnd_4 \eeq \obnd{\sowner_0}{\stype_3}{\sowner_1}
+      \)}
+        \begin{pfproof}
+          by definition $\nredNSanns$
+        \end{pfproof}
+      \qedstep
+        \begin{pfproof}
+          \begin{mathpar}
+            \inferrule*{
+              \inferrule*{
+                \inferrule*{
+                  \mbox{by inversion $\sWSOP$}
+                }{
+                  \snil; \sowner_1 \sWSOP \obbars{\svalue_2}{\sowner_1}
+                }
+              }{
+                \snil; \sowner_0 \sWSOP \edynb{\sbnd_3}{\obbars{\svalue_2}{\sowner_1}}
+              }
+              \\
+              \inferrule*{
+                \inferrule*{
+                  \mbox{by inversion $\sWSOP$}
+                }{
+                  \snil; \sowner_1 \sWSOP \obbars{\svalue_3}{\sowner_1}
+                }
+              }{
+                \snil; \sowner_0 \sWSOP \edynb{\sbnd_4}{\obbars{\svalue_3}{\sowner_1}}
+              }
+            }{
+              \snil; \sowner_0 \sWSOP \epair{\edynb{\sbnd_3}{\obbars{\svalue_2}{\sowner_1}}}{\edynb{\sbnd_4}{\obbars{\svalue_3}{\sowner_1}}}
+            }
+          \end{mathpar}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{4}{\case{\(
+    \svalue_1 \in \sint
+  \)\\and \(
+    \obars{\edynb{\sbnd_0}{\svalue_0}}{\sowner_0}
+    \nredNSanns
+    \obars{\svalue_1}{\sowner_0}
+  \)}}
+    \begin{pfproof}
+      \qedstep
+    \end{pfproof}
+
+  \step{5}{\case{\(
+    \obars{\edynb{\sbnd_0}{\svalue_0}}{\sowner_0}
+    \nredNSanns
+    \obars{\boundaryerror{\sbnd_0}{\svalue_0}}{\sowner_0}
+  \)}}
+    \begin{pfproof}
+      \qedstep
+    \end{pfproof}
+
+\end{lamportproof*}}
+
+\begin{lemma}[\hsym-$\ssta$ preservation]\label{H-sta-label-preservation}
+  If\/ $\snil \sWTN \estab{\sbnd_0}{\svalue_0} : \tdyn$
+  and\/ $\snil; \sowner_0 \sWSOP \estab{\sbnd_0}{\svalue_0}$
+  and\/ $\obars{\estab{\sbnd_0}{\svalue_0}}{\sowner_0} \nredNDanns \obars{\sexpr_1}{\sowner_0}$
+  then\/ $\snil; \sowner_0 \sWSOP \sexpr_1$.
+\end{lemma}{
+  \newcommand{\shortproof}{By case analysis of $\nredNDanns$.}
+\begin{lamportproof*}
+  \shortproof
+\mainproof
+  \shortproof
+
+  \step{0}{\(
+    \sbnd_0 \eeq \obnd{\sowner_0}{\stype_0}{\sowner_1}
+  \)\\and \(
+    \snil; \sowner_1 \sWSOP \svalue_0
+  \)\\and \(
+    \svalue_0 \eeq \obbars{\svalue_1}{\sowner_1}
+  \)}
+    \begin{pfproof}
+      by inversion $\sWSOP$
+    \end{pfproof}
+
+  \step{1}{\case{\(
+    \svalue_1 \in {(\efun{\tann{\svar}{{\stype}}}{\sexpr})} \cup {(\emon{\sbnd}{\svalue})}
+  \)\\and \(
+    \obars{\estab{\sbnd_0}{\svalue_0}}{\sowner_0}
+    \nredNDanns
+    \obars{\emon{\sbnd_0}{\svalue_0}}{\sowner_0}
+  \)}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          \begin{mathpar}
+            \inferrule*{
+              \inferrule*{
+                \mbox{by inversion $\sWSOP$}
+              }{
+                \snil; \sowner_1 \sWSOP \svalue_0
+              }
+            }{
+              \snil; \sowner_0 \sWSOP \emon{\sbnd_0}{\svalue_0}
+            }
+          \end{mathpar}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{2}{\case{\(
+    \svalue_1 \eeq \epair{\svalue_2}{\svalue_3}
+  \)\\and \(
+    \stype_0 \eeq \obars{\tpair{\stype_2}{\stype_3}}{\sowner_1}
+  \)\\and \(
+    \obars{\estab{\sbnd_0}{\svalue_0}}{\sowner_0}
+    \nredNDanns
+    \obars{\epair{\estab{\obnd{\sowner_0}{\stype_2}{\sowner_1}}{\svalue_2}}{\estab{\obnd{\sowner_0}{\stype_3}{\sowner_1}}{\svalue_3}}}{\sowner_0}
+  \)}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          \begin{mathpar}
+            \inferrule*{
+              \inferrule*{
+                \inferrule*{
+                  \mbox{by inversion $\sWSOP$}
+                }{
+                  \snil; \sowner_1 \sWSOP \svalue_2
+                }
+              }{
+                \snil; \sowner_0 \sWSOP \estab{\obnd{\sowner_0}{\stype_2}{\sowner_1}}{\svalue_2}
+              }
+              \\
+              \inferrule*{
+                \inferrule*{
+                  \mbox{by inversion $\sWSOP$}
+                }{
+                  \snil; \sowner_1 \sWSOP \svalue_3
+                }
+              }{
+                \snil; \sowner_0 \sWSOP \estab{\obnd{\sowner_0}{\stype_3}{\sowner_1}}{\svalue_3}
+              }
+            }{
+              \snil; \sowner_0 \sWSOP \epair{\estab{\obnd{\sowner_0}{\stype_2}{\sowner_1}}{\svalue_2}}{\estab{\obnd{\sowner_0}{\stype_3}{\sowner_1}}{\svalue_3}}
+            }
+          \end{mathpar}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{3}{\case{\(
+    \svalue_1 \in \sint
+  \)\\and \(
+    \obars{\estab{\sbnd_0}{\svalue_0}}{\sowner_0} \nredNDanns \obars{\svalue_1}{\sowner_0}
+  \)}}
+    \begin{pfproof}
+      qedstep
+    \end{pfproof}
+\end{lamportproof*}}
+
+\begin{lemma}\label{H-label-substitution}\leavevmode
+  If\/ $\fcons{\tann{\svar_0}{\stoptional_0}}{\stypeenv_0} \sWTN \sexpr_1 : \toptional$
+  and\/ $\fcons{\tann{\svar_0}{\sowner_0}}\sownerenv_0; \sowner_1 \sWSOP \sexpr_1$
+  and\/ $\snil \sWTN \svalue_0 : \stoptional_0$
+  and\/ $\snil; \sowner_0 \sWSOP \svalue_0$
+  then\/ $\stypeenv_0 \sWTN \esubst{\sexpr_1}{\svar_0}{\svalue_0} : \toptional$
+  and\/ $\sownerenv_0 \sWSOP \esubst{\sexpr_1}{\svar_0}{\svalue_0}$.
+\end{lemma}{
+  \newcommand{\shortproof}{By induction on the structure of $\sexpr_0$.}
+\begin{lamportproof*}
+  \shortproof
+\mainproof
+  \shortproof
+
+  \step{0}{$\sexpr_0 \eeq \svar_2$}
+    \begin{pfproof}
+      \step{0.0}{\scase{$\svar_0 \eeq \svar_2$}}
+        \begin{pfproof}
+          \qedstep
+        \end{pfproof}
+      \step{0.1}{\scase{$\svar_0 \neq \svar_2$}}
+        \begin{pfproof}
+          \qedstep
+            \begin{pfproof}
+              $\esubst{\sexpr_1}{\svar_0}{\svalue_0} \eeq \sexpr_1$
+            \end{pfproof}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{1}{\case{$\sexpr_0 \in \sint$}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          $\esubst{\sexpr_1}{\svar_0}{\svalue_0} \eeq \sexpr_1$
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{2}{\case{\(
+    \sexpr_0 \eeq \efun{\svar_2}{\sexpr_2}
+  \)\\or\(
+    \sexpr_0 \eeq \efun{\tann{\svar_2}{\stype_2}}{\sexpr_2}
+  \)}}
+    \begin{pfproof}
+      \step{2.0}{\scase{$\svar_0 \eeq \svar_2$}}
+        \begin{pfproof}
+          \qedstep
+            \begin{pfproof}
+              $\esubst{\sexpr_1}{\svar_0}{\svalue_0} \eeq \sexpr_1$
+            \end{pfproof}
+        \end{pfproof}
+      \step{2.1}{\scase{$\svar_0 \neq \svar_2$}}
+        \begin{pfproof}
+          \qedstep
+            \begin{pfproof}
+              by \pfih
+            \end{pfproof}
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{3}{\case{\(\sexpr_0 \eeq \epair{\sexpr_1}{\sexpr_2}\)}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{4}{\case{\(\sexpr_0 \eeq \eapp{\toptional}{\sexpr_1}{\sexpr_2}\)}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{5}{\case{\(\sexpr_0 \eeq \eunopt{\stoptional}{\sexpr_1}\)}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{6}{\case{\(\sexpr_0 \eeq \ebinopt{\stoptional}{\sexpr_1}{\sexpr_2}\)}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{7}{\case{\(\sexpr_0 \eeq \edynb{\sbnd_1}{\sexpr_1}\)}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{8}{\case{\(\sexpr_0 \eeq \estab{\sbnd_1}{\sexpr_1}\)}}
+    \begin{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+  \step{9}{\case{\(\sexpr_0 \eeq \obars{\sexpr_1}{\sowner_1}\)}}
+    \begin{pfproof}
+      \step{9.0}{$\sowner_0 \eeq \sowner_1$}
+        \begin{pfproof}
+          by inversion $\sWSOP$
+        \end{pfproof}
+      \qedstep
+        \begin{pfproof}
+          by \pfih
+        \end{pfproof}
+    \end{pfproof}
+
+\end{lamportproof*}}
+
+\begin{lemma}[boundary preservation]\label{H-source-boundary}\leavevmode
+  If\/ $\fwellformed{\sexpr_0}{\stoptional}$
+  and\/ $\sexpr_0 \rredN \ctx_0[{\edynb{\sbnd_0}{\svalue_1}}]$
+  then either\/ $\fhasbnd{\sexpr_0}{\sbnd_0}$
+  or\/ $\fhasbnd{\sexpr_0}{\fflip{\sbnd_0}}$.
+\end{lemma}{
+  \newcommand{\shortpf}{By case analysis of\/ $\nredNS$ and\/ $\nredND$, evaluation does not create new labels and only creates a new boundary by flipping an existing boundary.}
+\begin{lamportproof*}
+  \shortpf
+\mainproof
+  \shortpf
+
+\end{lamportproof*}}
+
+\begin{lemma}\label{H-mon-type}
+  If\/ $\fwellformed{\sexpr_0}{\stoptional}$
+  and\/ $\sexpr_0 \rredN \ctx[\emon{\obnd{\sowner_0}{\obars{\tfun{\stype_0}{\stype_1}}{\sowner_1}}{\sowner_2}}{\svalue_0}]$
+  then $\fshallow{\tagof{\tfun{\stype_0}{\stype_1}}}{\svalue_0}$
+\end{lemma}{
+\begin{lamportproof}
+  Surface expressions do not contain monitors, and the only ways to create one
+  via\/ $\nredND$ and\/ $\nredNS$ require\/ $\sshallow$ as a precondition.
+\end{lamportproof}}

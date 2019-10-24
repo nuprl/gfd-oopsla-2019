@@ -1,0 +1,109 @@
+\documentclass[acmsmall, screen]{acmart}
+
+%% NOTES among authors 
+%\def\notes#1{\expandafter\def\csname#1\endcsname##1{\marginpar{\par\noindent\hrulefill\par\raggedright\tiny\noindent #1: ##1}}}
+%% \def\notes#1{\expandafter\def\csname#1\endcsname##1{\marginpar{\relax}}}
+%\notes{bg}
+%\notes{cd}
+%\notes{mf}
+
+\title{Complete Monitors for Gradual Types}
+
+\author{Ben Greenman}
+\orcid{0000-0001-7078-9287}
+\affiliation{%
+  \institution{PLT @ Northeastern University}
+  \city{Boston}
+  \state{Massachusetts}
+  \country{USA}
+}
+\email{benjaminlgreenman@gmail.com}
+
+\author{Matthias Felleisen}
+\orcid{0000-0001-6678-1004}
+\affiliation{%
+  \institution{PLT @ Northeastern University}
+  \city{Boston}
+  \state{Massachusetts}
+  \country{USA}
+}
+\email{matthias@ccs.neu.edu}
+
+\author{Christos Dimoulas}
+\orcid{0000-0002-9338-7034}
+\affiliation{%
+  \institution{PLT @ Northwestern University}
+  \city{Evanston}
+  \state{Illinois}
+  \country{USA}
+}
+\email{chrdimo@northwestern.edu}
+
+\renewcommand{\shortauthors}{Ben Greenman, Matthias Felleisen, and Christos Dimoulas}
+
+\input{package.tex}
+\input{def.tex}
+
+%%% The following is specific to OOPSLA '19 and the paper
+%%% 'Complete Monitors for Gradual Types'
+%%% by Ben Greenman, Matthias Felleisen, and Christos Dimoulas.
+\setcopyright{acmcopyright}
+\acmJournal{PACMPL}
+\acmYear{2019} \acmVolume{3} \acmNumber{OOPSLA} \acmArticle{122} \acmMonth{10} \acmPrice{} \acmDOI{10.1145/3360548}
+\copyrightyear{2019}
+
+\citestyle{acmauthoryear}
+
+\begin{document}
+
+\begin{abstract}
+\input{abstract.tex}
+\end{abstract}
+
+\begin{CCSXML}
+\input{ccsxml.tex}
+\end{CCSXML}
+
+\ccsdesc[500]{Software and its engineering~Semantics}
+\ccsdesc[100]{Software and its engineering~Constraints}
+\ccsdesc[100]{Software and its engineering~Functional languages}
+
+\keywords{complete monitoring, blame soundness, blame completeness}
+
+\maketitle
+
+\def\sec#1#2#3{\section{#1} \label{#2} \input{#3}}
+
+%%    title 		    	                                label            file 
+%% ---------------------------------------------------------------------------------------------------
+\sec{Type Soundness Is Not Enough}                   {sec:intro}      {introduction}
+\sec{Motivational Examples, the Basic Insights}      {sec:motivation} {motivation}
+\sec{The Model: Syntax and Types}                    {sec:surface}    {surface}
+\sec{The Model: Three Semantics}                     {sec:semantics}  {semantics}
+\sec{Type Soundness}                                 {sec:soundness}  {soundness}
+\sec{Type Soundness Is {\em Really\/} Not Enough}    {sec:not}        {not-soundness}
+\sec{Ownership: Labels and Reductions}               {sec:ownership}  {ownership}
+\sec{Complete Monitoring}                            {sec:satisfies}  {satisfies}
+\sec{Implications for Blame}                         {sec:blame}      {blame}
+\sec{Related Work}                                   {sec:related}    {related}
+\sec{Complete Monitoring Is Needed}                  {sec:conclusion} {conclusion}
+
+\begin{acks}
+ We thank Michael M. Vitousek for conversations about Transient and its type soundness;
+   % "However, I don't think the soundness we guarantee is fundamentally different from soundness in Typed Racket; at
+   % least, the places where behavior differs are few." -- Mike V.
+ Amal Ahmed, Michael Ballantyne, Stephen Chang, and Max S. New for
+  conversations about complete monitoring;
+ and the anonymous OOPSLA reviewers for their questions, comments, and proofreading.
+ This work was partially supported by \grantsponsor{NSF}{NSF}{https://www.nsf.gov}
+  grants
+  \href{"https://www.nsf.gov/awardsearch/showAward?AWD_ID=1518844"}{\grantnum{NSF}{CCF 1518844}}
+  and
+  \href{"https://www.nsf.gov/awardsearch/showAward?AWD_ID=1763922"}{\grantnum{NSF}{CCF 1763922}}.
+\end{acks}
+
+
+\bibliographystyle{ACM-Reference-Format}
+\bibliography{bib,cs}
+
+\end{document}

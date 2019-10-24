@@ -1,0 +1,327 @@
+\begin{figure}[t]
+    \lbl{\fbox{\ssurfacelang{}}}{
+      \begin{tabular}{ll}
+      \begin{langarray}
+        \sexpr & \BNFeq &
+          \svar
+          \mid \snat \mid \sint
+          \mid \efun{\svar}{\sexpr}
+          \mid \efun{\tann{\svar}{\stype}}{\sexpr}
+          \mid \epair{\sexpr}{\sexpr} \mid
+        \\ & &
+               \eapp{\stoptional}{\sexpr}{\sexpr}
+          \mid \eunopt{\stoptional}{\sexpr}
+          \mid \ebinopt{\stoptional}{\sexpr}{\sexpr} \mid
+        \\ & &
+               \edynb{\sbnd}{\sexpr}
+          \mid \estab{\sbnd}{\sexpr}
+        \\
+         \stype & \BNFeq & 
+          \tnat \mid \tint \mid \tpair{\stype}{\stype} \mid \tfun{\stype}{\stype}
+        \\
+         \stoptional & \BNFeq & 
+          \stype \mid \tdyn
+        \\
+         \sbnd & \BNFeq & 
+          \obnd{\sowner}{\stype}{\sowner}
+        \\
+         \sowner & \BNFeq & 
+          \textrm{\scountable{} set of names}
+      \end{langarray}
+      &
+      \begin{langarray}
+        \sunop & \BNFeq & 
+          \sfst \mid \ssnd
+        \\
+         \sbinop & \BNFeq & 
+          \ssum \mid \squotient
+        \\
+         \tenv & \BNFeq & % or \stypeenv if you're not into the whole brevity thing
+          \cdot \mid \fcons{\tann{\svar}{\stoptional}}{\tenv}
+        \\
+        \sownerenv & \BNFeq &
+          \cdot \mid \fcons{\tann{\svar}{\sowner}}{\sownerenv}
+        \\
+         \snat & \BNFeq    & \naturals
+        \\
+         \sint & \BNFeq    & \integers
+        \\
+         \sbset & \BNFeq &
+          \powerset{\sbnd}
+        \\
+         \sowners & \BNFeq &
+          \powerset{\sowner}
+      \end{langarray}
+      \end{tabular}
+    }
+
+  \lbl{\fbox{$\fwellformed{\sexpr}{\stoptional}$}}{\(\begin{array}{l@{~~}l} % well-formed expression
+    \fwellformed{\sexpr_0}{\stype_0} &
+    \mbox{ iff } \,\exists\,\sowner_0.\,\sowner_0 \sWL \sexpr_0
+    \mbox{ and } \sWT \sexpr_0 : \stype_0
+    \\
+    \fwellformed{\sexpr_0}{\tdyn} &
+    \mbox{ iff } \,\exists\,\sowner_0.\,\sowner_0 \sWL \sexpr_0
+    \mbox{ and } \sWT \sexpr_0 : \tdyn
+  \end{array}\)}{}
+
+  \medskip
+  \lbl{\fbox{$\sownerenv; \sowner \sWL \sexpr$} \missingrules{}}{\begin{mathpar} %  well-named components (selected rules)
+    \inferrule*{
+      \tann{\svar_0}{\sowner_0} \in \sownerenv_0
+    }{
+      \sownerenv_0; \sowner_0 \sWL \svar_0
+    }
+
+    \inferrule*{
+      \fcons{\tann{\svar_0}{\sowner_0}}{\sownerenv_0}; \sowner_0 \sWL \sexpr_0
+    }{
+      \sownerenv_0; \sowner_0 \sWL \efun{\svar_0}{\sexpr_0}
+    }
+
+    \inferrule*{
+      \fcons{\tann{\svar_0}{\sowner_0}}{\sownerenv_0}; \sowner_0 \sWL \sexpr_0
+    }{
+      \sownerenv_0; \sowner_0 \sWL \efun{\tann{\svar_0}{\stype_0}}{\sexpr_0}
+    }
+
+    \inferrule*{
+      \sownerenv_0; \sowner_1 \sWL \sexpr_0
+    }{
+      \sownerenv_0; \sowner_0 \sWL \edynb{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\sexpr_0}
+    }
+
+  \end{mathpar}}
+
+  \medskip
+  \lbl{\fbox{$\tenv \sWS \sexpr : \stype$} \missingrules{}}{\begin{mathpar} %  static typing (selected rules)
+%    \inferrule*{
+%      \fmember{\tann{\svar_0}{\stype_0}}{\tenv_0}
+%    }{
+%      \tenv_0 \sWS \svar_0 : \stype_0
+%    }
+%
+%    \inferrule*{
+%    }{
+%      \tenv_0 \sWS \snat_0 : \tnat
+%    }
+%
+%    \inferrule*{
+%    }{
+%      \tenv_0 \sWS \sint_0 : \tint
+%    }
+
+    \inferrule*{
+      \fcons{\tann{\svar_0}{\stype_0}}{\tenv_0} \sWS \sexpr_0 : \stype_1
+    }{
+      \tenv_0 \sWS \efun{\tann{\svar_0}{\stype_0}}{\sexpr_0} : \tfun{\stype_0}{\stype_1}
+    }
+
+%    \inferrule*{
+%      \tenv_0 \sWS \sexpr_0 : \stype_0
+%      \\
+%      \tenv_0 \sWS \sexpr_1 : \stype_1
+%    }{
+%      \tenv_0 \sWS \epair{\sexpr_0}{\sexpr_1} : \tpair{\stype_0}{\stype_1}
+%    }
+%
+%    \inferrule*{
+%      \tenv_0 \sWS \sexpr_0 : \tfun{\stype_0}{\stype_1}
+%      \\
+%      \tenv_0 \sWS \sexpr_1 : \stype_0
+%    }{
+%      \tenv_0 \sWS \eapp{\stype_1}{\sexpr_0}{\sexpr_1} : \stype_1
+%    }
+%
+%    \inferrule*{
+%      \tenv_0 \sWS \sexpr_0 : \stype_0
+%      \\
+%      \sDelta(\sunop, \stype_0) \feq \stype_1
+%    }{
+%      \tenv_0 \sWS \eunop{\sexpr_0} : \stype_1
+%    }
+%
+%    \inferrule*{
+%      \tenv_0 \sWS \sexpr_0 : \stype_0
+%      \\
+%      \tenv_0 \sWS \sexpr_1 : \stype_1
+%      \\
+%      \sDelta(\sbinop, \stype_0, \stype_1) \feq \stype_2
+%    }{
+%      \tenv_0 \sWS \ebinop{\sexpr_0}{\sexpr_1} : \stype_2
+%    }
+
+    \inferrule*{
+      \tenv_0 \sWS \sexpr_0 : \stype_0
+      \\
+      \stype_0 \subteq \stype_1
+    }{
+      \tenv_0 \sWS \sexpr_0 : \stype_1
+    }
+
+    \inferrule*{
+      \tenv_0 \sWD \sexpr_0 : \tdyn
+    }{
+      \tenv_0 \sWS \edyn{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\sexpr_0} : \stype_0
+    }
+  \end{mathpar}}
+
+  \medskip
+  \lbl{\fbox{$\tenv \sWD \sexpr : \tdyn$} \missingrules{}}{\begin{mathpar} %  dynamic typing (selected rules)
+%    \inferrule*{
+%      \fmember{\svar_0}{\tenv_0}
+%    }{
+%      \tenv_0 \sWD \svar_0 : \tdyn
+%    }
+%
+%    \inferrule*{
+%    }{
+%      \tenv_0 \sWD \sint_0 : \tdyn
+%    }
+
+    \inferrule*{
+      \fcons{\tann{\svar_0}{\tdyn}}{\tenv_0} \sWD \sexpr_0 : \tdyn
+    }{
+      \tenv_0 \sWD \efun{\svar_0}{\sexpr_0} : \tdyn
+    }
+
+%    \inferrule*{
+%      \tenv_0 \sWD \sexpr_0 : \tdyn
+%      \\
+%      \tenv_0 \sWD \sexpr_1 : \tdyn
+%    }{
+%      \tenv_0 \sWD \epair{\sexpr_0}{\sexpr_1} : \tdyn
+%    }
+
+    \inferrule*{
+      \tenv_0 \sWD \sexpr_0 : \tdyn
+      \\
+      \tenv_0 \sWD \sexpr_1 : \tdyn
+    }{
+      \tenv_0 \sWD \eapp{\tdyn}{\sexpr_0}{\sexpr_1} : \tdyn
+    }
+
+%    \inferrule*{
+%      \tenv_0 \sWD \sexpr_0 : \tdyn
+%    }{
+%      \tenv_0 \sWD \eunop{\sexpr_0} : \tdyn
+%    }
+%
+%    \inferrule*{
+%      \tenv_0 \sWD \sexpr_0 : \tdyn
+%      \\
+%      \tenv_0 \sWD \sexpr_1 : \tdyn
+%    }{
+%      \tenv_0 \sWD \ebinop{\sexpr_0}{\sexpr_1} : \tdyn
+%    }
+
+    \inferrule*{
+      \tenv_0 \sWS \sexpr_0 : \stype_0
+    }{
+      \tenv_0 \sWD \esta{\obnd{\sowner_0}{\stype_0}{\sowner_1}}{\sexpr_0} : \tdyn
+    }
+
+  \end{mathpar}}
+
+  \medskip
+  \lbl{\fbox{$\stype \subteq \stype$}}{\vspace{-4mm}\begin{mathpar}
+    \inferrule*{
+    }{
+      \tnat \subteq \tint
+    }
+
+    \inferrule*{
+      \stype_0 \subteq \stype_2
+      \\
+      \stype_1 \subteq \stype_3
+    }{
+      \tpair{\stype_0}{\stype_1} \subteq \tpair{\stype_2}{\stype_3}
+    }
+
+    \inferrule*{
+      \stype_2 \subteq \stype_0
+      \\
+      \stype_1 \subteq \stype_3
+    }{
+      \tfun{\stype_0}{\stype_1} \subteq \tfun{\stype_2}{\stype_3}
+    }
+
+    \inferrule*{
+    }{
+      \stype_0 \subteq \stype_0
+    }
+  \end{mathpar}}
+
+  \Description[Grammar and typing judgments.]{Defines the expressions for
+    a model language, a labeling judgment, two typing judgments, and
+    a subtyping relation.
+  }
+  \caption{\ssurfacelang{}}
+  \label{fig:surface-language}
+\vspace{-3mm}
+\end{figure}
+
+\noindent Our model builds on the previous work of
+ \citeN{gf-icfp-2018} who, in turn, employ
+ \citeN{mf-toplas-2009}'s multi-language framework for modeling the syntax,
+ types, and semantics of a mixed-typed language.
+In particular, we interpret one ``surface'' syntax and mixed
+ type system (\figref{fig:surface-language}) in three different ways.  This
+ section presents the common basis.
+The set of surface expressions~$\sexpr$ includes numbers, tuples, and anonymous
+ functions, illustrative of the atomic values, data structures, and higher-order values.
+Expressions may be combined
+ through function application ($\sapp$), operator application ($\sunop$ and
+ $\sbinop$), and boundary terms ($\sdyn$ and $\ssta$).
+
+Boundary terms divide a program into named components.
+Each component is either statically or dynamically typed.
+A boundary term combines a boundary specification ($\sbnd$, for instance
+$\obnd{\sowner_0}{\stype_0}{\sowner_1}$) and a sender expression.
+For example, the boundary term $(\edynb{\obnd{\sowner_0}{\tnat}{\sowner_1}}{(\efun{\svar_0}{\svar_0})})$
+embeds a dynamically-typed sender component named $\sowner_1$,
+consisting of the function $(\efun{\svar_0}{\svar_0})$,
+into a statically-typed context named $\sowner_0$.
+While $\tnat$ seems to disagree with the enclosed function value,
+the term is grammatically correct and well-typed.
+
+Every function application and operator application comes with the type
+ $\stoptional$ of its expected result.\footnote{These annotations serve two
+ purposes: one essential, one convenient. On elimination forms ($\sapp$,
+ $\sfst$, and $\ssnd$) they are essential for the first-order
+ interpretations, because those must check the output of certain
+ elimination forms in typed components and thus enforce the type required
+ by the context. Binary operations have annotations to conveniently
+ disambiguate statically-typed and dynamically-typed redexes.
+ All these annotations could
+ be inferred from the type derivation of an unannotated surface program.}  In a
+ statically-typed component, any type $\stype$ may be acceptable.  Within a
+ dynamically-typed component, the mark $\tdyn$ of a un(i)typed value is the
+ only appropriate declaration.
+
+Note that $\tdyn$ is not a dynamic type~\cite{t-popl-1990}.
+Our model is thus directly representative of languages
+ such as Dart~2 ({\small\shorturl{https://}{dart.dev/dart-2}}) and Typed Racket,
+ and of the cast calculi employed by many true gradual
+ languages~\cite{svcb-snapl-2015,cs-popl-2017}.
+
+An expression is well-formed if it uses component names correctly and
+ is well-typed. Figure~\ref{fig:surface-language} defines the relevant
+ judgments. The first judgment, $\sWL$, checks that components are
+ named consistently and that the variables defined in one component are never
+ directly accessed by another component.
+This judgment applies to both static and
+ dynamic code.
+Type-correctness uses two judgments: one for static typing
+ ($\stypeenv \sWS \sexpr : \stype$) and one for dynamic typing ($\stypeenv
+ \sWD \sexpr : \tdyn$).
+These judgments depend on one another to handle
+ boundary terms.
+For example, a $\ssta$ boundary has type $\tdyn$ if
+ its subexpression has the type in the boundary specification.  The static typing
+ judgment depends on a notion of subtyping ($\subteq$)---based on a subset
+ relationship between the $\tnat$ and $\tint$ types---because we firmly
+ embrace the idea that a type system for untyped code must
+ have true union types~\cite{tf-icfp-2010,cl-icfp-2017,tfffgksst-snapl-2017}.
+ Subtyping is incorporated to the typing
+ judgment via a subsumption rule to keep the presentation brief.
